@@ -1,0 +1,179 @@
+{
+  "app": { "name": "Orvexa", "tagline": "Commandez sans attendre" },
+  "welcome": {
+    "title": "Bienvenue chez",
+    "greeting": "Installez-vous — nous arrivons.",
+    "noSession": "Scannez le QR code de votre table pour commencer.",
+    "scanAgain": "Scanner à nouveau",
+    "browseMenu": "Voir la carte"
+  },
+  "header": { "table": "Table {{label}}", "tableShort": "Table", "open": "Ouverte", "settings": "Paramètres" },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "languageHint": "Choisie une fois — modifiable ici.",
+    "table": "Votre table",
+    "restaurant": "Restaurant"
+  },
+  "extras": {
+    "openCta": "Demander quelque chose",
+    "title": "Besoin de",
+    "titleEm": "quelque chose ?",
+    "hint": "Touchez ce qu'il vous faut — un serveur viendra.",
+    "noteLabel": "Autre chose ?",
+    "notePlaceholder": "Optionnel · note pour le serveur",
+    "submit": "Envoyer au serveur",
+    "sentTitle": "Envoyé !",
+    "sentSub": "Un serveur arrive.",
+    "items": {
+      "fork": "Fourchette",
+      "spoon": "Cuillère",
+      "knife": "Couteau",
+      "napkin": "Serviette",
+      "straw": "Paille",
+      "water": "Eau",
+      "condiments": "Condiments"
+    }
+  },
+  "menu": {
+    "loading": "Chargement du menu…",
+    "empty": "Aucun plat disponible pour le moment.",
+    "unavailable": "Indisponible",
+    "serviceHours": "Service du midi · jusqu'à 16:00",
+    "served": "Service"
+  },
+  "dish": {
+    "addToCart": "Ajouter au panier",
+    "notes": "Notes pour la cuisine (optionnel)",
+    "notesPlaceholder": "Allergies, préférences…",
+    "quantity": "Quantité",
+    "selectOne": "Choisissez 1",
+    "selectMin": "Au moins {{min}}",
+    "selectUpTo": "Jusqu'à {{max}}",
+    "required": "Obligatoire"
+  },
+  "cart": {
+    "title": "Votre panier",
+    "empty": "Votre panier est vide.",
+    "subtotal": "Sous-total",
+    "tax": "TVA ({{percent}}%)",
+    "service": "Service ({{percent}}%)",
+    "total": "Total",
+    "items_one": "{{count}} article",
+    "items_other": "{{count}} articles",
+    "checkout": "Commander",
+    "remove": "Retirer",
+    "view": "Voir le panier",
+    "continueShopping": "Continuer la commande",
+    "added": "Ajouté au panier",
+    "review": "Vérifier votre commande",
+    "confirmOrder": "Confirmer la commande",
+    "back": "Retour",
+    "viewOnly": "Lecture seule",
+    "viewOnlyHint": "Seul le premier scanneur de cette table peut envoyer la commande ou appeler le serveur."
+  },
+  "order": {
+    "title": "Votre commande",
+    "placed": "Commande envoyée !",
+    "status": {
+      "received": "Reçue",
+      "preparing": "En préparation",
+      "ready": "Prête",
+      "served": "Servie",
+      "cancelled": "Annulée"
+    },
+    "cancel": "Annuler la commande",
+    "cancelConfirm": "Annuler cette commande ?",
+    "removeItem": "Retirer ce plat",
+    "removeItemConfirm": "Retirer ce plat de votre commande ?",
+    "history": "Mes commandes",
+    "back": "Retour au menu",
+    "editAddItems": "Ajouter des plats",
+    "viewReceipt": "Voir le reçu",
+    "hideReceipt": "Masquer le reçu",
+    "receipt": "Votre reçu",
+    "receiptItems": "Détails"
+  },
+  "actions": {
+    "callWaiter": "Appeler un serveur",
+    "requestBill": "Demander l'addition",
+    "calling": "Appel en cours…",
+    "callSent": "Un serveur arrive.",
+    "billSent": "Addition demandée.",
+    "billHint": "Vous pouvez maintenant demander l'addition.",
+    "billAvailableAfterServed": "L'addition pourra être demandée une fois votre commande servie."
+  },
+  "feedback": {
+    "title": "Comment s'est passé votre repas ?",
+    "sub": "Touchez une étoile pour noter — le commentaire est facultatif.",
+    "rating": "Note",
+    "commentPlaceholder": "Dites-nous ce qui vous a plu ou manqué (facultatif)",
+    "submit": "Envoyer",
+    "skip": "Plus tard",
+    "thanks": "Merci pour votre retour !"
+  },
+  "tracking": {
+    "id": "Commande",
+    "cookingTitle": "On cuisine",
+    "cookingTitleEm": "maintenant.",
+    "readyTitle": "Bon appétit.",
+    "cookingSub": "Estimation 22–28 min",
+    "readySub": "Vos plats arrivent.",
+    "received": { "name": "Envoyée à la cuisine", "sub": "L'équipe l'a reçue" },
+    "preparing": { "name": "En préparation", "sub": "Dressage bientôt" },
+    "ready": { "name": "Prête et servie", "sub": "Bon appétit" },
+    "live": "en direct",
+    "done": "Terminé",
+    "summaryHead_one": "Votre commande · {{count}} article",
+    "summaryHead_other": "Votre commande · {{count}} articles",
+    "callTitle": "Appeler un serveur",
+    "callSub": "Réponse ~30 sec",
+    "billTitle": "Addition",
+    "billSub": "Régler à table",
+    "eta": "~{{minutes}} min"
+  },
+  "waiter": {
+    "idleTitle": "Besoin d'un coup de main ?",
+    "idleBody": "Nous enverrons un serveur à votre table.",
+    "callingTitle": "Appel",
+    "callingTitleEm": "en cours…",
+    "callingBody": "En attente d'un serveur qui prend l'appel.",
+    "ackTitle": "En route.",
+    "ackBody": "Le serveur a vu votre appel.",
+    "or": "Ou — choisissez une demande rapide",
+    "quick": {
+      "water": "Eau",
+      "bread": "Pain",
+      "spicy": "Sauce piquante",
+      "manager": "Parler au responsable"
+    },
+    "done": "Terminé",
+    "banner": {
+      "calling": "Appel d'un serveur…",
+      "callingSub": "L'équipe est notifiée",
+      "onWay": "Serveur en route",
+      "onWaySub": "Votre appel a été vu",
+      "dismiss": "Masquer"
+    }
+  },
+  "bill": {
+    "title": "L'addition",
+    "subtitle": "table {{label}}",
+    "guestCopy": "Copie client · à conserver",
+    "totalLabel": "Total · TND",
+    "request": "Demander l'addition",
+    "sentTitle": "Addition en route",
+    "sentSub": "Un serveur vous l'apporte",
+    "download": "Télécharger / Imprimer",
+    "requestAgain": "Redemander",
+    "callWaiter": "Appeler un serveur"
+  },
+  "errors": {
+    "title": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "offline": "Vous êtes hors-ligne.",
+    "sessionExpired": "Votre session a expiré. Scannez à nouveau le QR code.",
+    "boot": "Impossible d'initialiser la session. Vérifiez votre connexion."
+  },
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
+}

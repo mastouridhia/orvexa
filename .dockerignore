@@ -1,0 +1,40 @@
+**/node_modules
+**/dist
+**/build
+**/.vite
+**/.turbo
+**/coverage
+**/.nyc_output
+**/test-results
+**/playwright-report
+**/*.tsbuildinfo
+**/.eslintcache
+**/.cache
+**/.parcel-cache
+
+.git
+.github
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Local runtime artifacts
+apps/api/uploads/**
+pgdata/**
+deploy/data/**
+
+# Test fixtures & dev-only files
+e2e
+playwright.config.ts
+
+# Env files - never bake secrets into images
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Editor swap files
+*.swp
+*.swo
+*.log

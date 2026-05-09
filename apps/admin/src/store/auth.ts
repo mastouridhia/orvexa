@@ -1,0 +1,69 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { StaffUser } from '@orvexa/shared';
+import { api } from '../api/queries.js';
+import { ApiError } from '../api/client.js';
+
+type AuthState = {
+  accessToken: string | null;
+  refreshToken: string | null;
+  user: StaffUser | null;
+  loginError: string | null;
+  logout: () => void;
+  login: (email: string, password: string, restaurantSlug?: string) => Promise<boolean>;
+  authedFetch: <T>(call: (token: string) => Promise<T>) => Promise<T>;
+};
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      accessToken: null,
+      refreshToken: null,
+      user: null,
+      loginError: null,
+      logout: () => set({ accessToken: null, refreshToken: null, user: null }),
+      async login(email, password, restaurantSlug) {
+        try {
+          const result = await api.login(email, password, restaurantSlug);
+          set({
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            user: result.user,
+            loginError: null,
+          });
+          return true;
+        } catch (err) {
+          set({ loginError: err instanceof ApiError ? err.message : (err as Error).message });
+          return false;
+        }
+      },
+      async authedFetch<T>(call: (token: string) => Promise<T>): Promise<T> {
+        const { accessToken, refreshToken } = get();
+        if (!accessToken) throw new ApiError('UNAUTHORIZED', 'Not signed in', 401);
+        try {
+          return await call(accessToken);
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 401 && refreshToken) {
+            try {
+              const tokens = await api.refresh(refreshToken);
+              set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+              return await call(tokens.accessToken);
+            } catch {
+              set({ accessToken: null, refreshToken: null, user: null });
+              throw err;
+            }
+          }
+          throw err;
+        }
+      },
+    }),
+    {
+      name: 'orvexa.admin.auth',
+      partialize: (s) => ({
+        accessToken: s.accessToken,
+        refreshToken: s.refreshToken,
+        user: s.user,
+      }),
+    },
+  ),
+);

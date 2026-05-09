@@ -1,0 +1,179 @@
+{
+  "app": { "name": "Orvexa", "tagline": "اطلب دون انتظار" },
+  "welcome": {
+    "title": "أهلاً بك في",
+    "greeting": "تفضّل بالجلوس — سنكون معك قريبًا.",
+    "noSession": "امسح رمز QR الخاص بطاولتك للبدء.",
+    "scanAgain": "أعد المسح",
+    "browseMenu": "تصفّح القائمة"
+  },
+  "header": { "table": "الطاولة {{label}}", "tableShort": "طاولة", "open": "مفتوحة", "settings": "الإعدادات" },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "languageHint": "تُختار مرة واحدة — يمكن تغييرها هنا.",
+    "table": "طاولتك",
+    "restaurant": "المطعم"
+  },
+  "extras": {
+    "openCta": "طلب شيء",
+    "title": "هل تحتاج",
+    "titleEm": "شيئًا؟",
+    "hint": "اضغط على ما تحتاجه — سيحضره النادل.",
+    "noteLabel": "أي شيء آخر؟",
+    "notePlaceholder": "اختياري · ملاحظة للنادل",
+    "submit": "أرسل للنادل",
+    "sentTitle": "تم الإرسال!",
+    "sentSub": "النادل في طريقه.",
+    "items": {
+      "fork": "شوكة",
+      "spoon": "ملعقة",
+      "knife": "سكين",
+      "napkin": "منديل",
+      "straw": "ماصة",
+      "water": "ماء",
+      "condiments": "بهارات"
+    }
+  },
+  "menu": {
+    "loading": "جاري تحميل القائمة…",
+    "empty": "لا توجد أطباق متاحة حاليا.",
+    "unavailable": "غير متاح",
+    "serviceHours": "خدمة الغداء · حتى 16:00",
+    "served": "الخدمة"
+  },
+  "dish": {
+    "addToCart": "أضف إلى السلة",
+    "notes": "ملاحظات للمطبخ (اختياري)",
+    "notesPlaceholder": "حساسية, تفضيلات…",
+    "quantity": "الكمية",
+    "selectOne": "اختر واحدا",
+    "selectMin": "على الأقل {{min}}",
+    "selectUpTo": "حتى {{max}}",
+    "required": "إلزامي"
+  },
+  "cart": {
+    "title": "سلتك",
+    "empty": "سلتك فارغة.",
+    "subtotal": "المجموع الفرعي",
+    "tax": "الضريبة ({{percent}}%)",
+    "service": "الخدمة ({{percent}}%)",
+    "total": "المجموع",
+    "items_one": "{{count}} عنصر",
+    "items_other": "{{count}} عناصر",
+    "checkout": "اطلب",
+    "remove": "إزالة",
+    "view": "عرض السلة",
+    "continueShopping": "مواصلة الطلب",
+    "added": "أُضيف إلى السلة",
+    "review": "راجع طلبك",
+    "confirmOrder": "تأكيد الطلب",
+    "back": "رجوع",
+    "viewOnly": "للعرض فقط",
+    "viewOnlyHint": "أول من يمسح هذه الطاولة هو الوحيد الذي يمكنه إرسال الطلب أو استدعاء النادل."
+  },
+  "order": {
+    "title": "طلبك",
+    "placed": "تم إرسال الطلب!",
+    "status": {
+      "received": "مستلم",
+      "preparing": "قيد التحضير",
+      "ready": "جاهز",
+      "served": "تم التقديم",
+      "cancelled": "ملغى"
+    },
+    "cancel": "إلغاء الطلب",
+    "cancelConfirm": "إلغاء هذا الطلب؟",
+    "removeItem": "حذف هذا الطبق",
+    "removeItemConfirm": "حذف هذا الطبق من طلبك؟",
+    "history": "طلباتي",
+    "back": "العودة إلى القائمة",
+    "editAddItems": "إضافة أطباق",
+    "viewReceipt": "عرض الفاتورة",
+    "hideReceipt": "إخفاء الفاتورة",
+    "receipt": "فاتورتك",
+    "receiptItems": "التفاصيل"
+  },
+  "actions": {
+    "callWaiter": "استدعاء النادل",
+    "requestBill": "طلب الفاتورة",
+    "calling": "جاري الاستدعاء…",
+    "callSent": "النادل قادم.",
+    "billSent": "تم طلب الفاتورة.",
+    "billHint": "يمكنك الآن طلب الفاتورة.",
+    "billAvailableAfterServed": "يمكن طلب الفاتورة بعد تقديم طلبك."
+  },
+  "feedback": {
+    "title": "كيف كانت زيارتك؟",
+    "sub": "اضغط نجمة للتقييم — التعليق اختياري.",
+    "rating": "التقييم",
+    "commentPlaceholder": "أخبرنا بما أعجبك أو نقصك (اختياري)",
+    "submit": "إرسال",
+    "skip": "ليس الآن",
+    "thanks": "شكرًا على رأيك!"
+  },
+  "tracking": {
+    "id": "الطلب",
+    "cookingTitle": "نطبخ",
+    "cookingTitleEm": "الآن.",
+    "readyTitle": "بالهناء والشفاء.",
+    "cookingSub": "التقدير 22–28 دقيقة",
+    "readySub": "أطباقك جاهزة.",
+    "received": { "name": "أُرسل إلى المطبخ", "sub": "وصل الطلب" },
+    "preparing": { "name": "قيد التحضير", "sub": "قريبا التقديم" },
+    "ready": { "name": "جاهز ومقدم", "sub": "بالهناء والشفاء" },
+    "live": "مباشر",
+    "done": "مُنجز",
+    "summaryHead_one": "طلبك · {{count}} عنصر",
+    "summaryHead_other": "طلبك · {{count}} عناصر",
+    "callTitle": "استدعاء النادل",
+    "callSub": "الرد ~30 ثانية",
+    "billTitle": "الفاتورة",
+    "billSub": "الدفع على الطاولة",
+    "eta": "~{{minutes}} دقيقة"
+  },
+  "waiter": {
+    "idleTitle": "تحتاج مساعدة؟",
+    "idleBody": "سنرسل نادلا إلى طاولتك.",
+    "callingTitle": "جاري",
+    "callingTitleEm": "الاستدعاء…",
+    "callingBody": "في انتظار رد النادل.",
+    "ackTitle": "قادم في الطريق.",
+    "ackBody": "النادل رأى استدعاءك.",
+    "or": "أو — اختر طلبا سريعا",
+    "quick": {
+      "water": "ماء",
+      "bread": "خبز",
+      "spicy": "صلصة حارة",
+      "manager": "التحدث إلى المسؤول"
+    },
+    "done": "تم",
+    "banner": {
+      "calling": "جاري استدعاء النادل…",
+      "callingSub": "تم إشعار الفريق",
+      "onWay": "النادل في الطريق",
+      "onWaySub": "تم استلام الاستدعاء",
+      "dismiss": "إخفاء"
+    }
+  },
+  "bill": {
+    "title": "الفاتورة",
+    "subtitle": "الطاولة {{label}}",
+    "guestCopy": "نسخة الزبون · للاحتفاظ",
+    "totalLabel": "المجموع · د.ت",
+    "request": "طلب الفاتورة",
+    "sentTitle": "الفاتورة في الطريق",
+    "sentSub": "سيحضرها النادل إلى طاولتك",
+    "download": "تنزيل / طباعة",
+    "requestAgain": "اطلب مرة أخرى",
+    "callWaiter": "استدعاء النادل"
+  },
+  "errors": {
+    "title": "حدث خطأ",
+    "retry": "أعد المحاولة",
+    "offline": "أنت غير متصل.",
+    "sessionExpired": "انتهت صلاحية جلستك. أعد مسح رمز QR.",
+    "boot": "تعذر بدء الجلسة. تحقق من الاتصال."
+  },
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
+}

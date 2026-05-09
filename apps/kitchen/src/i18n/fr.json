@@ -1,0 +1,95 @@
+{
+  "app": { "name": "Orvexa · Cuisine" },
+  "login": {
+    "title": "Connexion cuisine",
+    "email": "Email",
+    "password": "Mot de passe",
+    "restaurant": "Restaurant (optionnel)",
+    "submit": "Se connecter",
+    "submitting": "Connexion…"
+  },
+  "board": {
+    "subtitle": "Cuisine · service en cours",
+    "live": "En direct · synchronisé",
+    "paused": "En pause",
+    "loading": "Chargement…",
+    "status": {
+      "received": "Reçue",
+      "preparing": "En cours",
+      "ready": "Prête"
+    }
+  },
+  "wall": {
+    "subtitle": "Affichage Pass · cuisine"
+  },
+  "stat": {
+    "open": "Ouvertes",
+    "pushing": "À pousser",
+    "late": "En retard",
+    "ready": "Prêtes"
+  },
+  "filter": {
+    "all": "Toutes",
+    "pushing": "À pousser / En retard",
+    "received": "Reçues",
+    "preparing": "En préparation",
+    "ready": "Prêtes · à passer"
+  },
+  "age": {
+    "fresh": "Fraîche",
+    "cooking": "En cuisson",
+    "pushing": "À pousser",
+    "late": "En retard"
+  },
+  "card": {
+    "readyToPass": "Prête · à passer",
+    "holdTo": {
+      "preparing": "Maintenir pour démarrer",
+      "ready": "Maintenir pour marquer prête",
+      "served": "Maintenir pour passer"
+    },
+    "holding": "Maintenir… {{pct}}%",
+    "itemCount_one": "{{count}} article",
+    "itemCount_other": "{{count}} articles",
+    "firedAgo": "LANCÉ IL Y A {{time}}",
+    "eta": "Temps de préparation estimé",
+    "outOfStock": "86 (épuisé)",
+    "outOfStockConfirm": "Marquer ce plat comme épuisé ?"
+  },
+  "empty": {
+    "allClear": {
+      "title": "Tout en ordre.",
+      "sub": "Aucun ticket sur la rampe. Le tableau bourdonnera quand un nouveau ticket arrivera."
+    },
+    "filtered": {
+      "title": "Rien à montrer.",
+      "sub": "Aucun ticket ne correspond à ce filtre. Essayez « Toutes » pour voir le service complet."
+    }
+  },
+  "offline": {
+    "title": "Connexion perdue.",
+    "sub": "Impossible d'atteindre le réseau — les nouveaux tickets ne passeront pas. Vos copies imprimées restent valables.",
+    "queueing": "Hors ligne · tickets mis en file",
+    "retry": "Réessayer"
+  },
+  "header": {
+    "logout": "Déconnexion",
+    "soundOn": "Son activé",
+    "soundOff": "Son coupé",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "settings": "Paramètres",
+    "openWall": "Affichage TV",
+    "backToBoard": "Retour au tableau"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "languageHint": "Choisie une fois — modifiable ici."
+  },
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
+  "errors": {
+    "loginFailed": "Identifiants incorrects.",
+    "networkError": "Problème de connexion."
+  }
+}

@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TableFlow — DMOS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #f0eee9; height: 100%; }
+    body { font-family: -apple-system, system-ui, sans-serif; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="tweaks-panel.jsx"></script>
+  <script type="text/babel" src="tokens.jsx"></script>
+  <script type="text/babel" src="moodboards.jsx"></script>
+  <script type="text/babel" src="system-screens.jsx"></script>
+  <script type="text/babel" src="customer-data.jsx"></script>
+  <script type="text/babel" src="customer-app.jsx"></script>
+  <script type="text/babel" src="kitchen-data.jsx"></script>
+  <script type="text/babel" src="kitchen-screens.jsx"></script>
+  <script type="text/babel" src="waiter-app.jsx"></script>
+  <script type="text/babel" src="admin-dashboard.jsx"></script>
+  <script type="text/babel" src="states.jsx"></script>
+
+  <script type="text/babel">
+    const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+      "accentHue": 360,
+      "showAllScreens": true,
+      "showSystem": true,
+      "showMoodboards": true,
+      "showKitchen": true,
+      "showWall": true,
+      "showWaiter": true,
+      "showAdmin": true,
+      "showStates": true
+    }/*EDITMODE-END*/;
+
+    function Root() {
+      const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+      // Live accent override — saffron promoted to CSS custom properties.
+      React.useEffect(() => {
+        const r = document.documentElement;
+        const c    = `oklch(0.68 0.15 ${t.accentHue})`;
+        const cInk = `oklch(0.40 0.12 ${t.accentHue})`;
+        const cBg  = `oklch(0.93 0.06 ${t.accentHue})`;
+        r.style.setProperty('--tf-accent', c);
+        r.style.setProperty('--tf-accent-ink', cInk);
+        r.style.setProperty('--tf-accent-bg', cBg);
+        r.style.setProperty('--tf-accent-glow', `oklch(0.68 0.15 ${t.accentHue} / 0.32)`);
+      }, [t.accentHue]);
+
+      return (
+        <>
+          <DesignCanvas>
+            {t.showSystem && (
+              <DCSection id="system" title="Design system" subtitle="Tokens · type · color · spacing · components">
+                <DCArtboard id="cover" label="00 · Cover" width={1280} height={800}><SysCover /></DCArtboard>
+                <DCArtboard id="color" label="01 · Color" width={1280} height={800}><SysColor /></DCArtboard>
+                <DCArtboard id="type" label="02 · Type" width={1280} height={800}><SysType /></DCArtboard>
+                <DCArtboard id="space" label="03 · Spacing · radius · shadow · motion" width={1280} height={800}><SysSpace /></DCArtboard>
+                <DCArtboard id="components" label="04 · Components" width={1280} height={800}><SysComponents /></DCArtboard>
+              </DCSection>
+            )}
+
+            {t.showMoodboards && (
+              <DCSection id="moods" title="Directional moodboards" subtitle="Three options. Saffron / hospitality-soft selected — see prototype below.">
+                <DCArtboard id="a" label="A · Editorial / warm-minimal" width={420} height={620}><MoodEditorial /></DCArtboard>
+                <DCArtboard id="b" label="B · Tech-crisp / linear-coded" width={420} height={620}><MoodTech /></DCArtboard>
+                <DCArtboard id="c" label="C · Saffron · hospitality-soft  ← chosen" width={420} height={620}><MoodHospitality /></DCArtboard>
+              </DCSection>
+            )}
+
+            <DCSection id="customer" title="Customer app · interactive prototype" subtitle="Tap any screen to use it. Browse → item → cart → tracking → waiter → bill.">
+              <DCArtboard id="proto" label="01 · Live prototype  ↳  start here" width={402} height={874}>
+                <CustomerApp />
+              </DCArtboard>
+              {t.showAllScreens && <DCArtboard id="menu" label="02 · Menu" width={402} height={874}><StaticMenuScreen /></DCArtboard>}
+              {t.showAllScreens && <DCArtboard id="item" label="03 · Item detail" width={402} height={874}><StaticItemScreen /></DCArtboard>}
+              {t.showAllScreens && <DCArtboard id="cart" label="04 · Cart sheet" width={402} height={874}><StaticCartScreen /></DCArtboard>}
+              {t.showAllScreens && <DCArtboard id="track" label="05 · Order tracking" width={402} height={874}><StaticTrackingScreen /></DCArtboard>}
+              {t.showAllScreens && <DCArtboard id="waiter" label="06 · Call waiter — confirmed" width={402} height={874}><StaticWaiterScreen /></DCArtboard>}
+              {t.showAllScreens && <DCArtboard id="bill" label="07 · Bill" width={402} height={874}><StaticBillScreen /></DCArtboard>}
+            </DCSection>
+
+            {t.showKitchen && (
+              <DCSection id="kitchen" title="Kitchen Display · operator surface" subtitle="Live ticket simulation. Press-and-hold to bump. Aging cards, course pacing, station load. AR + FR.">
+                <DCArtboard id="kds-tablet" label="01 · Tablet KDS · 1366×1024 · live" width={1366} height={1024}>
+                  <TabletKDS width={1366} height={1024} />
+                </DCArtboard>
+                {t.showWall && (
+                  <DCArtboard id="kds-wall" label="02 · Wall display · 1920×1080 · high-glance" width={1920} height={1080}>
+                    <WallDisplay width={1920} height={1080} />
+                  </DCArtboard>
+                )}
+              </DCSection>
+            )}
+
+            {t.showWaiter && (
+              <DCSection id="waiter" title="Waiter app · phone" subtitle="Yassine, mid-shift. Floor map with breathing tables, oldest-first call queue, per-table order assist.">
+                <DCArtboard id="w-app" label="01 · Live prototype · tap a table" width={402} height={874}>
+                  <WaiterApp />
+                </DCArtboard>
+                <DCArtboard id="w-floor" label="02 · Floor map" width={402} height={874}>
+                  <WaiterAppStatic tab="floor" />
+                </DCArtboard>
+                <DCArtboard id="w-calls" label="03 · Call queue" width={402} height={874}>
+                  <WaiterAppStatic tab="calls" />
+                </DCArtboard>
+                <DCArtboard id="w-detail" label="04 · Table detail (cooking)" width={402} height={874}>
+                  <WaiterAppStatic tab="floor" detailTable={14} />
+                </DCArtboard>
+              </DCSection>
+            )}
+
+            {t.showAdmin && (
+              <DCSection id="admin" title="Admin dashboard · desktop" subtitle="Owner view. Today's pulse, menu performance, staff, and a live right-now feed.">
+                <DCArtboard id="adm-overview" label="01 · Overview" width={1440} height={900}>
+                  <AdminDashboard />
+                </DCArtboard>
+              </DCSection>
+            )}
+
+            {t.showStates && (
+              <DCSection id="states" title="Empty / loading / error states" subtitle="Engineer handoff. Drop these in for the non-happy paths — every screen real apps live or die in.">
+                <DCArtboard id="st-cust-loading" label="Customer · menu loading" width={402} height={874}><CustomerMenuLoading /></DCArtboard>
+                <DCArtboard id="st-cust-empty" label="Customer · empty cart" width={402} height={874}><CustomerEmptyCart /></DCArtboard>
+                <DCArtboard id="st-cust-net" label="Customer · network error" width={402} height={874}><CustomerNetworkError /></DCArtboard>
+                <DCArtboard id="st-cust-pay" label="Customer · payment failed" width={402} height={874}><CustomerPaymentFailed /></DCArtboard>
+                <DCArtboard id="st-cust-conf" label="Customer · order confirmed" width={402} height={874}><CustomerOrderConfirmedFull /></DCArtboard>
+                <DCArtboard id="st-w-empty" label="Waiter · empty queue" width={402} height={874}><WaiterEmptyCalls /></DCArtboard>
+                <DCArtboard id="st-w-shift" label="Waiter · shift start" width={402} height={874}><WaiterShiftStart /></DCArtboard>
+                <DCArtboard id="st-k-empty" label="Kitchen · all caught up" width={1366} height={1024}><KitchenEmptyQueue /></DCArtboard>
+                <DCArtboard id="st-k-off" label="Kitchen · offline" width={1366} height={1024}><KitchenOffline /></DCArtboard>
+                <DCArtboard id="st-a-loading" label="Admin · loading" width={1440} height={900}><AdminLoading /></DCArtboard>
+                <DCArtboard id="st-a-closed" label="Admin · closed day" width={1440} height={900}><AdminEmptyDay /></DCArtboard>
+              </DCSection>
+            )}
+
+            <DCSection id="next" title="Next steps" subtitle="Once you sign off, I'll commit this direction across the four operator surfaces.">
+              <DCArtboard id="roadmap" label="Roadmap" width={1280} height={420}>
+                <RoadmapScreen />
+              </DCArtboard>
+            </DCSection>
+
+            <DCPostIt top={120} left={20} rotate={-3}>
+              Two big questions for you →<br/><br/>
+              1. Hue — saffron #D97A2C feels right for North-Africa-coded warmth without going terracotta. Try the slider in Tweaks?<br/><br/>
+              2. RTL — when ready, I'll layer Arabic + logical CSS properties. Same components.
+            </DCPostIt>
+          </DesignCanvas>
+
+          <TweaksPanel title="Tweaks · DMOS">
+            <TweakSection label="Accent" />
+            <TweakSlider label="Hue" min={0} max={360} step={1} unit="°" value={t.accentHue} onChange={(v) => setTweak('accentHue', v)} />
+            <TweakSection label="Visibility" />
+            <TweakToggle label="Design system" value={t.showSystem} onChange={(v) => setTweak('showSystem', v)} />
+            <TweakToggle label="Moodboards" value={t.showMoodboards} onChange={(v) => setTweak('showMoodboards', v)} />
+            <TweakToggle label="Static customer screens" value={t.showAllScreens} onChange={(v) => setTweak('showAllScreens', v)} />
+            <TweakToggle label="Kitchen Display" value={t.showKitchen} onChange={(v) => setTweak('showKitchen', v)} />
+            <TweakToggle label="Wall display variant" value={t.showWall} onChange={(v) => setTweak('showWall', v)} />
+            <TweakToggle label="Waiter app" value={t.showWaiter} onChange={(v) => setTweak('showWaiter', v)} />
+            <TweakToggle label="Admin dashboard" value={t.showAdmin} onChange={(v) => setTweak('showAdmin', v)} />
+            <TweakToggle label="Empty/error/loading states" value={t.showStates} onChange={(v) => setTweak('showStates', v)} />
+          </TweaksPanel>
+        </>
+      );
+    }
+
+    // ── Static-screen wrappers ───────────────────────────────────────────────
+    // Each renders one customer-app screen in isolation, prepopulated with a
+    // realistic order so the empty state isn't shown on the design canvas.
+
+    const SAMPLE_CART = [
+      { id: 'm4', qty: 1 },
+      { id: 'm6', qty: 1 },
+      { id: 'm9', qty: 2 },
+      { id: 'm12', qty: 2 },
+    ];
+    const sampleItems = SAMPLE_CART.map((c) => ({ ...c, item: TF_MENU.items.find((i) => i.id === c.id) }));
+    const sampleTotal = sampleItems.reduce((s, c) => s + c.qty * c.item.price, 0);
+
+    function StaticMenuScreen() {
+      const [cat, setCat] = React.useState('mains');
+      const [search, setSearch] = React.useState('');
+      const items = TF_MENU.items.filter((i) => cat === 'all' || i.cat === cat);
+      return (
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+          <MenuScreen cat={cat} setCat={setCat} items={items} onItem={() => {}} search={search} setSearch={setSearch} orderState={null} onTracking={() => {}} />
+          <CartFab count={3} total={66.500} onClick={() => {}} />
+        </div>
+      );
+    }
+
+    function StaticItemScreen() {
+      const item = TF_MENU.items.find((i) => i.id === 'm4');
+      return <ItemSheet item={item} onClose={() => {}} onAdd={() => {}} />;
+    }
+
+    function StaticCartScreen() {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', background: '#FAF8F4' }}>
+          <div style={{ position: 'absolute', inset: 0, opacity: 0.4, background: '#FAF8F4', filter: 'blur(2px)' }}>
+            <StaticMenuScreen />
+          </div>
+          <CartSheet items={sampleItems} total={sampleTotal} onClose={() => {}} setQty={() => {}} onPlace={() => {}} />
+        </div>
+      );
+    }
+    function StaticTrackingScreen() {
+      return <TrackingScreen orderState="preparing" items={sampleItems} total={sampleTotal} onBack={() => {}} onWaiter={() => {}} onBill={() => {}} />;
+    }
+    function StaticWaiterScreen() {
+      return <WaiterScreen state="ack" onCall={() => {}} onClose={() => {}} />;
+    }
+    function StaticBillScreen() {
+      return <BillScreen items={sampleItems} total={sampleTotal} requested={false} onRequest={() => {}} onClose={() => {}} />;
+    }
+
+    function RoadmapScreen() {
+      const phases = [
+        { id: '01', name: 'Customer app', detail: 'Menu · item · cart · tracking · waiter · bill', state: 'In review' },
+        { id: '02', name: 'Landing', detail: 'Hero · features · pricing · CTA — operator-facing', state: 'Next' },
+        { id: '03', name: 'Kitchen Display', detail: 'Tablet KDS · dense · color-coded · 8–12 tickets', state: 'Queued' },
+        { id: '04', name: 'Waiter handheld', detail: 'Floor map · table states · notif feed · pulse-on-call', state: 'Queued' },
+        { id: '05', name: 'Admin', detail: 'Menu CRUD · staff · analytics · Linear-coded density', state: 'Queued' },
+        { id: '06', name: 'Localization', detail: 'RTL · Arabic · French · logical CSS props', state: 'Throughout' },
+      ];
+      return (
+        <div className="tf" style={{ width: '100%', height: '100%', background: '#FAF8F4', padding: 56, display: 'flex', flexDirection: 'column' }}>
+          <div className="tf-mono" style={{ fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', color: 'rgba(25,20,14,0.4)', marginBottom: 14 }}>05 · Next</div>
+          <h2 style={{ fontSize: 36, fontWeight: 500, letterSpacing: -1, margin: 0, marginBottom: 24 }}>
+            What I'd build next, after sign-off.
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, flex: 1 }}>
+            {phases.map((p) => (
+              <div key={p.id} style={{ padding: 20, background: '#fff', borderRadius: 14, border: `1px solid ${SYS_LINE}`, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <span className="tf-mono" style={{ fontSize: 11, color: 'rgba(25,20,14,0.5)', letterSpacing: 1.2 }}>{p.id}</span>
+                  <span className="tf-mono" style={{ fontSize: 11, color: p.state === 'In review' ? '#7C3F12' : 'rgba(25,20,14,0.5)', letterSpacing: 1.2, textTransform: 'uppercase' }}>{p.state}</span>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: -0.4, marginBottom: 6 }}>{p.name}</div>
+                <div style={{ fontSize: 13, color: 'rgba(25,20,14,0.6)', lineHeight: 1.5 }}>{p.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    Object.assign(window, {
+      StaticMenuScreen, StaticItemScreen, StaticCartScreen,
+      StaticTrackingScreen, StaticWaiterScreen, StaticBillScreen, RoadmapScreen,
+    });
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+  </script>
+</body>
+</html>

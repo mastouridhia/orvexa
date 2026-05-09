@@ -1,0 +1,172 @@
+{
+  "app": { "name": "Orvexa · Service" },
+  "topbar": { "sub": "Service · phone" },
+  "header": { "logout": "Sign out", "settings": "Settings" },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Picked once — change it here."
+  },
+
+  "tabs": {
+    "label": "Tabs",
+    "floor": "Floor",
+    "calls": "Calls",
+    "tables": "Tables"
+  },
+
+  "state": {
+    "open": "Open",
+    "seated": "Seated",
+    "ordered": "Ordered",
+    "cooking": "Cooking",
+    "ready": "Ready",
+    "paying": "Paying",
+    "clean": "Needs cleaning",
+    "call": "Calling"
+  },
+
+  "floor": {
+    "caption": "Floor · live",
+    "greeting": "Hey",
+    "meDefault": "chef",
+    "tablesOnYou": "tables on you",
+    "calls": "calls",
+    "readyToPass": "ready to pass",
+    "openTableLabel": "Open table {{label}} · {{state}}",
+    "zoneTableCount_one": "{{count}} table",
+    "zoneTableCount_other": "{{count}} tables",
+    "zones": {
+      "all": "Overview",
+      "unassigned": "Unassigned",
+      "noTables": "No tables to show."
+    }
+  },
+
+  "calls": {
+    "caption": "Queue",
+    "summary_one": "{{count}} call, oldest first.",
+    "summary_other": "{{count}} calls, oldest first.",
+    "tableLabel": "Table {{label}}",
+    "pax_one": "{{count}} pax",
+    "pax_other": "{{count}} pax",
+    "openTable": "Open table",
+    "onTheWay": "On the way",
+    "acking": "…",
+    "kind": {
+      "bill": "The bill",
+      "help": "Needs a hand",
+      "extras": "Needs extras"
+    },
+    "urgency": {
+      "fresh": "Fresh",
+      "stale": "Getting old",
+      "overdue": "Overdue"
+    },
+    "empty": {
+      "lead": "Nothing waiting.",
+      "tail": "Breathe.",
+      "body": "You're caught up. The board will buzz when someone needs you.",
+      "last4h": "Last 4 hours",
+      "answered": "Calls answered",
+      "avgResponse": "Avg response",
+      "lateCalls": "Late calls"
+    }
+  },
+
+  "tables": {
+    "title": "Tables list",
+    "totalCount_one": "All · {{count}} table",
+    "totalCount_other": "All · {{count}} tables",
+    "row": {
+      "name": "Table {{label}}",
+      "pax_one": "{{count}} pax",
+      "pax_other": "{{count}} pax"
+    },
+    "zones": {
+      "terrace": "Terrace",
+      "inside": "Inside",
+      "bar": "Bar",
+      "all": "All",
+      "unassigned": "Unassigned"
+    }
+  },
+
+  "detail": {
+    "back": "Floor",
+    "titleLead": "Table",
+    "seats_one": "{{count}} seat",
+    "seats_other": "{{count}} seats",
+    "assignedToMe": "Assigned to me",
+    "assignedToOther": "Assigned to another waiter",
+    "orderRef_one": "Order #{{id}} · {{count}} item",
+    "orderRef_other": "Order #{{id}} · {{count}} items",
+    "elapsed": "elapsed",
+
+    "subtotal": "Subtotal",
+    "tax": "Tax",
+    "service": "Service",
+    "total": "Total",
+    "paid": "Paid",
+
+    "empty": {
+      "open": "Empty.",
+      "noOrder": "No order yet.",
+      "openSub": "Seat a party here.",
+      "seatedSub": "Take their order to begin.",
+      "cleanSub": "Reset for the next guests."
+    },
+
+    "ackCall": "On the way",
+    "markPassed": "Mark passed to table",
+    "settleBill": "Settle bill",
+    "markClean": "Mark as clean",
+    "requestBill": "Request bill",
+    "billRequested": "Requested ✓",
+    "takeOrder": "Take order",
+    "noAction": "No action available",
+    "cookingNote": "Cooking · waiting on the kitchen",
+    "orderedNote": "Order received · the kitchen will start when ready",
+    "closeAndPaid": "Close & paid",
+
+    "cancel": "Cancel",
+    "saving": "Saving…",
+
+    "payment": {
+      "title": "Payment",
+      "tip": "Tip (TND)",
+      "submit": "Record payment",
+      "pendingTitle": "Pending payment",
+      "pendingSub": "A card / mobile-pay charge wasn't confirmed yet.",
+      "markPaid": "Mark paid"
+    }
+  },
+
+  "shift": {
+    "defaultName": "chef",
+    "greeting": "Welcome back,",
+    "body": "Start your shift when you're ready. The board lights up the moment you clock in.",
+    "clockIn": "Clock in",
+    "cards": {
+      "sections": "Sections",
+      "yourTables": "Your tables",
+      "reservations": "Reservations",
+      "specials": "Specials"
+    }
+  },
+
+  "login": {
+    "title": "Service sign-in",
+    "email": "Email",
+    "password": "Password",
+    "restaurant": "Restaurant (optional)",
+    "submit": "Sign in",
+    "submitting": "Signing in…"
+  },
+
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
+  "errors": {
+    "loginFailed": "Invalid credentials.",
+    "networkError": "Connection problem."
+  }
+}

@@ -1,0 +1,270 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orvexa — Waiter ("Saffron-Hospitality")
+   Phone-sized operator surface. Light warm-paper, single saffron accent,
+   breathing dots on the floor map. Tokens shared with the customer app.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,ital,wght@6..72,1,400;6..72,1,500&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────── */
+  --bg: #faf8f4;          /* warm paper */
+  --bg-elev: #ffffff;
+  --bg-soft: #f2efe8;     /* sunken / chip */
+  --fg: #19140e;          /* near-black warm */
+  --fg-soft: rgba(25, 20, 14, 0.62);
+  --fg-faint: rgba(25, 20, 14, 0.42);
+  --line: rgba(25, 20, 14, 0.08);
+  --line-soft: rgba(25, 20, 14, 0.05);
+
+  /* ── Saffron accent ───────────────────────────────────── */
+  --tf-accent: #d97a2c;
+  --tf-accent-ink: #7c3f12;
+  --tf-accent-bg: #fbeed9;
+  --tf-accent-glow: rgba(217, 122, 44, 0.32);
+
+  /* ── Status ───────────────────────────────────────────── */
+  --success: #2e8b57;
+  --success-bg: #e6f4ec;
+  --success-ink: #1f6b43;
+  --warn: #c97a2c;
+  --warn-bg: #fbeed9;
+  --warn-ink: #7c3f12;
+  --danger: #c8392e;
+  --danger-bg: #fbe6e3;
+  --danger-ink: #8e2218;
+
+  /* Lime "ready/pass" signal (matches kitchen) */
+  --tf-lime: #a6f562;
+  --tf-lime-ink: #1a2410;
+
+  /* Legacy variable aliases (kept so non-redesigned code keeps working) */
+  --primary: var(--tf-accent);
+  --primary-fg: #ffffff;
+  --accent: var(--tf-accent);
+  --warning: var(--warn);
+  --border: var(--line);
+
+  /* ── Typography ───────────────────────────────────────── */
+  --tf-display: 'Newsreader', 'GT Sera', 'Times New Roman', serif;
+  --tf-sans: 'Geist', 'Inter Tight', -apple-system, system-ui, sans-serif;
+  --tf-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Radii ────────────────────────────────────────────── */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ── Shadows (soft, layered) ──────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(36, 28, 20, 0.04);
+  --shadow-sm: 0 1px 3px rgba(36, 28, 20, 0.06), 0 1px 2px rgba(36, 28, 20, 0.04);
+  --shadow-md: 0 2px 4px rgba(36, 28, 20, 0.04), 0 8px 24px rgba(36, 28, 20, 0.08);
+  --shadow-lg: 0 4px 8px rgba(36, 28, 20, 0.05), 0 16px 48px rgba(36, 28, 20, 0.12);
+  --shadow-saffron: 0 1px 2px rgba(217, 122, 44, 0.32), 0 8px 24px rgba(217, 122, 44, 0.24);
+  --shadow-ink: 0 1px 2px rgba(25, 20, 14, 0.2), 0 8px 24px rgba(25, 20, 14, 0.16);
+  --shadow: var(--shadow-sm);
+
+  /* ── Motion ───────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --motion-fast: 180ms var(--ease-out);
+  --motion-base: 240ms var(--ease-out);
+  --motion-slow: 420ms var(--ease-out);
+  --motion-spring: 520ms var(--ease-spring);
+
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+
+  font-family: var(--tf-sans);
+  font-feature-settings: 'ss01', 'cv11';
+  font-size: 16px;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+[dir='rtl'] {
+  font-family: 'IBM Plex Sans Arabic', 'Noto Sans Arabic', var(--tf-sans);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; }
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+}
+button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 1rem;
+  color: inherit;
+}
+
+a { color: var(--tf-accent); text-decoration: none; }
+
+.tf-display {
+  font-family: var(--tf-display);
+  font-style: italic;
+  font-weight: 400;
+}
+.tf-mono {
+  font-family: var(--tf-mono);
+  font-feature-settings: 'tnum';
+}
+.tf-tabular { font-variant-numeric: tabular-nums; }
+.tf-caption {
+  font-family: var(--tf-mono);
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+/* ── Buttons (legacy class names, restyled) ─────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--fg);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: -0.1px;
+  transition: transform 80ms var(--ease-out), background var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--tf-accent);
+  color: #fff;
+  border-color: var(--tf-accent);
+  box-shadow: var(--shadow-saffron);
+}
+.btn-ink {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+  box-shadow: var(--shadow-ink);
+}
+.btn-ghost { background: transparent; border-color: transparent; }
+.btn-danger { color: var(--danger); }
+.btn-success {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+}
+.btn-pill { border-radius: var(--radius-pill); }
+.btn-block { width: 100%; }
+.btn-lg {
+  height: 52px;
+  padding: 0 22px;
+  font-size: 15px;
+  border-radius: var(--radius-pill);
+}
+
+.error-banner {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  margin: 0.75rem 0;
+  font-size: 13px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Animations (ported from prototype) ───────────────── */
+@keyframes tf-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+@keyframes tf-pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes tf-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes tf-sheet-up {
+  0% { transform: translateY(110%); }
+  100% { transform: translateY(0); }
+}
+@keyframes tf-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes tf-rise {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes tf-stagger-in {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes tf-new-pop {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes tf-late-throb {
+  0%, 100% {
+    box-shadow: 0 0 0 6px rgba(200, 57, 46, 0.18),
+                0 6px 16px rgba(200, 57, 46, 0.32);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(200, 57, 46, 0.32),
+                0 10px 24px rgba(200, 57, 46, 0.42);
+  }
+}
+@keyframes tf-breath {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.04); }
+}
+
+[data-stagger] > * {
+  opacity: 0;
+  animation: tf-stagger-in 480ms var(--ease-out) forwards;
+}
+[data-stagger] > *:nth-child(1) { animation-delay: 40ms; }
+[data-stagger] > *:nth-child(2) { animation-delay: 90ms; }
+[data-stagger] > *:nth-child(3) { animation-delay: 140ms; }
+[data-stagger] > *:nth-child(4) { animation-delay: 190ms; }
+[data-stagger] > *:nth-child(5) { animation-delay: 240ms; }
+[data-stagger] > *:nth-child(6) { animation-delay: 290ms; }
+[data-stagger] > *:nth-child(7) { animation-delay: 340ms; }
+[data-stagger] > *:nth-child(8) { animation-delay: 390ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

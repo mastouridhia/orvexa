@@ -1,0 +1,172 @@
+# Production compose. Build context: monorepo root.
+#
+#   1. cp .env.production.example .env.production && edit values
+#   2. docker compose -f docker-compose.prod.yml --env-file .env.production build
+#   3. docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+#   4. DOMAINS="..." LE_EMAIL="..." ./deploy/scripts/init-certs.sh
+#
+# Only the `proxy` service publishes ports to the host. Everything else
+# communicates over the internal docker network.
+
+name: orvexa
+
+x-frontend-build: &frontend-build
+  context: .
+  dockerfile: apps/Dockerfile.frontend
+  args:
+    VITE_API_URL: ${VITE_API_URL:?VITE_API_URL must be set}
+    VITE_SOCKET_URL: ${VITE_SOCKET_URL:?VITE_SOCKET_URL must be set}
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      SESSION_JWT_SECRET: ${SESSION_JWT_SECRET:?SESSION_JWT_SECRET must be set}
+      SESSION_JWT_EXPIRES_IN: ${SESSION_JWT_EXPIRES_IN:-12h}
+      SESSION_RENEW_THRESHOLD: ${SESSION_RENEW_THRESHOLD:-1h}
+      CLIENT_ORIGINS: ${CLIENT_ORIGINS:?CLIENT_ORIGINS must be set}
+      CUSTOMER_APP_URL: ${CUSTOMER_APP_URL:?CUSTOMER_APP_URL must be set}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:?PUBLIC_BASE_URL must be set}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      BODY_LIMIT: ${BODY_LIMIT:-100kb}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-120}
+      SHUTDOWN_TIMEOUT_MS: ${SHUTDOWN_TIMEOUT_MS:-10000}
+      UPLOADS_MAX_BYTES: ${UPLOADS_MAX_BYTES:-5242880}
+    volumes:
+      - api-uploads:/var/lib/orvexa/uploads
+    networks: [internal]
+
+  customer:
+    build:
+      <<: *frontend-build
+      args:
+        APP_NAME: customer
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    restart: unless-stopped
+    networks: [internal]
+
+  kitchen:
+    build:
+      <<: *frontend-build
+      args:
+        APP_NAME: kitchen
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    restart: unless-stopped
+    networks: [internal]
+
+  waiter:
+    build:
+      <<: *frontend-build
+      args:
+        APP_NAME: waiter
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    restart: unless-stopped
+    networks: [internal]
+
+  admin:
+    build:
+      <<: *frontend-build
+      args:
+        APP_NAME: admin
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+    restart: unless-stopped
+    networks: [internal]
+
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - customer
+      - kitchen
+      - waiter
+      - admin
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/conf.d-https:/etc/nginx/conf.d-https:ro
+      - ./deploy/nginx/entrypoint.sh:/usr/local/bin/orvexa-entrypoint.sh:ro
+      - certbot-www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt:ro
+    entrypoint: ["/usr/local/bin/orvexa-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [internal]
+
+  # certbot is a long-running renewal loop. Initial issuance is performed by
+  # deploy/scripts/init-certs.sh which runs `certbot certonly --webroot` once
+  # per domain via `docker compose run --rm certbot certonly ...`.
+  # On a successful renewal, the deploy-hook touches a sentinel file that the
+  # proxy's background watcher picks up and triggers `nginx -s reload`.
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot-www:/var/www/certbot
+      - letsencrypt:/etc/letsencrypt
+    # `trap exit TERM` makes `docker compose stop` instantaneous.
+    entrypoint: ["sh", "-c", "trap exit TERM; while :; do certbot renew --webroot --webroot-path=/var/www/certbot --quiet --deploy-hook 'touch /var/www/certbot/.reload-nginx'; sleep 43200 & wait $${!}; done"]
+
+volumes:
+  pgdata:
+  redisdata:
+  api-uploads:
+  certbot-www:
+  letsencrypt:
+
+networks:
+  internal:
+    driver: bridge

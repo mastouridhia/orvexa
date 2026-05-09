@@ -1,0 +1,71 @@
+export const I18N_KEYS = {
+  common: {
+    loading: 'common.loading',
+    error: 'common.error',
+    retry: 'common.retry',
+    cancel: 'common.cancel',
+    confirm: 'common.confirm',
+    back: 'common.back',
+    close: 'common.close',
+    save: 'common.save',
+    delete: 'common.delete',
+  },
+  menu: {
+    title: 'menu.title',
+    empty: 'menu.empty',
+    available: 'menu.available',
+    unavailable: 'menu.unavailable',
+    addToCart: 'menu.addToCart',
+    modifiers: 'menu.modifiers',
+    notes: 'menu.notes',
+    quantity: 'menu.quantity',
+  },
+  cart: {
+    title: 'cart.title',
+    empty: 'cart.empty',
+    subtotal: 'cart.subtotal',
+    tax: 'cart.tax',
+    service: 'cart.service',
+    total: 'cart.total',
+    checkout: 'cart.checkout',
+    placeOrder: 'cart.placeOrder',
+  },
+  order: {
+    placed: 'order.placed',
+    status: {
+      received: 'order.status.received',
+      preparing: 'order.status.preparing',
+      ready: 'order.status.ready',
+      served: 'order.status.served',
+      cancelled: 'order.status.cancelled',
+    },
+  },
+  table: {
+    callWaiter: 'table.callWaiter',
+    requestBill: 'table.requestBill',
+    called: 'table.called',
+    statuses: {
+      free: 'table.status.free',
+      seated: 'table.status.seated',
+      ordering: 'table.status.ordering',
+      waiting: 'table.status.waiting',
+      call_waiter: 'table.status.call_waiter',
+      needs_bill: 'table.status.needs_bill',
+    },
+  },
+  auth: {
+    login: 'auth.login',
+    logout: 'auth.logout',
+    email: 'auth.email',
+    password: 'auth.password',
+    invalidCredentials: 'auth.invalidCredentials',
+  },
+  errors: {
+    generic: 'errors.generic',
+    network: 'errors.network',
+    notFound: 'errors.notFound',
+    unauthorized: 'errors.unauthorized',
+  },
+} as const;
+
+export type I18nKeyTree = typeof I18N_KEYS;

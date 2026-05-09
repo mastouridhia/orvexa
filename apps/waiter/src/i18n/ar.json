@@ -1,0 +1,172 @@
+{
+  "app": { "name": "Orvexa · الخدمة" },
+  "topbar": { "sub": "الخدمة · هاتف" },
+  "header": { "logout": "تسجيل الخروج", "settings": "الإعدادات" },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "languageHint": "تُختار مرة واحدة — يمكن تغييرها هنا."
+  },
+
+  "tabs": {
+    "label": "علامات التبويب",
+    "floor": "الخريطة",
+    "calls": "النداءات",
+    "tables": "الطاولات"
+  },
+
+  "state": {
+    "open": "متاحة",
+    "seated": "مشغولة",
+    "ordered": "طُلبت",
+    "cooking": "قيد الطهي",
+    "ready": "جاهزة",
+    "paying": "الدفع",
+    "clean": "بحاجة للتنظيف",
+    "call": "تنادي"
+  },
+
+  "floor": {
+    "caption": "الخريطة · مباشر",
+    "greeting": "أهلاً",
+    "meDefault": "النادل",
+    "tablesOnYou": "طاولات نشطة",
+    "calls": "نداءات",
+    "readyToPass": "جاهزة للتقديم",
+    "openTableLabel": "فتح طاولة {{label}} · {{state}}",
+    "zoneTableCount_one": "{{count}} طاولة",
+    "zoneTableCount_other": "{{count}} طاولات",
+    "zones": {
+      "all": "نظرة عامة",
+      "unassigned": "بدون منطقة",
+      "noTables": "لا توجد طاولات لعرضها."
+    }
+  },
+
+  "calls": {
+    "caption": "قائمة الانتظار",
+    "summary_one": "{{count}} نداء، الأقدم أولاً.",
+    "summary_other": "{{count}} نداءات، الأقدم أولاً.",
+    "tableLabel": "طاولة {{label}}",
+    "pax_one": "{{count}} شخص",
+    "pax_other": "{{count}} أشخاص",
+    "openTable": "فتح الطاولة",
+    "onTheWay": "في الطريق",
+    "acking": "…",
+    "kind": {
+      "bill": "الفاتورة",
+      "help": "بحاجة للمساعدة",
+      "extras": "طلب إضافات"
+    },
+    "urgency": {
+      "fresh": "حديث",
+      "stale": "يتقادم",
+      "overdue": "متأخر"
+    },
+    "empty": {
+      "lead": "لا شيء في الانتظار.",
+      "tail": "خذ نفسًا.",
+      "body": "أنت محدّث. ستنبهك اللوحة عندما يحتاجك أحد.",
+      "last4h": "آخر 4 ساعات",
+      "answered": "النداءات المُجاب عليها",
+      "avgResponse": "متوسط الاستجابة",
+      "lateCalls": "النداءات المتأخرة"
+    }
+  },
+
+  "tables": {
+    "title": "قائمة الطاولات",
+    "totalCount_one": "الكل · {{count}} طاولة",
+    "totalCount_other": "الكل · {{count}} طاولات",
+    "row": {
+      "name": "طاولة {{label}}",
+      "pax_one": "{{count}} شخص",
+      "pax_other": "{{count}} أشخاص"
+    },
+    "zones": {
+      "terrace": "الشرفة",
+      "inside": "الداخل",
+      "bar": "البار",
+      "all": "الكل",
+      "unassigned": "بدون منطقة"
+    }
+  },
+
+  "detail": {
+    "back": "الخريطة",
+    "titleLead": "طاولة",
+    "seats_one": "{{count}} مقعد",
+    "seats_other": "{{count}} مقاعد",
+    "assignedToMe": "مخصصة لي",
+    "assignedToOther": "مخصصة لشخص آخر",
+    "orderRef_one": "طلب #{{id}} · {{count}} صنف",
+    "orderRef_other": "طلب #{{id}} · {{count}} أصناف",
+    "elapsed": "منقضية",
+
+    "subtotal": "المجموع الفرعي",
+    "tax": "الضريبة",
+    "service": "الخدمة",
+    "total": "المجموع",
+    "paid": "مدفوعة",
+
+    "empty": {
+      "open": "فارغة.",
+      "noOrder": "لا يوجد طلب بعد.",
+      "openSub": "اجلس مجموعة هنا.",
+      "seatedSub": "خذ طلبهم للبدء.",
+      "cleanSub": "أعد التهيئة للضيوف القادمين."
+    },
+
+    "ackCall": "في الطريق",
+    "markPassed": "تم التقديم",
+    "settleBill": "تسوية الفاتورة",
+    "markClean": "تم التنظيف",
+    "requestBill": "طلب الفاتورة",
+    "billRequested": "تم الطلب ✓",
+    "takeOrder": "خذ الطلب",
+    "noAction": "لا يوجد إجراء متاح",
+    "cookingNote": "قيد الطهي · في انتظار المطبخ",
+    "orderedNote": "تم استلام الطلب · سيبدأ المطبخ عند الاستعداد",
+    "closeAndPaid": "إغلاق · مدفوعة",
+
+    "cancel": "إلغاء",
+    "saving": "جاري الحفظ…",
+
+    "payment": {
+      "title": "الدفع",
+      "tip": "الإكرامية (د.ت)",
+      "submit": "تسجيل الدفع",
+      "pendingTitle": "دفع معلّق",
+      "pendingSub": "لم يتم تأكيد دفع بطاقة / محفظة بعد.",
+      "markPaid": "وضع علامة مدفوع"
+    }
+  },
+
+  "shift": {
+    "defaultName": "النادل",
+    "greeting": "مرحبًا بعودتك،",
+    "body": "ابدأ نوبتك عندما تكون جاهزًا. اللوحة ستضيء فور تسجيلك.",
+    "clockIn": "تسجيل الحضور",
+    "cards": {
+      "sections": "الأقسام",
+      "yourTables": "طاولاتك",
+      "reservations": "الحجوزات",
+      "specials": "الأصناف الخاصة"
+    }
+  },
+
+  "login": {
+    "title": "دخول الخدمة",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "restaurant": "المطعم (اختياري)",
+    "submit": "تسجيل الدخول",
+    "submitting": "جاري الدخول…"
+  },
+
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
+  "errors": {
+    "loginFailed": "بيانات الدخول غير صحيحة.",
+    "networkError": "مشكلة في الاتصال."
+  }
+}

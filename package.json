@@ -1,0 +1,56 @@
+{
+  "name": "orvexa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Orvexa — QR-based restaurant ordering system",
+  "scripts": {
+    "dev": "concurrently -n api,shared,customer,kitchen,waiter,admin -c magenta,gray,cyan,green,yellow,blue \"npm run dev --prefix apps/api\" \"npm run dev --prefix packages/shared\" \"npm run dev --prefix apps/customer\" \"npm run dev --prefix apps/kitchen\" \"npm run dev --prefix apps/waiter\" \"npm run dev --prefix apps/admin\"",
+    "dev:api": "npm run dev --prefix apps/api",
+    "dev:shared": "npm run dev --prefix packages/shared",
+    "dev:customer": "npm run dev --prefix apps/customer",
+    "dev:kitchen": "npm run dev --prefix apps/kitchen",
+    "dev:waiter": "npm run dev --prefix apps/waiter",
+    "dev:admin": "npm run dev --prefix apps/admin",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
+    "db:generate": "npm run db:generate --prefix apps/api",
+    "db:migrate": "npm run db:migrate --prefix apps/api",
+    "db:push": "npm run db:push --prefix apps/api",
+    "db:studio": "npm run db:studio --prefix apps/api",
+    "db:seed": "npm run db:seed --prefix apps/api",
+    "db:reset": "npm run db:reset --prefix apps/api",
+    "redis:logs": "docker compose logs -f redis",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\""
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "orvexa",
+    "restaurant",
+    "qr",
+    "pwa"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "concurrently": "^9.2.1",
+    "prettier": "3.8.3",
+    "rollup-plugin-visualizer": "^7.0.1"
+  }
+}

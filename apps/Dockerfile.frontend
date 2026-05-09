@@ -1,0 +1,63 @@
+# syntax=docker/dockerfile:1.7
+# Single Dockerfile for all 4 frontends. Build context: monorepo root.
+#   docker build -f apps/Dockerfile.frontend --build-arg APP_NAME=customer -t orvexa-customer .
+#
+# Required build args:
+#   APP_NAME           — one of: customer, kitchen, waiter, admin
+# Optional (baked into bundle, since Vite inlines VITE_* vars at build time):
+#   VITE_API_URL       — e.g. https://api.tableflow.tn
+#   VITE_SOCKET_URL    — e.g. https://api.tableflow.tn
+
+ARG NODE_VERSION=22-alpine
+ARG NGINX_VERSION=1.27-alpine
+
+# ── Build ───────────────────────────────────────────────────────────
+FROM node:${NODE_VERSION} AS build
+ARG APP_NAME
+ARG VITE_API_URL=http://localhost:4000
+ARG VITE_SOCKET_URL=http://localhost:4000
+WORKDIR /app
+
+RUN test -n "$APP_NAME" || (echo "APP_NAME build arg is required" && exit 1)
+
+# All workspace manifests so npm ci resolves the full graph in one shot
+# (filtering with --workspace drops dev deps in CI mode and breaks build tools).
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/admin/package.json apps/admin/
+COPY apps/customer/package.json apps/customer/
+COPY apps/kitchen/package.json apps/kitchen/
+COPY apps/waiter/package.json apps/waiter/
+COPY packages/shared/package.json packages/shared/
+COPY packages/ui/package.json packages/ui/
+COPY packages/api-client/package.json packages/api-client/
+
+RUN npm ci
+
+# Sources for the frontend dep graph (api server source is not needed here).
+COPY packages/shared packages/shared
+COPY packages/ui packages/ui
+COPY packages/api-client packages/api-client
+COPY apps/${APP_NAME} apps/${APP_NAME}
+
+# Build workspace packages in dep order, then the app.
+RUN npm run build --workspace @orvexa/shared \
+ && npm run build --workspace @orvexa/api-client \
+ && npm run build --workspace @orvexa/ui \
+ && VITE_API_URL=$VITE_API_URL VITE_SOCKET_URL=$VITE_SOCKET_URL \
+    npm run build --workspace ${APP_NAME}
+
+# ── Runtime ─────────────────────────────────────────────────────────
+FROM nginx:${NGINX_VERSION} AS runtime
+ARG APP_NAME
+
+# SPA-aware nginx config (try_files fallback to index.html).
+COPY apps/nginx-spa.conf /etc/nginx/conf.d/default.conf
+
+# Built static assets — single-stage `dist` from the build stage.
+COPY --from=build /app/apps/${APP_NAME}/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1/ || exit 1

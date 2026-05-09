@@ -1,0 +1,179 @@
+{
+  "app": { "name": "Orvexa", "tagline": "Order without waiting" },
+  "welcome": {
+    "title": "Welcome to",
+    "greeting": "Take a seat — we'll be with you shortly.",
+    "noSession": "Scan your table's QR code to begin.",
+    "scanAgain": "Scan again",
+    "browseMenu": "Browse menu"
+  },
+  "header": { "table": "Table {{label}}", "tableShort": "Table", "open": "Open", "settings": "Settings" },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Picked once — change it here.",
+    "table": "Your table",
+    "restaurant": "Restaurant"
+  },
+  "extras": {
+    "openCta": "Ask for something",
+    "title": "Need",
+    "titleEm": "anything?",
+    "hint": "Tap what you need — a server will bring it over.",
+    "noteLabel": "Anything else?",
+    "notePlaceholder": "Optional · short note for the waiter",
+    "submit": "Send to waiter",
+    "sentTitle": "Sent!",
+    "sentSub": "A server is on the way.",
+    "items": {
+      "fork": "Fork",
+      "spoon": "Spoon",
+      "knife": "Knife",
+      "napkin": "Napkin",
+      "straw": "Straw",
+      "water": "Water",
+      "condiments": "Condiments"
+    }
+  },
+  "menu": {
+    "loading": "Loading menu…",
+    "empty": "No dishes available right now.",
+    "unavailable": "Unavailable",
+    "serviceHours": "Lunch service · until 16:00",
+    "served": "Served"
+  },
+  "dish": {
+    "addToCart": "Add to cart",
+    "notes": "Notes for the kitchen (optional)",
+    "notesPlaceholder": "Allergies, preferences…",
+    "quantity": "Quantity",
+    "selectOne": "Choose 1",
+    "selectMin": "At least {{min}}",
+    "selectUpTo": "Up to {{max}}",
+    "required": "Required"
+  },
+  "cart": {
+    "title": "Your cart",
+    "empty": "Your cart is empty.",
+    "subtotal": "Subtotal",
+    "tax": "Tax ({{percent}}%)",
+    "service": "Service ({{percent}}%)",
+    "total": "Total",
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "checkout": "Place order",
+    "remove": "Remove",
+    "view": "View cart",
+    "continueShopping": "Continue shopping",
+    "added": "Added to cart",
+    "review": "Review your order",
+    "confirmOrder": "Confirm order",
+    "back": "Back",
+    "viewOnly": "View-only",
+    "viewOnlyHint": "Only the first person at this table can place the order or call the waiter."
+  },
+  "order": {
+    "title": "Your order",
+    "placed": "Order placed!",
+    "status": {
+      "received": "Received",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served",
+      "cancelled": "Cancelled"
+    },
+    "cancel": "Cancel order",
+    "cancelConfirm": "Cancel this order?",
+    "removeItem": "Remove this item",
+    "removeItemConfirm": "Remove this item from your order?",
+    "history": "My orders",
+    "back": "Back to menu",
+    "editAddItems": "Add more items",
+    "viewReceipt": "View receipt",
+    "hideReceipt": "Hide receipt",
+    "receipt": "Your receipt",
+    "receiptItems": "Details"
+  },
+  "actions": {
+    "callWaiter": "Call waiter",
+    "requestBill": "Request bill",
+    "calling": "Calling…",
+    "callSent": "A waiter is on their way.",
+    "billSent": "Bill requested.",
+    "billHint": "You can now request the bill.",
+    "billAvailableAfterServed": "The bill can be requested once your order is served."
+  },
+  "feedback": {
+    "title": "How was your visit?",
+    "sub": "Tap a star to rate — your comment is optional.",
+    "rating": "Rating",
+    "commentPlaceholder": "Tell us anything you liked or missed (optional)",
+    "submit": "Send feedback",
+    "skip": "Not now",
+    "thanks": "Thanks for your feedback!"
+  },
+  "tracking": {
+    "id": "Order",
+    "cookingTitle": "Cooking",
+    "cookingTitleEm": "now.",
+    "readyTitle": "Enjoy.",
+    "cookingSub": "Estimated 22–28 min",
+    "readySub": "Your dishes are at the pass.",
+    "received": { "name": "Sent to kitchen", "sub": "The team has it" },
+    "preparing": { "name": "In preparation", "sub": "Plating soon" },
+    "ready": { "name": "Ready & served", "sub": "Bon appétit" },
+    "live": "live",
+    "done": "Done",
+    "summaryHead_one": "Your order · {{count}} item",
+    "summaryHead_other": "Your order · {{count}} items",
+    "callTitle": "Call waiter",
+    "callSub": "~30s response",
+    "billTitle": "The bill",
+    "billSub": "Pay at table",
+    "eta": "~{{minutes}} min"
+  },
+  "waiter": {
+    "idleTitle": "Need a hand?",
+    "idleBody": "We'll send a server over to your table.",
+    "callingTitle": "Calling",
+    "callingTitleEm": "now…",
+    "callingBody": "Waiting for a server to acknowledge.",
+    "ackTitle": "On the way.",
+    "ackBody": "Your server has seen the call.",
+    "or": "Or — choose a quick request",
+    "quick": {
+      "water": "Water",
+      "bread": "Bread",
+      "spicy": "Spicy on side",
+      "manager": "Speak to manager"
+    },
+    "done": "Done",
+    "banner": {
+      "calling": "Calling a server…",
+      "callingSub": "Notifying the team",
+      "onWay": "Server on the way",
+      "onWaySub": "They've seen your call",
+      "dismiss": "Dismiss"
+    }
+  },
+  "bill": {
+    "title": "The bill",
+    "subtitle": "table {{label}}",
+    "guestCopy": "Guest copy · keep",
+    "totalLabel": "Total · TND",
+    "request": "Request the bill",
+    "sentTitle": "Bill on the way",
+    "sentSub": "A server will bring it to your table",
+    "download": "Download / Print",
+    "requestAgain": "Request again",
+    "callWaiter": "Call waiter"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "retry": "Retry",
+    "offline": "You're offline.",
+    "sessionExpired": "Your session expired. Scan the QR code again.",
+    "boot": "Could not start session. Check your connection."
+  },
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
+}

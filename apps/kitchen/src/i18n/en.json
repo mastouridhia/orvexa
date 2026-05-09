@@ -1,0 +1,95 @@
+{
+  "app": { "name": "Orvexa · Kitchen" },
+  "login": {
+    "title": "Kitchen sign-in",
+    "email": "Email",
+    "password": "Password",
+    "restaurant": "Restaurant (optional)",
+    "submit": "Sign in",
+    "submitting": "Signing in…"
+  },
+  "board": {
+    "subtitle": "Kitchen · service in progress",
+    "live": "Live · synced",
+    "paused": "Paused",
+    "loading": "Loading…",
+    "status": {
+      "received": "Received",
+      "preparing": "Cooking",
+      "ready": "Ready"
+    }
+  },
+  "wall": {
+    "subtitle": "Pass display · kitchen"
+  },
+  "stat": {
+    "open": "Open",
+    "pushing": "Pushing",
+    "late": "Late",
+    "ready": "Ready"
+  },
+  "filter": {
+    "all": "All open",
+    "pushing": "Pushing / Late",
+    "received": "Received",
+    "preparing": "Cooking",
+    "ready": "Ready · pass"
+  },
+  "age": {
+    "fresh": "Fresh",
+    "cooking": "Cooking",
+    "pushing": "Pushing",
+    "late": "Late"
+  },
+  "card": {
+    "readyToPass": "Ready · pass",
+    "holdTo": {
+      "preparing": "Hold to start",
+      "ready": "Hold to mark ready",
+      "served": "Hold to pass out"
+    },
+    "holding": "Holding… {{pct}}%",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "firedAgo": "FIRED {{time}} AGO",
+    "eta": "Estimated prep time",
+    "outOfStock": "86 this dish",
+    "outOfStockConfirm": "Mark this dish as out of stock?"
+  },
+  "empty": {
+    "allClear": {
+      "title": "All clear.",
+      "sub": "No tickets on the rail. The board will buzz when a new ticket comes in."
+    },
+    "filtered": {
+      "title": "Nothing here.",
+      "sub": "No tickets match this filter. Try \"All open\" to see the full service."
+    }
+  },
+  "offline": {
+    "title": "Lost the floor.",
+    "sub": "Can't reach the network — new tickets won't come through. Your printed copies are still good.",
+    "queueing": "Offline · queueing tickets",
+    "retry": "Retry"
+  },
+  "header": {
+    "logout": "Sign out",
+    "soundOn": "Sound on",
+    "soundOff": "Sound off",
+    "pause": "Pause",
+    "resume": "Resume",
+    "settings": "Settings",
+    "openWall": "TV display",
+    "backToBoard": "Back to board"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Picked once — change it here."
+  },
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
+  "errors": {
+    "loginFailed": "Invalid credentials.",
+    "networkError": "Connection problem."
+  }
+}

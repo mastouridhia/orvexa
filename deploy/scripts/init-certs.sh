@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# One-time cert provisioning. Run after `docker compose -f docker-compose.prod.yml up -d`.
+#
+#   DOMAINS="tableflow.tn www.tableflow.tn kitchen.tableflow.tn waiter.tableflow.tn admin.tableflow.tn api.tableflow.tn" \
+#   LE_EMAIL="ops@example.com" \
+#   ./deploy/scripts/init-certs.sh
+#
+# Strategy: HTTP-01 challenge via webroot. The proxy is already running in
+# bootstrap mode and serves /.well-known/acme-challenge/ from a shared volume.
+# After certs land, this script enables the HTTPS config and reloads nginx.
+
+set -euo pipefail
+
+: "${DOMAINS:?DOMAINS env var is required (space-separated list)}"
+: "${LE_EMAIL:?LE_EMAIL env var is required for Let's Encrypt registration}"
+STAGING="${STAGING:-0}"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+
+staging_flag=""
+if [ "$STAGING" = "1" ]; then
+  staging_flag="--staging"
+  echo "[init-certs] Using Let's Encrypt STAGING environment (rate-limit-safe)."
+fi
+
+# Group domains so that {tableflow.tn, www.tableflow.tn} share a single cert.
+# Everything else gets its own cert keyed on the bare hostname.
+issue_cert() {
+  local primary="$1"
+  shift
+  local san_args=("-d" "$primary")
+  for d in "$@"; do
+    san_args+=("-d" "$d")
+  done
+
+  echo "[init-certs] Requesting cert for: $primary ${*:+(SANs: $*)}"
+  docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
+    --webroot --webroot-path=/var/www/certbot \
+    --email "$LE_EMAIL" --agree-tos --no-eff-email \
+    --non-interactive \
+    --cert-name "$primary" \
+    $staging_flag \
+    "${san_args[@]}"
+}
+
+# Parse DOMAINS into apex and subdomain groups.
+apex=""
+www=""
+others=()
+for d in $DOMAINS; do
+  case "$d" in
+    www.*) www="$d" ;;
+    *.*.*) others+=("$d") ;;        # subdomains (kitchen.tableflow.tn etc)
+    *.*)   apex="$d" ;;             # 2-label domains (tableflow.tn)
+    *)     echo "[init-certs] skipping malformed domain: $d" >&2 ;;
+  esac
+done
+
+if [ -n "$apex" ]; then
+  if [ -n "$www" ]; then
+    issue_cert "$apex" "$www"
+  else
+    issue_cert "$apex"
+  fi
+fi
+
+for d in "${others[@]}"; do
+  issue_cert "$d"
+done
+
+# Activate the full HTTPS config: copy from conf.d-https to conf.d, then reload.
+# The proxy mounts both directories (conf.d-https is a staging area).
+echo "[init-certs] Activating HTTPS config and reloading proxy..."
+docker compose -f "$COMPOSE_FILE" exec -T proxy sh -c '
+  cp /etc/nginx/conf.d-https/02-orvexa.conf /etc/nginx/conf.d/02-orvexa.conf \
+  && nginx -t \
+  && nginx -s reload
+'
+
+echo "[init-certs] Done. HTTPS is live."

@@ -1,0 +1,172 @@
+{
+  "app": { "name": "Orvexa · Service" },
+  "topbar": { "sub": "Service · phone" },
+  "header": { "logout": "Déconnexion", "settings": "Paramètres" },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "languageHint": "Choisie une fois — modifiable ici."
+  },
+
+  "tabs": {
+    "label": "Onglets",
+    "floor": "Plan",
+    "calls": "Appels",
+    "tables": "Tables"
+  },
+
+  "state": {
+    "open": "Libre",
+    "seated": "Installée",
+    "ordered": "Commandée",
+    "cooking": "En cuisson",
+    "ready": "Prête",
+    "paying": "Encaissement",
+    "clean": "À nettoyer",
+    "call": "Sonne"
+  },
+
+  "floor": {
+    "caption": "Plan · en direct",
+    "greeting": "Salut",
+    "meDefault": "chef",
+    "tablesOnYou": "tables actives",
+    "calls": "appels",
+    "readyToPass": "à passer",
+    "openTableLabel": "Ouvrir la table {{label}} · {{state}}",
+    "zoneTableCount_one": "{{count}} table",
+    "zoneTableCount_other": "{{count}} tables",
+    "zones": {
+      "all": "Vue d'ensemble",
+      "unassigned": "Sans zone",
+      "noTables": "Aucune table à afficher."
+    }
+  },
+
+  "calls": {
+    "caption": "Queue",
+    "summary_one": "{{count}} appel, le plus ancien d'abord.",
+    "summary_other": "{{count}} appels, le plus ancien d'abord.",
+    "tableLabel": "Table {{label}}",
+    "pax_one": "{{count}} couvert",
+    "pax_other": "{{count}} couverts",
+    "openTable": "Ouvrir la table",
+    "onTheWay": "J'arrive",
+    "acking": "…",
+    "kind": {
+      "bill": "L'addition",
+      "help": "Demande d'aide",
+      "extras": "Demande d'extras"
+    },
+    "urgency": {
+      "fresh": "Frais",
+      "stale": "Vieillit",
+      "overdue": "En retard"
+    },
+    "empty": {
+      "lead": "Rien en attente.",
+      "tail": "Respire.",
+      "body": "Tu es à jour. Le tableau vibrera quand quelqu'un aura besoin de toi.",
+      "last4h": "Dernières 4h",
+      "answered": "Appels répondus",
+      "avgResponse": "Temps moyen",
+      "lateCalls": "Appels en retard"
+    }
+  },
+
+  "tables": {
+    "title": "Liste des tables",
+    "totalCount_one": "Toutes · {{count}} table",
+    "totalCount_other": "Toutes · {{count}} tables",
+    "row": {
+      "name": "Table {{label}}",
+      "pax_one": "{{count}} couvert",
+      "pax_other": "{{count}} couverts"
+    },
+    "zones": {
+      "terrace": "Terrasse",
+      "inside": "Intérieur",
+      "bar": "Bar",
+      "all": "Toutes",
+      "unassigned": "Sans zone"
+    }
+  },
+
+  "detail": {
+    "back": "Plan",
+    "titleLead": "Table",
+    "seats_one": "{{count}} place",
+    "seats_other": "{{count}} places",
+    "assignedToMe": "Assignée à moi",
+    "assignedToOther": "Assignée à un autre",
+    "orderRef_one": "Commande #{{id}} · {{count}} article",
+    "orderRef_other": "Commande #{{id}} · {{count}} articles",
+    "elapsed": "écoulées",
+
+    "subtotal": "Sous-total",
+    "tax": "Taxes",
+    "service": "Service",
+    "total": "Total",
+    "paid": "Payée",
+
+    "empty": {
+      "open": "Vide.",
+      "noOrder": "Pas encore de commande.",
+      "openSub": "Installe une table ici.",
+      "seatedSub": "Prends la commande pour démarrer.",
+      "cleanSub": "Réinitialiser pour les prochains clients."
+    },
+
+    "ackCall": "Marquer « j'arrive »",
+    "markPassed": "Marquer comme servi",
+    "settleBill": "Encaisser",
+    "markClean": "Marquer comme nettoyée",
+    "requestBill": "Demander l'addition",
+    "billRequested": "Demandée ✓",
+    "takeOrder": "Prendre la commande",
+    "noAction": "Pas d'action disponible",
+    "cookingNote": "En cuisson · attendre le retour cuisine",
+    "orderedNote": "Commande reçue · la cuisine commencera dès que possible",
+    "closeAndPaid": "Clôturer · payée",
+
+    "cancel": "Annuler",
+    "saving": "Enregistrement…",
+
+    "payment": {
+      "title": "Paiement",
+      "tip": "Pourboire (TND)",
+      "submit": "Enregistrer le paiement",
+      "pendingTitle": "Paiement en attente",
+      "pendingSub": "Un règlement carte / mobile n'est pas encore confirmé.",
+      "markPaid": "Marquer payé"
+    }
+  },
+
+  "shift": {
+    "defaultName": "chef",
+    "greeting": "Bon retour,",
+    "body": "Démarre ton service quand tu es prêt. Le tableau s'allume dès que tu pointes.",
+    "clockIn": "Pointer",
+    "cards": {
+      "sections": "Sections",
+      "yourTables": "Tes tables",
+      "reservations": "Réservations",
+      "specials": "Spéciaux"
+    }
+  },
+
+  "login": {
+    "title": "Connexion service",
+    "email": "Email",
+    "password": "Mot de passe",
+    "restaurant": "Restaurant (optionnel)",
+    "submit": "Se connecter",
+    "submitting": "Connexion…"
+  },
+
+  "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
+  "errors": {
+    "loginFailed": "Identifiants incorrects.",
+    "networkError": "Problème de connexion."
+  }
+}

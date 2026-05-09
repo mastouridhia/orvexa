@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Orvexa — QR-based restaurant ordering</title>
+    <meta
+      name="description"
+      content="QR-based ordering, kitchen display, and waiter ops for cafés and restaurants in Tunisia. One stack, four apps, real-time everywhere."
+    />
+    <meta name="color-scheme" content="light" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site">
+      <div class="container site-row">
+        <a class="brand" href="/">Orvexa</a>
+        <nav>
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#pricing">Pricing</a>
+          <a class="btn btn-ghost" href="mailto:hello@tableflow.tn">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="container">
+        <span class="eyebrow">For restaurants &amp; cafés in Tunisia</span>
+        <h1>Customers order with their phone. Your team flows.</h1>
+        <p class="lede">
+          A QR code on every table. Trilingual menu (ar / fr / en). Kitchen display, waiter ops,
+          and a clean admin — all real-time, all built for the way your floor actually works.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="mailto:hello@tableflow.tn?subject=Orvexa%20demo">
+            Request a demo
+          </a>
+          <a class="btn" href="#how">See how it works</a>
+        </div>
+        <p class="lede-sub">No customer login. No tablet rental. No per-table fee.</p>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <h2>What you get</h2>
+        <div class="grid">
+          <article>
+            <h3>QR ordering</h3>
+            <p>
+              Print one QR per table. Customers scan, pick their language, browse the menu, and
+              place orders — no app install, no account.
+            </p>
+          </article>
+          <article>
+            <h3>Kitchen display</h3>
+            <p>
+              Live board with received → preparing → ready columns. New-order sound, elapsed-time
+              indicators, and a layout that's readable from across the kitchen.
+            </p>
+          </article>
+          <article>
+            <h3>Waiter app</h3>
+            <p>
+              Color-coded table grid with call-waiter and bill-request alerts. Mark served, take
+              payment, request bills on a customer's behalf — all in one screen.
+            </p>
+          </article>
+          <article>
+            <h3>Admin &amp; reports</h3>
+            <p>
+              Trilingual menu editor with sauces, sizes, and extras. Live dashboard. Sales,
+              top-items, and revenue-by-category reports. Staff attendance.
+            </p>
+          </article>
+          <article>
+            <h3>Merge tables</h3>
+            <p>
+              Birthdays and parties span more than one table. Merge them into a single bill with
+              one tap.
+            </p>
+          </article>
+          <article>
+            <h3>Smart waiter routing</h3>
+            <p>
+              When the kitchen marks a dish ready, Orvexa assigns it to the least-busy waiter on
+              shift. Less coordination overhead, faster delivery.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section section-alt">
+      <div class="container">
+        <h2>How it works</h2>
+        <ol class="how">
+          <li>
+            <span class="step">1</span>
+            <h3>You print one QR per table</h3>
+            <p>The QR rotates a daily token under the hood — print once, no annual reprints.</p>
+          </li>
+          <li>
+            <span class="step">2</span>
+            <h3>Customer scans &amp; orders</h3>
+            <p>
+              No login. Picks their language, adds dishes with sauces and extras, and confirms.
+            </p>
+          </li>
+          <li>
+            <span class="step">3</span>
+            <h3>Kitchen prepares; waiter delivers</h3>
+            <p>
+              Each app updates in real-time. The waiter knows who has the order; the kitchen knows
+              the order's age.
+            </p>
+          </li>
+          <li>
+            <span class="step">4</span>
+            <h3>Customer requests the bill</h3>
+            <p>
+              Waiter takes payment in cash, card, or mobile. The table goes back to free for the
+              next group automatically.
+            </p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section id="pricing" class="section">
+      <div class="container narrow">
+        <h2>Simple pricing</h2>
+        <p>
+          Self-host on your own server, or let us host it for you. No per-table fee, no
+          per-transaction cut.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="mailto:hello@tableflow.tn?subject=Orvexa%20pricing">
+            Get a quote
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site">
+      <div class="container site-row">
+        <div>© <span id="y"></span> Orvexa · Tunis</div>
+        <nav>
+          <a href="mailto:hello@tableflow.tn">hello@tableflow.tn</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
