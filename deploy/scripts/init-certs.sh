@@ -12,7 +12,7 @@
 set -euo pipefail
 
 : "${DOMAINS:?DOMAINS env var is required (space-separated list)}"
-: "${LE_EMAIL:?LE_EMAIL env var is required for Let's Encrypt registration}"
+: "${LE_EMAIL:?LE_EMAIL env var is required for Lets Encrypt registration}"
 STAGING="${STAGING:-0}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
 
