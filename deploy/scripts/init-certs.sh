@@ -15,6 +15,11 @@ set -euo pipefail
 : "${LE_EMAIL:?LE_EMAIL env var is required for Lets Encrypt registration}"
 STAGING="${STAGING:-0}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+ENV_FILE="${ENV_FILE:-.env.production}"
+
+compose() {
+  docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" "$@"
+}
 
 staging_flag=""
 if [ "$STAGING" = "1" ]; then
@@ -33,7 +38,7 @@ issue_cert() {
   done
 
   echo "[init-certs] Requesting cert for: $primary ${*:+(SANs: $*)}"
-  docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
+  compose run --rm certbot certonly \
     --webroot --webroot-path=/var/www/certbot \
     --email "$LE_EMAIL" --agree-tos --no-eff-email \
     --non-interactive \
@@ -70,7 +75,7 @@ done
 # Activate the full HTTPS config: copy from conf.d-https to conf.d, then reload.
 # The proxy mounts both directories (conf.d-https is a staging area).
 echo "[init-certs] Activating HTTPS config and reloading proxy..."
-docker compose -f "$COMPOSE_FILE" exec -T proxy sh -c '
+compose exec -T proxy sh -c '
   cp /etc/nginx/conf.d-https/02-orvexa.conf /etc/nginx/conf.d/02-orvexa.conf \
   && nginx -t \
   && nginx -s reload
