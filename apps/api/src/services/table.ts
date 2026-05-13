@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import QRCode from 'qrcode';
 import type {
   BulkUpdateTableLayoutRequest,
@@ -10,7 +9,9 @@ import type {
 } from '@orvexa/shared';
 import { config } from '../config.js';
 import { ForbiddenError, NotFoundError } from '../utils/errors.js';
+import { CustomerSessionRepository } from '../repositories/customer-session.js';
 import { OrderRepository, type OrderRow } from '../repositories/order.js';
+import { TableCartRepository } from '../repositories/table-cart.js';
 import {
   TableRepository,
   TableZoneRepository,
@@ -21,19 +22,12 @@ import {
   type WaiterCallRow,
 } from '../repositories/waiter-call.js';
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function generateToken(): string {
-  return randomBytes(16).toString('base64url');
-}
-
 export function toTable(row: TableRow): Table {
   return {
     id: row.id,
     restaurantId: row.restaurantId,
     label: row.label,
+    publicSlug: row.publicSlug,
     seats: row.seats,
     status: row.status as TableStatus,
     mergedIntoTableId: row.mergedIntoTableId ?? null,
@@ -73,15 +67,33 @@ export class TableService {
   private readonly tableRepo: TableRepository;
   private readonly waiterCallRepo: WaiterCallRepository;
   private readonly orderRepo: OrderRepository;
+  private readonly customerSessionRepo: CustomerSessionRepository;
+  private readonly tableCartRepo: TableCartRepository;
 
   constructor(
     tableRepo: TableRepository = new TableRepository(),
     waiterCallRepo: WaiterCallRepository = new WaiterCallRepository(),
     orderRepo: OrderRepository = new OrderRepository(),
+    customerSessionRepo: CustomerSessionRepository = new CustomerSessionRepository(),
+    tableCartRepo: TableCartRepository = new TableCartRepository(),
   ) {
     this.tableRepo = tableRepo;
     this.waiterCallRepo = waiterCallRepo;
     this.orderRepo = orderRepo;
+    this.customerSessionRepo = customerSessionRepo;
+    this.tableCartRepo = tableCartRepo;
+  }
+
+  /**
+   * Kill any cached customer JWT for the previous occupant and wipe their
+   * pending shared cart. Called when a table transitions to free/cleaning so
+   * the next party starts from a blank state.
+   */
+  private async resetGuestStateForTable(tableId: string): Promise<void> {
+    await Promise.all([
+      this.customerSessionRepo.expireActiveForTable(tableId),
+      this.tableCartRepo.deleteByTableId(tableId),
+    ]);
   }
 
   async list(restaurantId: string): Promise<TableWithDerived[]> {
@@ -184,6 +196,12 @@ export class TableService {
     }
     const row = await this.tableRepo.update(id, input);
     if (!row) throw new NotFoundError('Table not found');
+    if (
+      (input.status === 'free' || input.status === 'needs_cleaning') &&
+      existing.status !== input.status
+    ) {
+      await this.resetGuestStateForTable(id);
+    }
     return toTable(row);
   }
 
@@ -229,6 +247,9 @@ export class TableService {
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     const row = await this.tableRepo.update(tableId, { status: 'needs_cleaning' });
     if (!row) throw new NotFoundError('Table not found');
+    if (existing.status !== 'needs_cleaning') {
+      await this.resetGuestStateForTable(tableId);
+    }
     return toTable(row);
   }
 
@@ -238,6 +259,9 @@ export class TableService {
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     const row = await this.tableRepo.update(tableId, { status: 'free' });
     if (!row) throw new NotFoundError('Table not found');
+    if (existing.status !== 'free') {
+      await this.resetGuestStateForTable(tableId);
+    }
     return toTable(row);
   }
 
@@ -253,22 +277,13 @@ export class TableService {
     if (!table) throw new NotFoundError('Table not found');
     if (table.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
 
-    const day = todayIso();
-    let dayToken = await this.tableRepo.findDayToken(id, day);
-    if (!dayToken) {
-      dayToken = await this.tableRepo.createDayToken({
-        restaurantId,
-        tableId: id,
-        day,
-        token: generateToken(),
-      });
-    }
-
-    const url = `${config.customer.appUrl}/t/${dayToken.token}`;
+    // The printed sticker encodes the stable per-table slug. The internal daily
+    // rotation lives in table_day_tokens and is resolved server-side on scan.
+    const url = `${config.customer.appUrl}/t/${table.publicSlug}`;
 
     if (format === 'svg') {
       const body = await QRCode.toString(url, { type: 'svg', errorCorrectionLevel: 'M', margin: 1 });
-      return { format, url, token: dayToken.token, body, contentType: 'image/svg+xml' };
+      return { format, url, token: table.publicSlug, body, contentType: 'image/svg+xml' };
     }
     const body = await QRCode.toBuffer(url, {
       type: 'png',
@@ -276,7 +291,7 @@ export class TableService {
       margin: 1,
       width: 512,
     });
-    return { format, url, token: dayToken.token, body, contentType: 'image/png' };
+    return { format, url, token: table.publicSlug, body, contentType: 'image/png' };
   }
 
   async callWaiter(restaurantId: string, tableId: string): Promise<WaiterCallRow> {

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { Dish, LanguageCode } from '@orvexa/shared';
+import type { Dish, LanguageCode, OrderStatus, PaymentStatus } from '@orvexa/shared';
 import { Toast } from '@orvexa/ui';
 import { api, type MenuTreeCategory } from '../api/queries.js';
-import { ApiError } from '../api/client.js';
+import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
+import { useOrderRefsStore } from '../store/orders.js';
 import { useCartStore, cartLineCount, cartSubtotal } from '../store/cart.js';
 import { connectCustomerSocket } from '../socket/client.js';
 import { CartDrawer } from '../components/CartDrawer.js';
@@ -13,8 +14,6 @@ import { ExtrasSheet } from '../components/ExtrasSheet.js';
 import { ItemDetailModal } from '../components/ItemDetailModal.js';
 import { IconArrowRight, IconSearch } from '../components/tf-icons.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
-
-const ALL_CAT = '__all__';
 
 export function Menu() {
   const { t, i18n } = useTranslation();
@@ -26,7 +25,7 @@ export function Menu() {
 
   const [tree, setTree] = useState<MenuTreeCategory[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeCat, setActiveCat] = useState<string>(ALL_CAT);
+  const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [openDish, setOpenDish] = useState<Dish | null>(null);
   const [openCart, setOpenCart] = useState(false);
@@ -37,6 +36,71 @@ export function Menu() {
 
   const lines = useCartStore((s) => s.lines);
   const prevCountRef = useRef(0);
+
+  const orderIds = useOrderRefsStore((s) => s.ids);
+  type OrderRef = {
+    id: string;
+    status: OrderStatus;
+    paymentStatus: PaymentStatus;
+    totalMillimes: number;
+  };
+  const [sessionOrders, setSessionOrders] = useState<OrderRef[]>([]);
+
+  // Fetch every remembered order on this device — the customer needs to see
+  // every round on their table, not just the latest. Cancelled orders are
+  // dropped; everything else (received → served) stays on the list. Live
+  // status pushes keep it fresh.
+  useEffect(() => {
+    if (!token || orderIds.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSessionOrders([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const fetched: OrderRef[] = [];
+      for (const id of orderIds) {
+        try {
+          const o = await api.getOrder(token, id);
+          if (o.status === 'cancelled') continue;
+          fetched.push({
+            id: o.id,
+            status: o.status,
+            paymentStatus: o.paymentStatus,
+            totalMillimes: o.totalMillimes,
+          });
+        } catch {
+          // skip — order may have been purged or no longer accessible
+        }
+      }
+      if (!cancelled) setSessionOrders(fetched);
+    })();
+    const socket = connectCustomerSocket(token);
+    const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
+      setSessionOrders((prev) => {
+        const idx = prev.findIndex((o) => o.id === payload.orderId);
+        if (idx < 0) return prev;
+        if (payload.status === 'cancelled') {
+          return prev.filter((_, i) => i !== idx);
+        }
+        const next = prev.slice();
+        next[idx] = { ...next[idx], status: payload.status };
+        return next;
+      });
+    };
+    socket.on('order:status', onStatus);
+    return () => {
+      cancelled = true;
+      socket.off('order:status', onStatus);
+    };
+  }, [token, orderIds]);
+
+  // Keep served (but unpaid) rounds in the banner so the customer still has
+  // an entry point to the order tracker / bill / call-waiter actions.
+  const activeOrders = useMemo(
+    () => sessionOrders.filter((o) => o.paymentStatus !== 'paid'),
+    [sessionOrders],
+  );
 
   // redirect if no session
   useEffect(() => {
@@ -56,14 +120,14 @@ export function Menu() {
         setTree(data);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : (err as Error).message);
+          setError(handleApiError(err, t));
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, reloadKey]);
+  }, [token, reloadKey, t]);
 
   // socket: bump reloadKey on menu:updated
   useEffect(() => {
@@ -105,23 +169,31 @@ export function Menu() {
     [tree],
   );
 
+  // Default to first category once tree loads
+  useEffect(() => {
+    if (activeCat === null && visibleCategories.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveCat(visibleCategories[0].id);
+    }
+  }, [activeCat, visibleCategories]);
+
   const lower = search.trim().toLowerCase();
+  const isSearching = lower.length > 0;
   const filtered = useMemo(() => {
     if (!tree) return [] as Dish[];
     const all = tree.flatMap((c) => c.dishes.map((d) => ({ ...d, _cat: c.id })));
     return all.filter((d) => {
-      const matchCat = activeCat === ALL_CAT || d._cat === activeCat;
-      if (!matchCat) return false;
-      if (!lower) return true;
+      // When searching, span all categories; otherwise restrict to active pill
+      if (!isSearching && activeCat && d._cat !== activeCat) return false;
+      if (!isSearching) return true;
       return (
         pickLang(d.name, lang).toLowerCase().includes(lower) ||
         (d.description && pickLang(d.description, lang).toLowerCase().includes(lower))
       );
     });
-  }, [tree, activeCat, lower, lang]);
+  }, [tree, activeCat, lower, isSearching, lang]);
 
   const isLoading = tree === null && error === null;
-  const showGrouped = activeCat === ALL_CAT && !lower;
 
   // Restaurant name → split first word + remainder for the display-italic feel
   const headline = (() => {
@@ -133,6 +205,39 @@ export function Menu() {
 
   return (
     <div className="tf-menu">
+      {activeOrders.length > 0 ? (
+        <div className="tf-active-order-stack">
+          {activeOrders.length > 1 ? (
+            <div className="tf-active-order-stack__head">
+              {t('menu.activeOrdersHead', {
+                count: activeOrders.length,
+                defaultValue: '{{count}} active orders',
+              })}
+            </div>
+          ) : null}
+          {activeOrders.map((o, idx) => (
+            <button
+              type="button"
+              key={o.id}
+              className="tf-active-order-banner"
+              onClick={() => navigate(`/orders/${o.id}`)}
+            >
+              <span>
+                {activeOrders.length > 1
+                  ? `${t('menu.round', { defaultValue: 'Round' })} ${activeOrders.length - idx} · `
+                  : ''}
+                {t('menu.activeOrderTitle', {
+                  id: o.id.slice(0, 8).toUpperCase(),
+                  status: t(`order.status.${o.status}`),
+                })}
+              </span>
+              <span className="tf-active-order-banner__cta">
+                {t('menu.activeOrderCta')} <IconArrowRight size={14} />
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
       {/* Hero */}
       <div className="tf-menu__hero">
         <h1 className="tf-menu__title">
@@ -170,14 +275,6 @@ export function Menu() {
       {tree !== null && visibleCategories.length > 0 ? (
         <nav className="tf-cat-strip" aria-label={t('menu.categories', { defaultValue: 'Categories' })}>
           <div className="tf-cat-strip__inner">
-            <button
-              type="button"
-              className="tf-cat-pill"
-              aria-pressed={activeCat === ALL_CAT}
-              onClick={() => setActiveCat(ALL_CAT)}
-            >
-              {t('menu.all', { defaultValue: 'All' })}
-            </button>
             {visibleCategories.map((c) => (
               <button
                 key={c.id}
@@ -227,28 +324,7 @@ export function Menu() {
           <div className="empty-state">{t('menu.empty')}</div>
         ) : null}
 
-        {!isLoading && showGrouped
-          ? visibleCategories.map((c) => (
-              <section key={c.id} className="tf-menu__section">
-                <div className="tf-menu__section-head">
-                  <h2 className="tf-menu__section-title">{pickLang(c.name, lang)}</h2>
-                </div>
-                <div>
-                  {c.dishes.map((d) => (
-                    <DishRow
-                      key={d.id}
-                      dish={d}
-                      lang={lang}
-                      unavailableLabel={t('menu.unavailable')}
-                      onOpen={() => d.available && setOpenDish(d)}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))
-          : null}
-
-        {!isLoading && !showGrouped ? (
+        {!isLoading && tree !== null ? (
           filtered.length === 0 ? (
             <div className="tf-empty-search">
               <div className="tf-empty-search__title">

@@ -21,6 +21,7 @@
     "ordered": "Commandée",
     "cooking": "En cuisson",
     "ready": "Prête",
+    "eating": "À table",
     "paying": "Encaissement",
     "clean": "À nettoyer",
     "call": "Sonne"
@@ -118,6 +119,10 @@
     },
 
     "ackCall": "Marquer « j'arrive »",
+    "cleanPrompt": {
+      "question": "La table est-elle prête à nettoyer ?",
+      "notYet": "Pas encore"
+    },
     "markPassed": "Marquer comme servi",
     "settleBill": "Encaisser",
     "markClean": "Marquer comme nettoyée",
@@ -130,6 +135,8 @@
     "closeAndPaid": "Clôturer · payée",
 
     "cancel": "Annuler",
+    "cancelOrder": "Annuler la commande",
+    "cancelOrderConfirm": "Annuler cette commande ?",
     "saving": "Enregistrement…",
 
     "payment": {

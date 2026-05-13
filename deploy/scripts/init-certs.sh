@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # One-time cert provisioning. Run after `docker compose -f docker-compose.prod.yml up -d`.
 #
-#   DOMAINS="tableflow.tn www.tableflow.tn kitchen.tableflow.tn waiter.tableflow.tn admin.tableflow.tn api.tableflow.tn" \
+#   DOMAINS="orvexa.tn www.orvexa.tn kitchen.orvexa.tn waiter.orvexa.tn admin.orvexa.tn api.orvexa.tn" \
 #   LE_EMAIL="ops@example.com" \
 #   ./deploy/scripts/init-certs.sh
 #
@@ -22,7 +22,7 @@ if [ "$STAGING" = "1" ]; then
   echo "[init-certs] Using Let's Encrypt STAGING environment (rate-limit-safe)."
 fi
 
-# Group domains so that {tableflow.tn, www.tableflow.tn} share a single cert.
+# Group domains so that {orvexa.tn, www.orvexa.tn} share a single cert.
 # Everything else gets its own cert keyed on the bare hostname.
 issue_cert() {
   local primary="$1"
@@ -49,8 +49,8 @@ others=()
 for d in $DOMAINS; do
   case "$d" in
     www.*) www="$d" ;;
-    *.*.*) others+=("$d") ;;        # subdomains (kitchen.tableflow.tn etc)
-    *.*)   apex="$d" ;;             # 2-label domains (tableflow.tn)
+    *.*.*) others+=("$d") ;;        # subdomains (kitchen.orvexa.tn etc)
+    *.*)   apex="$d" ;;             # 2-label domains (orvexa.tn)
     *)     echo "[init-certs] skipping malformed domain: $d" >&2 ;;
   esac
 done

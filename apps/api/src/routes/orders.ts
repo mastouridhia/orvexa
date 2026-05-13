@@ -134,10 +134,21 @@ ordersRouter.delete(
 ordersRouter.get(
   '/orders/active',
   requireAuth,
-  requireRole('admin', 'manager', 'kitchen', 'waiter'),
+  requireRole('admin', 'manager', 'kitchen', 'waiter', 'cashier'),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
     const list = await service.listActive(req.user.restaurantId);
+    sendSuccess(res, list);
+  }),
+);
+
+ordersRouter.get(
+  '/orders/open-bills',
+  requireAuth,
+  requireRole('admin', 'manager', 'cashier', 'waiter'),
+  asyncHandler(async (req, res) => {
+    if (!req.user) throw new UnauthorizedError('Authentication required');
+    const list = await service.listOpenBills(req.user.restaurantId);
     sendSuccess(res, list);
   }),
 );
@@ -256,6 +267,11 @@ registerPath('delete', '/orders/{id}/items/{itemId}', {
 });
 registerPath('get', '/orders/active', {
   summary: 'Live feed of active orders (received/preparing/ready)',
+  tags: ['orders'],
+  responses: okResponses,
+});
+registerPath('get', '/orders/open-bills', {
+  summary: 'Cross-table list of unpaid (non-cancelled) orders — used by cashier and waiter to settle bills',
   tags: ['orders'],
   responses: okResponses,
 });

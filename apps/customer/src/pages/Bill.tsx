@@ -3,44 +3,75 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LanguageCode, Order } from '@orvexa/shared';
 import { api } from '../api/queries.js';
-import { ApiError } from '../api/client.js';
+import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
 import { IconCheck, IconChevronLeft } from '../components/tf-icons.js';
 
+type BillTotals = {
+  subtotalMillimes: number;
+  taxMillimes: number;
+  serviceMillimes: number;
+  totalMillimes: number;
+};
+
+function sumOrders(orders: Order[]): BillTotals {
+  return orders.reduce<BillTotals>(
+    (acc, o) => ({
+      subtotalMillimes: acc.subtotalMillimes + o.subtotalMillimes,
+      taxMillimes: acc.taxMillimes + o.taxMillimes,
+      serviceMillimes: acc.serviceMillimes + o.serviceMillimes,
+      totalMillimes: acc.totalMillimes + o.totalMillimes,
+    }),
+    { subtotalMillimes: 0, taxMillimes: 0, serviceMillimes: 0, totalMillimes: 0 },
+  );
+}
+
 function buildBillHtml(opts: {
-  order: Order;
+  orders: Order[];
   restaurantName: string;
   tableLabel: string;
   lang: LanguageCode;
 }): string {
-  const { order, restaurantName, tableLabel, lang } = opts;
+  const { orders, restaurantName, tableLabel, lang } = opts;
   const escape = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const fmt = (m: number) => formatMillimes(m);
-  const itemRows = order.items
-    .map((it) => {
-      const variantDelta = it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0);
-      const lineTotal = (it.unitPriceMillimes + variantDelta) * it.quantity;
-      const variants = it.variants.length
-        ? `<div class="var">${it.variants.map((v) => escape(pickLang(v.nameSnapshot, lang))).join(' · ')}</div>`
-        : '';
-      const notes = it.notes ? `<div class="note">${escape(it.notes)}</div>` : '';
-      return `<tr>
-          <td>${it.quantity}×</td>
-          <td><div>${escape(pickLang(it.nameSnapshot, lang))}</div>${variants}${notes}</td>
-          <td class="r">${fmt(lineTotal)}</td>
-        </tr>`;
+  const rounds = orders
+    .map((order, idx) => {
+      const itemRows = order.items
+        .map((it) => {
+          const variantDelta = it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0);
+          const lineTotal = (it.unitPriceMillimes + variantDelta) * it.quantity;
+          const variants = it.variants.length
+            ? `<div class="var">${it.variants.map((v) => escape(pickLang(v.nameSnapshot, lang))).join(' · ')}</div>`
+            : '';
+          const notes = it.notes ? `<div class="note">${escape(it.notes)}</div>` : '';
+          return `<tr>
+              <td>${it.quantity}×</td>
+              <td><div>${escape(pickLang(it.nameSnapshot, lang))}</div>${variants}${notes}</td>
+              <td class="r">${fmt(lineTotal)}</td>
+            </tr>`;
+        })
+        .join('');
+      const roundLabel =
+        orders.length > 1
+          ? `<div class="round">Round ${idx + 1} · #${escape(order.id.slice(0, 8).toUpperCase())}</div>`
+          : '';
+      return `${roundLabel}<table><thead><tr><th>Qt</th><th>Item</th><th class="r">Total</th></tr></thead><tbody>${itemRows}</tbody></table>`;
     })
     .join('');
-  const date = new Date(order.createdAt).toLocaleString(lang);
-  return `<!doctype html><html><head><meta charset="utf-8" /><title>Receipt ${escape(order.id.slice(0, 8))}</title>
+  const totals = sumOrders(orders);
+  const date = new Date().toLocaleString(lang);
+  const ref = orders.map((o) => o.id.slice(0, 6).toUpperCase()).join(' · ');
+  return `<!doctype html><html><head><meta charset="utf-8" /><title>Receipt</title>
 <style>
   body { font-family: ui-monospace, Menlo, Consolas, monospace; max-width: 420px; margin: 1rem auto; padding: 0 1rem; color: #111; }
   h1 { font-size: 1.2rem; text-align: center; margin: 0 0 .25rem; }
   .meta { text-align: center; color: #555; font-size: .85rem; margin-bottom: 1rem; }
-  table { width: 100%; border-collapse: collapse; }
+  .round { margin-top: .75rem; font-weight: 700; font-size: .9rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: .5rem; }
   th, td { padding: .3rem .15rem; vertical-align: top; font-size: .9rem; }
   th { border-bottom: 1px dashed #aaa; text-align: left; }
   td.r, th.r { text-align: right; }
@@ -54,21 +85,21 @@ function buildBillHtml(opts: {
 </style></head>
 <body>
   <h1>${escape(restaurantName)}</h1>
-  <div class="meta">Table ${escape(tableLabel)} · #${escape(order.id.slice(0, 8).toUpperCase())} · ${escape(date)}</div>
-  <table><thead><tr><th>Qt</th><th>Item</th><th class="r">Total</th></tr></thead><tbody>${itemRows}</tbody></table>
+  <div class="meta">Table ${escape(tableLabel)} · ${escape(ref)} · ${escape(date)}</div>
+  ${rounds}
   <div class="totals">
-    <div class="row"><span>Subtotal</span><span>${fmt(order.subtotalMillimes)}</span></div>
+    <div class="row"><span>Subtotal</span><span>${fmt(totals.subtotalMillimes)}</span></div>
     ${
-      order.taxMillimes > 0
-        ? `<div class="row"><span>Tax</span><span>${fmt(order.taxMillimes)}</span></div>`
+      totals.taxMillimes > 0
+        ? `<div class="row"><span>Tax</span><span>${fmt(totals.taxMillimes)}</span></div>`
         : ''
     }
     ${
-      order.serviceMillimes > 0
-        ? `<div class="row"><span>Service</span><span>${fmt(order.serviceMillimes)}</span></div>`
+      totals.serviceMillimes > 0
+        ? `<div class="row"><span>Service</span><span>${fmt(totals.serviceMillimes)}</span></div>`
         : ''
     }
-    <div class="row grand"><span>Total</span><span>${fmt(order.totalMillimes)}</span></div>
+    <div class="row grand"><span>Total</span><span>${fmt(totals.totalMillimes)}</span></div>
   </div>
   <div class="footer">Merci · Thank you · شكرًا</div>
 </body></html>`;
@@ -83,10 +114,12 @@ export function BillPage() {
   const restaurant = useSessionStore((s) => s.restaurant);
   const orderIds = useOrderRefsStore((s) => s.ids);
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [requested, setRequested] = useState(false);
+  const order = orders[orders.length - 1] ?? null;
+  const totals = sumOrders(orders);
   const [feedbackHover, setFeedbackHover] = useState(0);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
@@ -99,25 +132,30 @@ export function BillPage() {
       navigate('/', { replace: true });
       return;
     }
-    const latest = orderIds[0];
-    if (!latest) {
+    if (orderIds.length === 0) {
       navigate('/menu', { replace: true });
       return;
     }
     let cancelled = false;
     void (async () => {
-      try {
-        const o = await api.getOrder(token, latest);
-        if (!cancelled) setOrder(o);
-      } catch (err) {
-        if (!cancelled)
-          setError(err instanceof ApiError ? err.message : (err as Error).message);
+      const fetched: Order[] = [];
+      for (const oid of orderIds) {
+        try {
+          const o = await api.getOrder(token, oid);
+          if (o.status !== 'cancelled') fetched.push(o);
+        } catch (err) {
+          if (!cancelled)
+            setError(handleApiError(err, t));
+        }
       }
+      // Show oldest round first so the bill reads chronologically.
+      fetched.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      if (!cancelled) setOrders(fetched);
     })();
     return () => {
       cancelled = true;
     };
-  }, [token, session, orderIds, navigate]);
+  }, [token, session, orderIds, navigate, t]);
 
   const requestBill = async () => {
     if (!token || !session) return;
@@ -127,7 +165,7 @@ export function BillPage() {
       await api.requestBill(token, session.tableId);
       setRequested(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }
@@ -141,7 +179,7 @@ export function BillPage() {
       await api.callWaiter(token, session.tableId);
       navigate('/waiter');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }
@@ -159,7 +197,7 @@ export function BillPage() {
       });
       setFeedbackSent(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setFeedbackBusy(false);
     }
@@ -170,9 +208,9 @@ export function BillPage() {
   const restaurantName = restaurant?.name ?? t('app.name');
 
   const printReceipt = () => {
-    if (!order) return;
+    if (orders.length === 0) return;
     const html = buildBillHtml({
-      order,
+      orders,
       restaurantName,
       tableLabel: tableShort,
       lang,
@@ -206,7 +244,7 @@ export function BillPage() {
       </div>
 
       <div className="tf-bill__body">
-        {!order ? (
+        {orders.length === 0 ? (
           <div style={{ padding: 16 }}>
             <div className="skeleton" style={{ height: 240, borderRadius: 14 }} />
           </div>
@@ -215,38 +253,52 @@ export function BillPage() {
             <div className="tf-receipt">
               <div className="tf-receipt__head">
                 <span>{t('bill.guestCopy')}</span>
-                <span>{new Date(order.createdAt).toLocaleString(lang)}</span>
+                <span>{new Date().toLocaleString(lang)}</span>
               </div>
-              {order.items.map((it) => {
-                const lineTotal =
-                  (it.unitPriceMillimes +
-                    it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0)) *
-                  it.quantity;
-                return (
-                  <div className="tf-receipt__row" key={it.id}>
-                    <span>
-                      <span className="qty">{it.quantity}× </span>
-                      {pickLang(it.nameSnapshot, lang)}
-                    </span>
-                    <span className="price">{formatMillimes(lineTotal)}</span>
-                  </div>
-                );
-              })}
+              {orders.map((o, oi) => (
+                <div key={o.id}>
+                  {orders.length > 1 ? (
+                    <div className="tf-receipt__round tf-mono">
+                      <span className="tf-receipt__round-label">
+                        {t('bill.round', { defaultValue: 'Round' })} {oi + 1}
+                      </span>
+                      <span className="tf-receipt__round-id">
+                        #{o.id.slice(0, 8).toUpperCase()}
+                      </span>
+                    </div>
+                  ) : null}
+                  {o.items.map((it) => {
+                    const lineTotal =
+                      (it.unitPriceMillimes +
+                        it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0)) *
+                      it.quantity;
+                    return (
+                      <div className="tf-receipt__row" key={it.id}>
+                        <span>
+                          <span className="qty">{it.quantity}× </span>
+                          {pickLang(it.nameSnapshot, lang)}
+                        </span>
+                        <span className="price">{formatMillimes(lineTotal)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
               <div className="tf-receipt__totals">
                 <div className="row">
                   <span>{t('cart.subtotal')}</span>
-                  <span>{formatMillimes(order.subtotalMillimes)}</span>
+                  <span>{formatMillimes(totals.subtotalMillimes)}</span>
                 </div>
-                {order.taxMillimes > 0 ? (
+                {totals.taxMillimes > 0 ? (
                   <div className="row muted">
-                    <span>{t('cart.tax', { percent: '' })}</span>
-                    <span>{formatMillimes(order.taxMillimes)}</span>
+                    <span>{t('cart.tax', { percent: restaurant?.taxPercent ?? '' })}</span>
+                    <span>{formatMillimes(totals.taxMillimes)}</span>
                   </div>
                 ) : null}
-                {order.serviceMillimes > 0 ? (
+                {totals.serviceMillimes > 0 ? (
                   <div className="row muted">
-                    <span>{t('cart.service', { percent: '' })}</span>
-                    <span>{formatMillimes(order.serviceMillimes)}</span>
+                    <span>{t('cart.service', { percent: restaurant?.servicePercent ?? '' })}</span>
+                    <span>{formatMillimes(totals.serviceMillimes)}</span>
                   </div>
                 ) : null}
                 <div className="divider" aria-hidden="true" />
@@ -255,7 +307,7 @@ export function BillPage() {
                     {t('bill.totalLabel')}
                   </span>
                   <span className="tf-receipt__grand-value">
-                    {formatMillimes(order.totalMillimes)}
+                    {formatMillimes(totals.totalMillimes)}
                   </span>
                 </div>
               </div>
@@ -339,13 +391,13 @@ export function BillPage() {
           <button
             type="button"
             className="tf-bill__request"
-            disabled={busy || !order}
+            disabled={busy || orders.length === 0}
             onClick={requestBill}
           >
             <span>{busy ? t('actions.calling') : t('bill.request')}</span>
-            {order ? (
+            {orders.length > 0 ? (
               <span className="tf-bill__request-amount">
-                {formatMillimes(order.totalMillimes)} TND
+                {formatMillimes(totals.totalMillimes)} TND
               </span>
             ) : null}
           </button>
@@ -380,7 +432,7 @@ export function BillPage() {
           <button
             type="button"
             className="tf-bill__secondary"
-            disabled={!order}
+            disabled={orders.length === 0}
             onClick={printReceipt}
           >
             {t('bill.download')}

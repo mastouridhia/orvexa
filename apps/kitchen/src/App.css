@@ -293,7 +293,7 @@
   border-color: var(--kds-late-line);
   animation: tf-late-throb 1.6s ease-in-out infinite;
 }
-.tf-kds-card.is-ready { opacity: 0.55; }
+.tf-kds-card.is-ready { opacity: 0.85; }
 
 /* Header strip */
 .tf-kds-card__head {

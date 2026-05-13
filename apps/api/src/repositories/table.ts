@@ -1,6 +1,11 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { randomBytes } from 'node:crypto';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { tableDayTokens, tableZones, tables } from '../db/schema/tables.js';
 import { BaseRepository } from './base.js';
+
+function generateDayToken(): string {
+  return randomBytes(16).toString('base64url');
+}
 
 export type TableRow = typeof tables.$inferSelect;
 export type TableInsert = typeof tables.$inferInsert;
@@ -22,6 +27,38 @@ export class TableRepository extends BaseRepository {
   async findById(id: string): Promise<TableRow | null> {
     const [row] = await this.db.select().from(tables).where(eq(tables.id, id)).limit(1);
     return row ?? null;
+  }
+
+  async findByPublicSlug(slug: string): Promise<TableRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(tables)
+      .where(eq(tables.publicSlug, slug))
+      .limit(1);
+    return row ?? null;
+  }
+
+  /**
+   * Idempotent: returns today's day-token for the table, creating one if missing.
+   * Safe under concurrent scans thanks to the unique (table_id, day) index.
+   */
+  async findOrCreateDayToken(
+    restaurantId: string,
+    tableId: string,
+    day: string,
+  ): Promise<TableDayTokenRow> {
+    const existing = await this.findDayToken(tableId, day);
+    if (existing) return existing;
+    const [row] = await this.db
+      .insert(tableDayTokens)
+      .values({ restaurantId, tableId, day, token: generateDayToken() })
+      .onConflictDoUpdate({
+        target: [tableDayTokens.tableId, tableDayTokens.day],
+        set: { day: sql`EXCLUDED.day` },
+      })
+      .returning();
+    if (!row) throw new Error('Failed to upsert table_day_token');
+    return row;
   }
 
   async create(input: TableInsert): Promise<TableRow> {

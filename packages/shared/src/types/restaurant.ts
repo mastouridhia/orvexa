@@ -6,6 +6,9 @@ import {
   UuidSchema,
 } from './common.js';
 
+export const PaymentPointSchema = z.enum(['table', 'counter']);
+export type PaymentPoint = z.infer<typeof PaymentPointSchema>;
+
 export const RestaurantSchema = z.object({
   id: UuidSchema,
   slug: z.string().min(1),
@@ -17,6 +20,7 @@ export const RestaurantSchema = z.object({
   servicePercent: z.number().min(0).max(100),
   defaultPrepMinutes: z.number().int().min(1).max(120),
   timezone: z.string().min(1),
+  paymentPoint: PaymentPointSchema,
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 });
@@ -31,6 +35,7 @@ export const PatchRestaurantRequestSchema = z
     servicePercent: z.number().min(0).max(100),
     defaultPrepMinutes: z.number().int().min(1).max(120),
     timezone: z.string().min(1),
+    paymentPoint: PaymentPointSchema,
   })
   .partial();
 export type PatchRestaurantRequest = z.infer<typeof PatchRestaurantRequestSchema>;

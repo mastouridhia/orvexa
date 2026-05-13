@@ -237,6 +237,15 @@ export const api = {
   },
 
   // Orders
+  listOpenBills(token: string) {
+    return apiRequest<Order[]>('/orders/open-bills', { token });
+  },
+  recordPayment(token: string, orderId: string, body: { method: 'cash'; tipMillimes: number }) {
+    return apiRequest<{ order: Order; payment: unknown; fullyPaid: boolean }>(
+      `/orders/${orderId}/pay`,
+      { method: 'POST', token, body },
+    );
+  },
   listOrders(token: string, q: OrderListQuery) {
     return apiRequest<PaginatedOrders>(
       `/orders${qs({ status: q.status, page: q.page, pageSize: q.pageSize })}`,

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/queries.js';
-import { ApiError } from '../api/client.js';
+import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
 import { useWaiterCallStore } from '../store/waiterCall.js';
 import {
@@ -47,7 +47,7 @@ export function WaiterPage() {
         setState('ack');
       }, ACK_DELAY_MS);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
       setState('idle');
     }
   };

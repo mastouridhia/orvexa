@@ -32,7 +32,8 @@
       "napkin": "Serviette",
       "straw": "Paille",
       "water": "Eau",
-      "condiments": "Condiments"
+      "condiments": "Condiments",
+      "cleaning": "Nettoyer la table"
     }
   },
   "menu": {
@@ -40,7 +41,9 @@
     "empty": "Aucun plat disponible pour le moment.",
     "unavailable": "Indisponible",
     "serviceHours": "Service du midi · jusqu'à 16:00",
-    "served": "Service"
+    "served": "Service",
+    "activeOrderTitle": "Commande #{{id}} · {{status}}",
+    "activeOrderCta": "Suivre la commande"
   },
   "dish": {
     "addToCart": "Ajouter au panier",
@@ -130,7 +133,8 @@
     "callSub": "Réponse ~30 sec",
     "billTitle": "Addition",
     "billSub": "Régler à table",
-    "eta": "~{{minutes}} min"
+    "eta": "~{{minutes}} min",
+    "orderMore": "Commander d'autres plats"
   },
   "waiter": {
     "idleTitle": "Besoin d'un coup de main ?",

@@ -21,6 +21,7 @@
     "ordered": "طُلبت",
     "cooking": "قيد الطهي",
     "ready": "جاهزة",
+    "eating": "يتناولون الطعام",
     "paying": "الدفع",
     "clean": "بحاجة للتنظيف",
     "call": "تنادي"
@@ -118,6 +119,10 @@
     },
 
     "ackCall": "في الطريق",
+    "cleanPrompt": {
+      "question": "هل الطاولة جاهزة للتنظيف؟",
+      "notYet": "ليس بعد"
+    },
     "markPassed": "تم التقديم",
     "settleBill": "تسوية الفاتورة",
     "markClean": "تم التنظيف",
@@ -130,6 +135,8 @@
     "closeAndPaid": "إغلاق · مدفوعة",
 
     "cancel": "إلغاء",
+    "cancelOrder": "إلغاء الطلب",
+    "cancelOrderConfirm": "إلغاء هذا الطلب؟",
     "saving": "جاري الحفظ…",
 
     "payment": {

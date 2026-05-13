@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/auth.js';
 import { Modal } from '@orvexa/ui';
 import { formatDateTime } from '../utils/format.js';
 
-const ROLES: StaffRole[] = ['admin', 'manager', 'kitchen', 'waiter'];
+const ROLES: StaffRole[] = ['admin', 'manager', 'kitchen', 'waiter', 'cashier'];
 
 function todayDateIso(): string {
   return new Date().toISOString().slice(0, 10);

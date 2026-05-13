@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   AnyPgColumn,
   date,
@@ -38,6 +39,11 @@ export const tables = pgTable(
       .notNull()
       .references(() => restaurants.id, { onDelete: 'cascade' }),
     label: text('label').notNull(),
+    // Stable, URL-safe short code that identifies the table forever. Printed on the
+    // physical QR sticker, so it must NEVER rotate once a table is created.
+    publicSlug: text('public_slug')
+      .notNull()
+      .default(sql`substr(md5(random()::text || clock_timestamp()::text), 1, 10)`),
     seats: integer('seats').notNull().default(4),
     status: text('status', {
       enum: ['free', 'seated', 'ordering', 'waiting', 'call_waiter', 'needs_bill', 'needs_cleaning'],
@@ -57,6 +63,7 @@ export const tables = pgTable(
   },
   (t) => [
     uniqueIndex('tables_restaurant_label_idx').on(t.restaurantId, t.label),
+    uniqueIndex('tables_public_slug_idx').on(t.publicSlug),
     index('tables_merged_into_idx').on(t.mergedIntoTableId),
     index('tables_zone_idx').on(t.zoneId),
   ],

@@ -7,6 +7,8 @@ import {
   callUrgency,
   indexCallsByTable,
   pickActiveOrder,
+  pickActiveOrders,
+  secondaryVisualState,
   visualStateOf,
   type WaiterVisualState,
 } from '../utils/waiter.js';
@@ -14,7 +16,7 @@ import { IconBellRing } from './tf-icons.js';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 const STATE_ORDER: WaiterVisualState[] = [
-  'call', 'ready', 'cooking', 'ordered', 'seated', 'paying', 'clean', 'open',
+  'call', 'ready', 'cooking', 'ordered', 'eating', 'seated', 'paying', 'clean', 'open',
 ];
 
 const ALL_ZONE_KEY = '__all__';
@@ -108,8 +110,10 @@ export function FloorView({
 
     return tables.map((tb) => {
       const orderForTable = pickActiveOrder(orders, tb.id);
+      const activeOrdersForTable = pickActiveOrders(orders, tb.id);
       const call = callsByTable.get(tb.id) ?? null;
-      const state = visualStateOf(tb, orderForTable ? [orderForTable] : [], call);
+      const state = visualStateOf(tb, activeOrdersForTable, call);
+      const secondary = call ? null : secondaryVisualState(state, activeOrdersForTable);
       const pos =
         tb.x !== null && tb.y !== null
           ? { x: tb.x, y: tb.y }
@@ -118,7 +122,7 @@ export function FloorView({
         ? Math.max(0, Math.floor((now - new Date(orderForTable.createdAt).getTime()) / 60000))
         : 0;
       const callAge = call ? callAgeSeconds(call, now) : 0;
-      return { table: tb, state, pos, minsInOrder, call, callAge };
+      return { table: tb, state, secondary, pos, minsInOrder, call, callAge };
     });
   }, [tables, orders, callsByTable, now]);
 
@@ -218,13 +222,14 @@ export function FloorView({
             ))}
 
             {/* Table dots */}
-            {allPlaced.map(({ table, state, pos, minsInOrder, callAge }) => {
+            {allPlaced.map(({ table, state, secondary, pos, minsInOrder, callAge }) => {
               const calling = state === 'call';
               const ready = state === 'ready';
               const overdue = calling && callUrgency(callAge) === 'overdue';
               const dim = isDimmed(table.zoneId);
               const size = table.seats >= 6 ? 56 : table.seats >= 4 ? 48 : table.seats >= 2 ? 40 : 32;
               const showMins = ['ordered', 'cooking', 'paying'].includes(state) && minsInOrder > 0;
+              const radius = table.seats === 1 ? size / 2 : 10;
               return (
                 <button
                   key={table.id}
@@ -235,6 +240,7 @@ export function FloorView({
                     calling ? 'is-calling' : '',
                     ready ? 'is-ready' : '',
                     overdue ? 'is-overdue' : '',
+                    secondary ? 'is-reorder' : '',
                     dim ? 'is-dim' : '',
                   ].filter(Boolean).join(' ')}
                   onClick={() => !dim && onOpen(table.id)}
@@ -243,13 +249,20 @@ export function FloorView({
                     top: `${pos.y * 100}%`,
                     width: size,
                     height: size,
-                    borderRadius: table.seats === 1 ? size / 2 : 10,
+                    borderRadius: radius,
                   }}
                   aria-label={t('floor.openTableLabel', {
                     label: table.label,
                     state: t(`state.${state}`),
                   })}
                 >
+                  {secondary && (
+                    <span
+                      className={`tf-w-floor__dot-split tf-w-floor__dot-split--${secondary}`}
+                      style={{ borderRadius: radius }}
+                      aria-hidden="true"
+                    />
+                  )}
                   <span className="tf-w-floor__dot-num">{shortLabel(table.label)}</span>
                   {showMins && (
                     <span className="tf-mono tf-w-floor__dot-mins">{minsInOrder}m</span>

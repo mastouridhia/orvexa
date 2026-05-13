@@ -11,6 +11,7 @@ export type WaiterVisualState =
   | 'ordered'
   | 'cooking'
   | 'ready'
+  | 'eating'
   | 'paying'
   | 'clean'
   | 'call';
@@ -51,6 +52,10 @@ export function visualStateOf(
   if (active.some((o) => o.status === 'ready')) return 'ready';
   if (active.some((o) => o.status === 'preparing')) return 'cooking';
   if (active.some((o) => o.status === 'received')) return 'ordered';
+  // Food was served and not yet paid → the guests are currently dining.
+  if (ordersForTable.some((o) => o.status === 'served' && o.paymentStatus !== 'paid')) {
+    return 'eating';
+  }
   if (table.derivedStatus === 'call_waiter') return 'call';
   if (table.derivedStatus === 'waiting') return 'ordered';
   if (table.derivedStatus === 'ordering' || table.derivedStatus === 'seated') return 'seated';
@@ -105,6 +110,76 @@ export function pickActiveOrder(orders: Order[], tableId: string): Order | null 
     .filter((o) => o.tableId === tableId && ACTIVE_STATUSES.has(o.status))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return list[0] ?? null;
+}
+
+/**
+ * All orders for a table that still affect the waiter's view of it — active
+ * rounds plus served-but-unpaid rounds (the table is eating). Cancelled and
+ * fully-paid rounds are excluded.
+ */
+export function pickActiveOrders(orders: Order[], tableId: string): Order[] {
+  return orders.filter((o) => {
+    if (o.tableId !== tableId) return false;
+    if (o.status === 'cancelled') return false;
+    if (ACTIVE_STATUSES.has(o.status)) return true;
+    return o.status === 'served' && o.paymentStatus !== 'paid';
+  });
+}
+
+/**
+ * When a table has multiple rounds in different lifecycle stages (e.g., round 1
+ * served and being eaten while round 2 is still 'preparing'), return the
+ * secondary visual bucket so the floor dot can show a split color.
+ * Returns null when there's no meaningful second state to surface.
+ */
+export function secondaryVisualState(
+  primary: WaiterVisualState,
+  ordersForTable: Order[],
+): WaiterVisualState | null {
+  const present = new Set<WaiterVisualState>();
+  for (const o of ordersForTable) {
+    if (o.status === 'ready') present.add('ready');
+    else if (o.status === 'preparing') present.add('cooking');
+    else if (o.status === 'received') present.add('ordered');
+    else if (o.status === 'served' && o.paymentStatus !== 'paid') present.add('eating');
+  }
+  present.delete(primary);
+  for (const s of ['ready', 'cooking', 'ordered', 'eating'] as const) {
+    if (present.has(s)) return s;
+  }
+  return null;
+}
+
+/**
+ * All orders for a table that still need waiter attention — anything that is
+ * either in an active lifecycle state, or has been served but is not yet paid.
+ * Cancelled orders are excluded. Sorted oldest-first so the UI renders rounds
+ * in chronological order.
+ */
+export function pickOrdersForTable(orders: Order[], tableId: string): Order[] {
+  return orders
+    .filter((o) => {
+      if (o.tableId !== tableId) return false;
+      if (o.status === 'cancelled') return false;
+      if (ACTIVE_STATUSES.has(o.status)) return true;
+      // served stays in the list until paid
+      return o.status === 'served' && o.paymentStatus !== 'paid';
+    })
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+/** Choose the order that should drive the footer CTA: most actionable first. */
+export function pickPrimaryOrder(orders: Order[]): Order | null {
+  if (orders.length === 0) return null;
+  const byStatus = (s: string) => orders.filter((o) => o.status === s);
+  return (
+    byStatus('ready')[0] ??
+    byStatus('received')[0] ??
+    byStatus('preparing')[0] ??
+    byStatus('served')[0] ??
+    orders[0] ??
+    null
+  );
 }
 
 /** Index calls by tableId for fast lookup; ties broken by oldest-first. */

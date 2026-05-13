@@ -3,8 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode, Order, OrderStatus } from '@orvexa/shared';
 import { api } from '../api/queries.js';
-import { ApiError } from '../api/client.js';
+import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
+import { useOrderRefsStore } from '../store/orders.js';
 import { useCartStore } from '../store/cart.js';
 import { connectCustomerSocket } from '../socket/client.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
@@ -42,7 +43,10 @@ export function OrderPage() {
   const token = useSessionStore((s) => s.token);
   const session = useSessionStore((s) => s.session);
   const startEditing = useCartStore((s) => s.startEditing);
+  const stopEditing = useCartStore((s) => s.stopEditing);
+  const orderIds = useOrderRefsStore((s) => s.ids);
   const [order, setOrder] = useState<Order | null>(null);
+  const [siblings, setSiblings] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -59,28 +63,61 @@ export function OrderPage() {
         if (!cancelled) setOrder(o);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : (err as Error).message);
+          setError(handleApiError(err, t));
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [id, token, navigate]);
+  }, [id, token, navigate, t]);
 
   // Live status updates
   useEffect(() => {
     if (!token || !id) return;
     const socket = connectCustomerSocket(token);
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
-      if (payload.orderId !== id) return;
-      setOrder((cur) => (cur ? { ...cur, status: payload.status } : cur));
+      if (payload.orderId === id) {
+        setOrder((cur) => (cur ? { ...cur, status: payload.status } : cur));
+      }
+      setSiblings((prev) =>
+        prev.map((s) => (s.id === payload.orderId ? { ...s, status: payload.status } : s)),
+      );
     };
     socket.on('order:status', onStatus);
     return () => {
       socket.off('order:status', onStatus);
     };
   }, [token, id]);
+
+  // Fetch sibling orders (other rounds on this table session) so the
+  // customer can see every round at a glance — fixes the "I forgot what
+  // I had ordered" confusion when there are multiple rounds.
+  useEffect(() => {
+    if (!token || !id) return;
+    let cancelled = false;
+    const otherIds = orderIds.filter((oid) => oid !== id);
+    if (otherIds.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSiblings([]);
+      return;
+    }
+    void (async () => {
+      const fetched: Order[] = [];
+      for (const oid of otherIds) {
+        try {
+          const o = await api.getOrder(token, oid);
+          if (o.status !== 'cancelled') fetched.push(o);
+        } catch {
+          // skip
+        }
+      }
+      if (!cancelled) setSiblings(fetched);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, id, orderIds]);
 
   const cancel = async () => {
     if (!token || !order) return;
@@ -90,7 +127,7 @@ export function OrderPage() {
       const updated = await api.cancelOrder(token, order.id);
       setOrder(updated);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }
@@ -110,7 +147,7 @@ export function OrderPage() {
       const updated = await api.removeOrderItem(token, order.id, itemId);
       setOrder(updated);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }
@@ -147,6 +184,10 @@ export function OrderPage() {
   const idx = stageIndex(order.status);
   const itemCount = order.items.reduce((s, i) => s + i.quantity, 0);
   const editable = order.status === 'received';
+  const canOrderMore =
+    order.status === 'preparing' ||
+    order.status === 'ready' ||
+    order.status === 'served';
   const billAvailable = order.status === 'served';
   const tableShort = session?.tableLabel ?? '—';
   const orderShort = order.id.slice(0, 8).toUpperCase();
@@ -335,6 +376,47 @@ export function OrderPage() {
           </div>
         </div>
 
+        {siblings.length > 0 ? (
+          <div className="tf-card">
+            <div className="tf-summary__head">
+              {t('tracking.otherRounds', { defaultValue: 'Other rounds on your table' })}
+            </div>
+            {siblings
+              .slice()
+              .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+              .map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className="tf-summary__row"
+                  onClick={() => navigate(`/orders/${s.id}`)}
+                  style={{
+                    background: 'transparent',
+                    border: 0,
+                    width: '100%',
+                    textAlign: 'start',
+                    cursor: 'pointer',
+                    padding: '10px 0',
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="tf-mono" style={{ fontSize: 11, color: 'var(--fg-faint)' }}>
+                      #{s.id.slice(0, 8).toUpperCase()}
+                    </div>
+                    <span
+                      className={`tf-status-pill tf-status-pill--${s.status}`}
+                      style={{ marginTop: 4 }}
+                    >
+                      {t(`order.status.${s.status}`)}
+                    </span>
+                  </div>
+                  <span className="price">{formatMillimes(s.totalMillimes)}</span>
+                  <IconChevronRight size={14} color="var(--fg-faint)" />
+                </button>
+              ))}
+          </div>
+        ) : null}
+
         {!isCancelled ? (
           <div className="tf-quick">
             <button
@@ -388,6 +470,19 @@ export function OrderPage() {
               onClick={cancel}
             >
               {t('order.cancel')}
+            </button>
+          </div>
+        ) : canOrderMore ? (
+          <div className="tf-tracking__actions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                stopEditing();
+                navigate('/menu');
+              }}
+            >
+              {t('tracking.orderMore')}
             </button>
           </div>
         ) : null}

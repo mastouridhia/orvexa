@@ -43,6 +43,9 @@ export const api = {
   listActiveOrders(token: string) {
     return apiRequest<Order[]>('/orders/active', { token });
   },
+  listOpenBills(token: string) {
+    return apiRequest<Order[]>('/orders/open-bills', { token });
+  },
   getMenuPublic(token: string) {
     return apiRequest<MenuTreeCategory[]>('/menu', { token });
   },
@@ -61,6 +64,12 @@ export const api = {
       token,
       body: { status },
     });
+  },
+  cancelOrder(token: string, orderId: string) {
+    return apiRequest<Order>(`/orders/${orderId}/cancel`, { method: 'POST', token });
+  },
+  removeOrderItem(token: string, orderId: string, itemId: string) {
+    return apiRequest<Order>(`/orders/${orderId}/items/${itemId}`, { method: 'DELETE', token });
   },
   recordPayment(token: string, orderId: string, body: RecordPaymentRequest) {
     return apiRequest<RecordPaymentResult>(`/orders/${orderId}/pay`, {

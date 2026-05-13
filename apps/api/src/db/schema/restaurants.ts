@@ -11,6 +11,9 @@ export const restaurants = pgTable('restaurants', {
   servicePercent: integer('service_percent').notNull().default(0),
   defaultPrepMinutes: integer('default_prep_minutes').notNull().default(15),
   timezone: text('timezone').notNull().default('Africa/Tunis'),
+  paymentPoint: text('payment_point', { enum: ['table', 'counter'] })
+    .notNull()
+    .default('table'),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

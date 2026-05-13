@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEscapeKey, useFocusTrap } from '@orvexa/ui';
-import { ApiError } from '../api/client.js';
+import { handleApiError } from '../api/errorMessage.js';
 import { api } from '../api/queries.js';
 import { useSessionStore } from '../store/session.js';
 
-const PRESETS = ['fork', 'spoon', 'knife', 'napkin', 'straw', 'water', 'condiments'] as const;
+const PRESETS = ['fork', 'spoon', 'knife', 'napkin', 'straw', 'water', 'condiments', 'cleaning'] as const;
 
 export function ExtrasSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
@@ -43,7 +43,7 @@ export function ExtrasSheet({ onClose }: { onClose: () => void }) {
       setSent(true);
       setTimeout(onClose, 1400);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }

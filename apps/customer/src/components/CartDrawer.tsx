@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { LanguageCode } from '@orvexa/shared';
 import { useEscapeKey, useFocusTrap } from '@orvexa/ui';
 import { api } from '../api/queries.js';
-import { ApiError } from '../api/client.js';
+import { handleApiError } from '../api/errorMessage.js';
 import {
   buildPlaceOrderItems,
   cartLineCount,
@@ -32,11 +32,9 @@ export function CartDrawer({
   const remove = useCartStore((s) => s.remove);
   const clearCart = useCartStore((s) => s.clear);
   const editingOrderId = useCartStore((s) => s.editingOrderId);
-  const ownerSessionId = useCartStore((s) => s.ownerSessionId);
   const token = useSessionStore((s) => s.token);
   const session = useSessionStore((s) => s.session);
   const restaurant = useSessionStore((s) => s.restaurant);
-  const isOwner = !ownerSessionId || !session || ownerSessionId === session.id;
   const rememberOrder = useOrderRefsStore((s) => s.remember);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +63,7 @@ export function CartDrawer({
       onClose();
       navigate(`/orders/${order.id}`);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }
@@ -210,22 +208,15 @@ export function CartDrawer({
 
         {lines.length > 0 ? (
           <div className="tf-cartsheet__bar">
-            {isOwner ? (
-              <button
-                type="button"
-                className="tf-cartsheet__cta"
-                disabled={busy}
-                onClick={checkout}
-              >
-                <span>{busy ? t('actions.calling') : t('cart.confirmOrder')}</span>
-                <IconArrowRight size={16} />
-              </button>
-            ) : (
-              <div className="tf-cartsheet__viewonly" role="status">
-                <strong>{t('cart.viewOnly')}</strong>
-                <span className="tf-cartsheet__hint">{t('cart.viewOnlyHint')}</span>
-              </div>
-            )}
+            <button
+              type="button"
+              className="tf-cartsheet__cta"
+              disabled={busy}
+              onClick={checkout}
+            >
+              <span>{busy ? t('actions.calling') : t('cart.confirmOrder')}</span>
+              <IconArrowRight size={16} />
+            </button>
             <div className="tf-cartsheet__hint">
               {t('cart.payAtTable', {
                 defaultValue: "Pay at the table when you're done.",

@@ -26,7 +26,7 @@ const IdParams = z.object({ id: UuidSchema });
 paymentsRouter.post(
   '/orders/:id/pay',
   requireAuth,
-  requireRole('admin', 'manager', 'waiter'),
+  requireRole('admin', 'manager', 'waiter', 'cashier'),
   validate({ params: IdParams, body: RecordPaymentRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -56,7 +56,7 @@ paymentsRouter.post(
 paymentsRouter.post(
   '/payments/:id/confirm',
   requireAuth,
-  requireRole('admin', 'manager', 'waiter'),
+  requireRole('admin', 'manager', 'waiter', 'cashier'),
   validate({ params: IdParams }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');

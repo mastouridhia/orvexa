@@ -32,7 +32,8 @@
       "napkin": "Napkin",
       "straw": "Straw",
       "water": "Water",
-      "condiments": "Condiments"
+      "condiments": "Condiments",
+      "cleaning": "Clean the table"
     }
   },
   "menu": {
@@ -40,7 +41,9 @@
     "empty": "No dishes available right now.",
     "unavailable": "Unavailable",
     "serviceHours": "Lunch service · until 16:00",
-    "served": "Served"
+    "served": "Served",
+    "activeOrderTitle": "Order #{{id}} · {{status}}",
+    "activeOrderCta": "Track order"
   },
   "dish": {
     "addToCart": "Add to cart",
@@ -130,7 +133,8 @@
     "callSub": "~30s response",
     "billTitle": "The bill",
     "billSub": "Pay at table",
-    "eta": "~{{minutes}} min"
+    "eta": "~{{minutes}} min",
+    "orderMore": "Order more items"
   },
   "waiter": {
     "idleTitle": "Need a hand?",

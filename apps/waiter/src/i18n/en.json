@@ -21,6 +21,7 @@
     "ordered": "Ordered",
     "cooking": "Cooking",
     "ready": "Ready",
+    "eating": "Eating",
     "paying": "Paying",
     "clean": "Needs cleaning",
     "call": "Calling"
@@ -118,6 +119,10 @@
     },
 
     "ackCall": "On the way",
+    "cleanPrompt": {
+      "question": "Is the table ready to clean?",
+      "notYet": "Not yet"
+    },
     "markPassed": "Mark passed to table",
     "settleBill": "Settle bill",
     "markClean": "Mark as clean",
@@ -130,6 +135,8 @@
     "closeAndPaid": "Close & paid",
 
     "cancel": "Cancel",
+    "cancelOrder": "Cancel order",
+    "cancelOrderConfirm": "Cancel this order?",
     "saving": "Saving…",
 
     "payment": {

@@ -49,8 +49,17 @@ export class CustomerSessionService {
   }
 
   async open(input: { qrToken: string; locale: LanguageCode }): Promise<OpenSessionResult> {
-    const dayToken = await this.repo.findTokenForToday(input.qrToken, todayIso());
-    if (!dayToken) throw new UnauthorizedError('Invalid or expired QR token');
+    // `qrToken` is the printed table's stable public slug. The daily rotation
+    // happens internally so per-day analytics (orders, carts, sessions) keep
+    // their FK to table_day_tokens unchanged.
+    const table = await this.tables.findByPublicSlug(input.qrToken);
+    if (!table) throw new UnauthorizedError('Invalid QR code');
+
+    const dayToken = await this.tables.findOrCreateDayToken(
+      table.restaurantId,
+      table.id,
+      todayIso(),
+    );
 
     const expiresAt = new Date(Date.now() + ms(config.auth.sessionTtl as StringValue));
     const row = await this.repo.create({
@@ -61,8 +70,7 @@ export class CustomerSessionService {
       expiresAt,
     });
 
-    const label = await this.tableLabel(row.tableId);
-    return { session: toCustomerSession(row, label), token: this.issueToken(row) };
+    return { session: toCustomerSession(row, table.label), token: this.issueToken(row) };
   }
 
   async renewIfNeeded(sessionId: string): Promise<OpenSessionResult | null> {

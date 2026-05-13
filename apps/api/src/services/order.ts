@@ -239,6 +239,11 @@ export class OrderService {
     return rows.map(rowToOrder);
   }
 
+  async listOpenBills(restaurantId: string): Promise<Order[]> {
+    const rows = await this.orderRepo.listOpenBills(restaurantId);
+    return rows.map(rowToOrder);
+  }
+
   async list(restaurantId: string, query: OrderListQuery): Promise<OrderListResult> {
     const { rows, total } = await this.orderRepo.listByStatus(
       restaurantId,

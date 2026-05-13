@@ -3,6 +3,11 @@ import { ConflictError, ForbiddenError } from '../utils/errors.js';
 import { TableCartRepository, type TableCartRow } from '../repositories/table-cart.js';
 import { CustomerSessionRepository } from '../repositories/customer-session.js';
 
+// `ownerSessionId` is informational ("started by") only. Any session on the
+// same table day-token can edit/clear/checkout — they're at the same table,
+// so the owner gate caused lockouts (dead phone, customer left) without
+// preventing real abuse.
+
 export type TableCartView = {
   id: string;
   restaurantId: string;
@@ -76,17 +81,14 @@ export class TableCartService {
     return toView(updated);
   }
 
-  /** Owner-only clear (used after successful checkout). */
+  /** Any session on the same day-token can clear (e.g. after checkout). */
   async clear(input: { tableId: string; sessionId: string }): Promise<void> {
     const existing = await this.repo.findByTableId(input.tableId);
     if (!existing) return;
-    if (existing.ownerSessionId !== input.sessionId) {
-      throw new ForbiddenError('Only the cart owner can clear the cart');
-    }
+    await this.assertSessionOnSameToken(input.sessionId, existing);
     await this.repo.deleteByTableId(input.tableId);
   }
 
-  /** Throws ForbiddenError if the caller's session is not on the same day-token. */
   private async assertSessionOnSameToken(
     sessionId: string,
     cart: TableCartRow,
@@ -95,14 +97,6 @@ export class TableCartService {
     if (!session) throw new ForbiddenError('Session not found');
     if (session.tableDayTokenId !== cart.tableDayTokenId) {
       throw new ForbiddenError('Session is for a different table day-token');
-    }
-  }
-
-  async assertOwner(sessionId: string, tableId: string): Promise<void> {
-    const cart = await this.repo.findByTableId(tableId);
-    if (!cart) return; // No cart yet — nothing to gate.
-    if (cart.ownerSessionId !== sessionId) {
-      throw new ForbiddenError('Only the cart owner can perform this action');
     }
   }
 }

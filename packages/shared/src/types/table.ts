@@ -20,6 +20,8 @@ export const TableSchema = z.object({
   id: UuidSchema,
   restaurantId: UuidSchema,
   label: z.string().min(1),
+  /** Stable URL-safe code embedded in the printed QR. Never rotates. */
+  publicSlug: z.string().min(1),
   seats: z.number().int().positive(),
   status: TableStatusSchema,
   mergedIntoTableId: UuidSchema.nullable(),

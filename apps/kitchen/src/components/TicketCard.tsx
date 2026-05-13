@@ -41,7 +41,6 @@ export function TicketCard({
   const bucket: AgeBucket = ageBucket(order.createdAt, now);
   const meta = AGE_LABELS[bucket];
   const next = nextStatus(order.status);
-  const isReady = order.status === 'ready';
   const isNew = order.status === 'received';
   const tableLabel = tableLabels.get(order.tableId) ?? order.tableId.slice(0, 4).toUpperCase();
   const ticketId = shortTicketId(order.id);
@@ -83,7 +82,7 @@ export function TicketCard({
 
   return (
     <article
-      className={`tf-kds-card tf-kds-card--${bucket}${isReady ? ' is-ready' : ''}${isNew ? ' is-new' : ''}${freshlyArrived ? ' just-arrived' : ''}${large ? ' is-large' : ''}`}
+      className={`tf-kds-card tf-kds-card--${bucket}${order.status === 'ready' ? ' is-ready' : ''}${isNew ? ' is-new' : ''}${freshlyArrived ? ' just-arrived' : ''}${large ? ' is-large' : ''}`}
       aria-label={`Order ${ticketId} · ${t(`board.status.${order.status}`)}`}
     >
       {/* Header strip — color reflects age bucket */}
@@ -162,12 +161,13 @@ export function TicketCard({
 
       {/* Bump bar */}
       <div className="tf-kds-card__bump">
-        {isReady ? (
-          <div className="tf-kds-card__ready">
+        {order.status === 'ready' ? (
+          <div className="tf-kds-card__ready" aria-hidden="true">
             <IconCheck />
             <span>{t('card.readyToPass')}</span>
           </div>
-        ) : next ? (
+        ) : null}
+        {next ? (
           <button
             type="button"
             className="tf-kds-card__hold"

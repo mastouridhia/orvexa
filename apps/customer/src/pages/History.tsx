@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { LanguageCode, Order } from '@orvexa/shared';
 import { api } from '../api/queries.js';
 import { ApiError } from '../api/client.js';
+import { handleApiError, isSessionExpiredError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
 import { formatMillimes } from '../utils/format.js';
@@ -29,6 +30,10 @@ export function History() {
           const o = await api.getOrder(token, id);
           fetched.push(o);
         } catch (err) {
+          if (isSessionExpiredError(err)) {
+            setError(handleApiError(err, t));
+            break;
+          }
           if (err instanceof ApiError && err.status >= 500) {
             setError(err.message);
           }
@@ -42,7 +47,7 @@ export function History() {
     return () => {
       cancelled = true;
     };
-  }, [ids, token, hasWork]);
+  }, [ids, token, hasWork, t]);
 
   if (loading) {
     return (

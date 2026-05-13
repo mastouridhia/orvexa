@@ -2,6 +2,7 @@ import { useState, type ComponentType } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/auth.js';
+import type { StaffRole } from '@orvexa/shared';
 import {
   IconBolt,
   IconLeaf,
@@ -15,10 +16,16 @@ import {
 
 type IconCmp = ComponentType<{ size?: number }>;
 
-const NAV: { to: string; key: string; icon: IconCmp }[] = [
+const NAV: { to: string; key: string; icon: IconCmp; roles?: StaffRole[] }[] = [
   { to: '/', key: 'dashboard', icon: IconBolt },
   { to: '/menu', key: 'menu', icon: IconUtensils },
   { to: '/orders', key: 'orders', icon: IconReceipt },
+  {
+    to: '/open-bills',
+    key: 'openBills',
+    icon: IconReceipt,
+    roles: ['admin', 'manager', 'cashier'],
+  },
   { to: '/tables', key: 'tables', icon: IconTable },
   { to: '/staff', key: 'staff', icon: IconUser },
   { to: '/reports', key: 'reports', icon: IconLeaf },
@@ -26,7 +33,8 @@ const NAV: { to: string; key: string; icon: IconCmp }[] = [
   { to: '/settings', key: 'settings', icon: IconSettings },
 ];
 
-const VISIBLE_NAV = NAV;
+// Cashier only needs the open-bills view (and a way to sign out via Settings).
+const CASHIER_NAV_KEYS = new Set(['openBills', 'settings']);
 
 export function AppShell() {
   const { t } = useTranslation();
@@ -34,6 +42,11 @@ export function AppShell() {
   const [navOpen, setNavOpen] = useState(false);
   const closeNav = () => setNavOpen(false);
   const userName = user?.email ? user.email.split('@')[0] : t('shell.defaultUser');
+  const visibleNav = NAV.filter((n) => {
+    if (user?.role === 'cashier') return CASHIER_NAV_KEYS.has(n.key);
+    if (n.roles && (!user?.role || !n.roles.includes(user.role))) return false;
+    return true;
+  });
 
   return (
     <div className={`app-shell${navOpen ? ' nav-open' : ''}`}>
@@ -60,7 +73,7 @@ export function AppShell() {
           <div className="tf-mono tf-a-side__brand-sub">{t('shell.brandSub')}</div>
         </div>
         <nav className="tf-a-side__nav" data-stagger>
-          {VISIBLE_NAV.map((n) => {
+          {visibleNav.map((n) => {
             const Icon = n.icon;
             return (
               <NavLink

@@ -33,6 +33,9 @@
   --danger: #c8392e;
   --danger-bg: #fbe6e3;
   --danger-ink: #8e2218;
+  --info: #3a73c4;
+  --info-bg: #e4ecf8;
+  --info-ink: #1d3f73;
 
   /* Lime "ready/pass" signal (matches kitchen) */
   --tf-lime: #a6f562;

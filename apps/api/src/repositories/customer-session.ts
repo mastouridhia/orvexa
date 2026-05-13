@@ -1,20 +1,23 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gt, sql } from 'drizzle-orm';
 import type { LanguageCode } from '@orvexa/shared';
 import { customerSessions } from '../db/schema/sessions.js';
-import { tableDayTokens } from '../db/schema/tables.js';
 import { BaseRepository } from './base.js';
 
 export type CustomerSessionRow = typeof customerSessions.$inferSelect;
-export type TableDayTokenRow = typeof tableDayTokens.$inferSelect;
 
 export class CustomerSessionRepository extends BaseRepository {
-  async findTokenForToday(token: string, day: string): Promise<TableDayTokenRow | null> {
-    const [row] = await this.db
-      .select()
-      .from(tableDayTokens)
-      .where(and(eq(tableDayTokens.token, token), eq(tableDayTokens.day, day)))
-      .limit(1);
-    return row ?? null;
+  /**
+   * Force-expire every still-active customer session for a table. Used when
+   * the table is marked clean / free so the previous occupant's cached JWT
+   * stops working before the next customer scans in.
+   */
+  async expireActiveForTable(tableId: string): Promise<number> {
+    const rows = await this.db
+      .update(customerSessions)
+      .set({ expiresAt: sql`NOW()` })
+      .where(and(eq(customerSessions.tableId, tableId), gt(customerSessions.expiresAt, sql`NOW()`)))
+      .returning({ id: customerSessions.id });
+    return rows.length;
   }
 
   async create(input: {

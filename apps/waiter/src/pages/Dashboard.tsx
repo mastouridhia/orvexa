@@ -20,9 +20,22 @@ import { TablesList } from '../components/TablesList.js';
 import { TableDetail } from '../components/TableDetail.js';
 import { TabBar, type WaiterTab } from '../components/TabBar.js';
 import { IconLogout, IconSettings } from '../components/tf-icons.js';
-import { indexCallsByTable, pickActiveOrder } from '../utils/waiter.js';
+import { indexCallsByTable, pickOrdersForTable } from '../utils/waiter.js';
 
 const ACTIVE_STATUSES: OrderStatus[] = ['received', 'preparing', 'ready'];
+
+/** Keep an order in the dashboard list if it's still actionable by the waiter. */
+function isRelevant(o: Order): boolean {
+  if (o.status === 'cancelled') return false;
+  if (ACTIVE_STATUSES.includes(o.status)) return true;
+  return o.status === 'served' && o.paymentStatus !== 'paid';
+}
+
+function mergeOrders(existing: Order[], next: Order[]): Order[] {
+  const byId = new Map(existing.map((o) => [o.id, o] as const));
+  for (const o of next) byId.set(o.id, o);
+  return Array.from(byId.values()).filter(isRelevant);
+}
 
 /**
  * Shift-start gate is in-memory only — shown once per page load. Persisting it
@@ -45,6 +58,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [openTableId, setOpenTableId] = useState<string | null>(null);
   const [busyCallId, setBusyCallId] = useState<string | null>(null);
+  const [pendingCleanTables, setPendingCleanTables] = useState<Set<string>>(() => new Set());
   const [tab, setTab] = useState<WaiterTab>('floor');
   const [now, setNow] = useState(() => Date.now());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -61,16 +75,17 @@ export function Dashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const [tbls, zns, ords, cls] = await Promise.all([
+        const [tbls, zns, ords, bills, cls] = await Promise.all([
           authedFetch((tk) => api.listTables(tk)),
           authedFetch((tk) => api.listTableZones(tk)),
           authedFetch((tk) => api.listActiveOrders(tk)),
+          authedFetch((tk) => api.listOpenBills(tk)),
           authedFetch((tk) => api.listOpenWaiterCalls(tk)),
         ]);
         if (cancelled) return;
         setTables(tbls);
         setZones(zns);
-        setActiveOrders(ords);
+        setActiveOrders(mergeOrders(ords, bills));
         setCalls(cls);
       } catch (err) {
         if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
@@ -98,7 +113,7 @@ export function Dashboard() {
       setActiveOrders((prev) =>
         prev
           .map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o))
-          .filter((o) => ACTIVE_STATUSES.includes(o.status)),
+          .filter(isRelevant),
       );
     };
     const onTableStatus = (payload: { tableId: string; status: TableStatus }) => {
@@ -142,14 +157,33 @@ export function Dashboard() {
   );
 
   const onCallCleared = useCallback((id: string) => {
-    setCalls((prev) => prev.filter((c) => c.id !== id));
+    setCalls((prev) => {
+      const cleared = prev.find((c) => c.id === id);
+      if (cleared) {
+        setPendingCleanTables((s) => {
+          const next = new Set(s);
+          next.add(cleared.tableId);
+          return next;
+        });
+      }
+      return prev.filter((c) => c.id !== id);
+    });
+  }, []);
+
+  const dismissCleanPrompt = useCallback((tableId: string) => {
+    setPendingCleanTables((s) => {
+      if (!s.has(tableId)) return s;
+      const next = new Set(s);
+      next.delete(tableId);
+      return next;
+    });
   }, []);
 
   const onOrderChange = useCallback((next: Order | null) => {
     if (!next) return;
     setActiveOrders((prev) => {
       const without = prev.filter((o) => o.id !== next.id);
-      if (ACTIVE_STATUSES.includes(next.status)) return [next, ...without];
+      if (isRelevant(next)) return [next, ...without];
       return without;
     });
   }, []);
@@ -160,8 +194,8 @@ export function Dashboard() {
     () => (openTableId ? tables.find((tt) => tt.id === openTableId) ?? null : null),
     [openTableId, tables],
   );
-  const openTableOrder = useMemo(
-    () => (openTableId ? pickActiveOrder(activeOrders, openTableId) : null),
+  const openTableOrders = useMemo(
+    () => (openTableId ? pickOrdersForTable(activeOrders, openTableId) : []),
     [openTableId, activeOrders],
   );
   const openTableCall = useMemo(
@@ -301,13 +335,15 @@ export function Dashboard() {
       {openTable ? (
         <TableDetail
           table={openTable}
-          order={openTableOrder}
+          orders={openTableOrders}
           call={openTableCall}
           lang={lang}
           now={now}
           onClose={() => setOpenTableId(null)}
           onOrderChange={onOrderChange}
           onCallCleared={onCallCleared}
+          cleanPromptOpen={openTable ? pendingCleanTables.has(openTable.id) : false}
+          onDismissCleanPrompt={() => openTable && dismissCleanPrompt(openTable.id)}
         />
       ) : null}
     </div>

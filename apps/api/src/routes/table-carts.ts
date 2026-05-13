@@ -101,7 +101,7 @@ registerPath('put', '/carts/me', {
   responses: okResponses,
 });
 registerPath('delete', '/carts/me', {
-  summary: 'Clear the shared cart (cart owner only)',
+  summary: 'Clear the shared cart (any session on the same day-token)',
   tags: ['carts'],
   responses: okResponses,
 });

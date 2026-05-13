@@ -6,29 +6,36 @@ import { ApiError } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatMillimes, parseMillimes, pickLang } from '../utils/format.js';
-import { visualStateOf, type WaiterVisualState } from '../utils/waiter.js';
+import { pickPrimaryOrder, visualStateOf, type WaiterVisualState } from '../utils/waiter.js';
 import { IconBolt, IconChevronLeft } from './tf-icons.js';
 import { WaiterOrderSheet } from './WaiterOrderSheet.js';
 
 export function TableDetail({
   table,
-  order,
+  orders,
   call,
   lang,
   now,
   onClose,
   onOrderChange,
   onCallCleared,
+  cleanPromptOpen,
+  onDismissCleanPrompt,
 }: {
   table: TableWithDerived;
-  order: Order | null;
+  orders: Order[];
   call: WaiterCall | null;
   lang: LanguageCode;
   now: number;
   onClose: () => void;
   onOrderChange: (next: Order | null) => void;
   onCallCleared: (id: string) => void;
+  cleanPromptOpen: boolean;
+  onDismissCleanPrompt: () => void;
 }) {
+  const order = pickPrimaryOrder(orders);
+  const unpaidOrders = orders.filter((o) => o.paymentStatus !== 'paid');
+  const billTotalMillimes = unpaidOrders.reduce((s, o) => s + o.totalMillimes, 0);
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const me = useAuthStore((s) => s.user);
@@ -36,7 +43,6 @@ export function TableDetail({
   const [error, setError] = useState<string | null>(null);
   const [showPay, setShowPay] = useState(false);
   const [tipInput, setTipInput] = useState('');
-  const [billRequested, setBillRequested] = useState(false);
   const [showOrder, setShowOrder] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
 
@@ -79,25 +85,11 @@ export function TableDetail({
   const sheetRef = useFocusTrap<HTMLDivElement>();
   useEscapeKey(onClose);
 
-  const state: WaiterVisualState = visualStateOf(table, order ? [order] : [], call);
+  const state: WaiterVisualState = visualStateOf(table, orders, call);
   const assignedToMe = order !== null && me !== null && order.assignedWaiterId === me.id;
   const assignedToOther =
     order !== null && order.assignedWaiterId !== null && !assignedToMe;
-  const canRequestBill =
-    order !== null && order.status === 'served' && order.paymentStatus !== 'paid';
-
-  const requestBill = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await authedFetch((tk) => api.requestBillForTable(tk, table.id));
-      setBillRequested(true);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
+  const canSettleBill = unpaidOrders.some((o) => o.status === 'served');
 
   const advance = async (next: 'preparing' | 'ready' | 'served') => {
     if (!order) return;
@@ -113,17 +105,15 @@ export function TableDetail({
     }
   };
 
-  const submitPay = async () => {
-    if (!order) return;
+  const cancelOrder = async (orderId: string) => {
+    if (!window.confirm(t('detail.cancelOrderConfirm', { defaultValue: 'Cancel this round?' }))) {
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
-      const tip = parseMillimes(tipInput) ?? 0;
-      const result = await authedFetch((tk) =>
-        api.recordPayment(tk, order.id, { method: 'cash', tipMillimes: tip }),
-      );
-      onOrderChange(result.order);
-      if (result.fullyPaid) setShowPay(false);
+      const updated = await authedFetch((tk) => api.cancelOrder(tk, orderId));
+      onOrderChange(updated);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : (err as Error).message);
     } finally {
@@ -131,21 +121,43 @@ export function TableDetail({
     }
   };
 
-  const closeAndPaid = async () => {
-    if (!order) return;
+  const markPaid = async () => {
+    if (unpaidOrders.length === 0) return;
     setBusy(true);
     setError(null);
     try {
-      // Ensure the order is in a payable lifecycle state.
-      if (order.status === 'ready') {
-        const updated = await authedFetch((tk) => api.updateOrderStatus(tk, order.id, 'served'));
-        onOrderChange(updated);
+      // Advance any 'ready' rounds to 'served' first — payment endpoint
+      // requires the order to be in a payable state.
+      for (const o of unpaidOrders) {
+        if (o.status === 'ready') {
+          const updated = await authedFetch((tk) =>
+            api.updateOrderStatus(tk, o.id, 'served'),
+          );
+          onOrderChange(updated);
+        }
       }
+      // Tip goes on the first unpaid order so we don't double-count it.
       const tip = parseMillimes(tipInput) ?? 0;
-      const updatedPay = await authedFetch((tk) =>
-        api.recordPayment(tk, order.id, { method: 'cash', tipMillimes: tip }),
-      );
-      onOrderChange(updatedPay.order);
+      for (let i = 0; i < unpaidOrders.length; i++) {
+        const target = unpaidOrders[i];
+        const tipForThis = i === 0 ? tip : 0;
+        try {
+          const result = await authedFetch((tk) =>
+            api.recordPayment(tk, target.id, { method: 'cash', tipMillimes: tipForThis }),
+          );
+          onOrderChange(result.order);
+        } catch (err) {
+          // Stale UI: order was paid in another tab/by another waiter.
+          // Refresh it and keep going instead of surfacing as an error.
+          const msg = err instanceof ApiError ? err.message : (err as Error).message;
+          if (/already fully paid/i.test(msg)) {
+            const fresh = await authedFetch((tk) => api.getOrder(tk, target.id));
+            onOrderChange(fresh);
+            continue;
+          }
+          throw err;
+        }
+      }
       setShowPay(false);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : (err as Error).message);
@@ -173,6 +185,7 @@ export function TableDetail({
     setError(null);
     try {
       await authedFetch((tk) => api.markTableClean(tk, table.id));
+      onDismissCleanPrompt();
       onClose();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : (err as Error).message);
@@ -240,77 +253,100 @@ export function TableDetail({
           </div>
         ) : null}
 
-        {order ? (
-          <section className="tf-w-detail__order-card">
-            <div className="tf-w-detail__order-head">
-              <span className="tf-caption">
-                {t('detail.orderRef', {
-                  id: order.id.slice(0, 6).toUpperCase(),
-                  count: order.items.reduce((s, i) => s + i.quantity, 0),
-                })}
-              </span>
-              {minsInOrder > 0 ? (
-                <span className="tf-mono tf-w-detail__order-elapsed">
-                  {minsInOrder}m {t('detail.elapsed')}
-                </span>
-              ) : null}
-            </div>
-            <div className="tf-w-detail__items">
-              {order.items.map((item) => (
-                <div className="tf-w-detail__item" key={item.id}>
-                  <span className="tf-mono tf-w-detail__item-qty">{item.quantity}×</span>
-                  <span className="tf-w-detail__item-body">
-                    <span className="tf-w-detail__item-name">{pickLang(item.nameSnapshot, lang)}</span>
-                    {lang !== 'ar' && item.nameSnapshot.ar ? (
-                      <span className="tf-w-detail__item-ar" dir="rtl">
-                        {item.nameSnapshot.ar}
-                      </span>
-                    ) : null}
-                    {item.variants.length > 0 ? (
-                      <span className="tf-w-detail__item-variants">
-                        {item.variants.map((v) => pickLang(v.nameSnapshot, lang)).join(' · ')}
-                      </span>
-                    ) : null}
-                    {item.notes ? (
-                      <span className="tf-w-detail__item-notes">{item.notes}</span>
-                    ) : null}
+        {orders.length > 0 ? (
+          orders.map((o, idx) => {
+            const isPrimary = order !== null && o.id === order.id;
+            const oMins = Math.max(
+              0,
+              Math.floor((now - new Date(o.createdAt).getTime()) / 60000),
+            );
+            return (
+              <section className="tf-w-detail__order-card" key={o.id}>
+                <div className="tf-w-detail__order-head">
+                  <span className="tf-caption">
+                    {orders.length > 1
+                      ? `${t('detail.round', { defaultValue: 'Round' })} ${idx + 1} · `
+                      : ''}
+                    {t('detail.orderRef', {
+                      id: o.id.slice(0, 6).toUpperCase(),
+                      count: o.items.reduce((s, i) => s + i.quantity, 0),
+                    })}
                   </span>
-                  <span className="tf-mono tf-w-detail__item-line">
-                    {formatMillimes(
-                      (item.unitPriceMillimes +
-                        item.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0)) *
-                        item.quantity,
-                    )}
-                  </span>
+                  {oMins > 0 ? (
+                    <span className="tf-mono tf-w-detail__order-elapsed">
+                      {oMins}m {t('detail.elapsed')}
+                    </span>
+                  ) : null}
+                  {o.status === 'received' || o.status === 'preparing' ? (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => cancelOrder(o.id)}
+                      disabled={busy}
+                      style={{ color: 'var(--color-danger, #c0392b)' }}
+                    >
+                      {t('detail.cancelOrder', { defaultValue: 'Cancel' })}
+                    </button>
+                  ) : null}
                 </div>
-              ))}
-            </div>
-            <div className="tf-w-detail__totals">
-              <Row k={t('detail.subtotal')} v={formatMillimes(order.subtotalMillimes)} />
-              <Row k={t('detail.tax')} v={formatMillimes(order.taxMillimes)} />
-              <Row k={t('detail.service')} v={formatMillimes(order.serviceMillimes)} />
-              <Row k={t('detail.total')} v={formatMillimes(order.totalMillimes)} grand />
-              {order.paymentStatus === 'paid' ? (
-                <Row k={t('detail.paid')} v="✓" success />
-              ) : null}
-            </div>
-            {showPay ? (
-              <div className="tf-w-detail__pay">
-                <h3 className="tf-w-detail__pay-title">{t('detail.payment.title')}</h3>
-                <label className="tf-w-detail__pay-label">
-                  {t('detail.payment.tip')}
-                  <input
-                    className="tf-w-detail__pay-input"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="0.000"
-                    value={tipInput}
-                    onChange={(e) => setTipInput(e.target.value)}
-                  />
-                </label>
-              </div>
-            ) : null}
-          </section>
+                <div className="tf-w-detail__items">
+                  {o.items.map((item) => (
+                    <div className="tf-w-detail__item" key={item.id}>
+                      <span className="tf-mono tf-w-detail__item-qty">{item.quantity}×</span>
+                      <span className="tf-w-detail__item-body">
+                        <span className="tf-w-detail__item-name">{pickLang(item.nameSnapshot, lang)}</span>
+                        {lang !== 'ar' && item.nameSnapshot.ar ? (
+                          <span className="tf-w-detail__item-ar" dir="rtl">
+                            {item.nameSnapshot.ar}
+                          </span>
+                        ) : null}
+                        {item.variants.length > 0 ? (
+                          <span className="tf-w-detail__item-variants">
+                            {item.variants.map((v) => pickLang(v.nameSnapshot, lang)).join(' · ')}
+                          </span>
+                        ) : null}
+                        {item.notes ? (
+                          <span className="tf-w-detail__item-notes">{item.notes}</span>
+                        ) : null}
+                      </span>
+                      <span className="tf-mono tf-w-detail__item-line">
+                        {formatMillimes(
+                          (item.unitPriceMillimes +
+                            item.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0)) *
+                            item.quantity,
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="tf-w-detail__totals">
+                  <Row k={t('detail.subtotal')} v={formatMillimes(o.subtotalMillimes)} />
+                  <Row k={t('detail.tax')} v={formatMillimes(o.taxMillimes)} />
+                  <Row k={t('detail.service')} v={formatMillimes(o.serviceMillimes)} />
+                  <Row k={t('detail.total')} v={formatMillimes(o.totalMillimes)} grand />
+                  {o.paymentStatus === 'paid' ? (
+                    <Row k={t('detail.paid')} v="✓" success />
+                  ) : null}
+                </div>
+                {isPrimary && showPay ? (
+                  <div className="tf-w-detail__pay">
+                    <h3 className="tf-w-detail__pay-title">{t('detail.payment.title')}</h3>
+                    <label className="tf-w-detail__pay-label">
+                      {t('detail.payment.tip')}
+                      <input
+                        className="tf-w-detail__pay-input"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0.000"
+                        value={tipInput}
+                        onChange={(e) => setTipInput(e.target.value)}
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </section>
+            );
+          })
         ) : (
           <div className="tf-w-detail__no-order">
             <span className="tf-display tf-w-detail__no-order-title">
@@ -358,21 +394,38 @@ export function TableDetail({
               type="button"
               className="btn btn-success btn-lg btn-block"
               disabled={busy}
-              onClick={submitPay}
+              onClick={markPaid}
               style={{ flex: 1 }}
             >
               {busy ? t('detail.saving') : t('detail.payment.submit')}
             </button>
-            <button
-              type="button"
-              className="btn btn-lg btn-block"
-              disabled={busy}
-              onClick={closeAndPaid}
-              style={{ flex: 1 }}
-            >
-              {busy ? t('detail.saving') : t('detail.closeAndPaid', { defaultValue: 'Close & paid' })}
-            </button>
           </>
+        ) : cleanPromptOpen ? (
+          <div className="tf-w-detail__clean-prompt">
+            <div className="tf-w-detail__clean-prompt-q">
+              {t('detail.cleanPrompt.question')}
+            </div>
+            <div className="tf-w-detail__clean-prompt-row">
+              <button
+                type="button"
+                className="btn btn-ghost btn-lg"
+                onClick={onDismissCleanPrompt}
+                disabled={busy}
+                style={{ flex: 1 }}
+              >
+                {t('detail.cleanPrompt.notYet')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-success btn-lg"
+                onClick={markClean}
+                disabled={busy}
+                style={{ flex: 1 }}
+              >
+                {busy ? t('detail.saving') : t('detail.markClean')}
+              </button>
+            </div>
+          </div>
         ) : state === 'clean' ? (
           <button
             type="button"
@@ -401,31 +454,19 @@ export function TableDetail({
             <IconBolt />
             <span>{busy ? t('detail.saving') : t('detail.markPassed')}</span>
           </button>
-        ) : order && (state === 'paying' || canRequestBill) ? (
+        ) : order && (state === 'paying' || canSettleBill) ? (
           order.paymentStatus !== 'paid' ? (
-            <>
-              {canRequestBill ? (
-                <button
-                  type="button"
-                  className="btn btn-lg"
-                  onClick={requestBill}
-                  disabled={busy || billRequested}
-                >
-                  {billRequested ? t('detail.billRequested') : t('detail.requestBill')}
-                </button>
-              ) : null}
-              <button
-                type="button"
-                className="tf-w-detail__cta tf-w-detail__cta--ink"
-                onClick={() => setShowPay(true)}
-                disabled={busy}
-              >
-                <span>{t('detail.settleBill')}</span>
-                <span className="tf-mono tf-w-detail__cta-amount">
-                  {formatMillimes(order.totalMillimes)}
-                </span>
-              </button>
-            </>
+            <button
+              type="button"
+              className="tf-w-detail__cta tf-w-detail__cta--ink"
+              onClick={() => setShowPay(true)}
+              disabled={busy}
+            >
+              <span>{t('detail.settleBill')}</span>
+              <span className="tf-mono tf-w-detail__cta-amount">
+                {formatMillimes(billTotalMillimes)}
+              </span>
+            </button>
           ) : null
         ) : order && state === 'cooking' ? (
           <div className="tf-w-detail__cta tf-w-detail__cta--info">{t('detail.cookingNote')}</div>

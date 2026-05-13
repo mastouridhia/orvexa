@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { IsoDateTimeSchema, UuidSchema } from './common.js';
 
-export const StaffRoleSchema = z.enum(['admin', 'manager', 'kitchen', 'waiter']);
+export const StaffRoleSchema = z.enum(['admin', 'manager', 'kitchen', 'waiter', 'cashier']);
 export type StaffRole = z.infer<typeof StaffRoleSchema>;
 
 export const StaffUserSchema = z.object({

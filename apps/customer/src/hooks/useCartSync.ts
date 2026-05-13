@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { api } from '../api/queries.js';
 import { ApiError } from '../api/client.js';
+import { isSessionExpiredError } from '../api/errorMessage.js';
 import { useCartStore, type CartLine } from '../store/cart.js';
 import { useSessionStore } from '../store/session.js';
 import { connectCustomerSocket } from '../socket/client.js';
@@ -44,7 +45,13 @@ export function useCartSync(): void {
         replaceFromServer(incoming, cart.ownerSessionId);
         lastPushedRef.current = JSON.stringify(incoming);
       } catch (err) {
-        // Network errors are silent — local cart still works.
+        // 401 here means the session is expired — clear it so the app
+        // falls back to the QR-scan prompt.
+        if (isSessionExpiredError(err)) {
+          useSessionStore.getState().clear();
+          return;
+        }
+        // Other network errors are silent — local cart still works.
         if (!(err instanceof ApiError)) return;
       }
     })();

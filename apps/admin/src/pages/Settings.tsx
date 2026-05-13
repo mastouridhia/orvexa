@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LanguageCode, Restaurant } from '@orvexa/shared';
+import type { LanguageCode, PaymentPoint, Restaurant } from '@orvexa/shared';
 import { LanguageSelector } from '@orvexa/ui';
 import { ApiError } from '../api/client.js';
 import { api } from '../api/queries.js';
@@ -46,6 +46,7 @@ export function Settings() {
           taxPercent: restaurant.taxPercent,
           servicePercent: restaurant.servicePercent,
           timezone: restaurant.timezone,
+          paymentPoint: restaurant.paymentPoint,
         }),
       );
       setRestaurant(updated);
@@ -230,6 +231,28 @@ export function Settings() {
               </label>
             </div>
             <p className="tf-a-settings__note">{t('settings.pricingNote')}</p>
+            <label className="tf-a-settings__field">
+              <span className="tf-a-settings__field-label">
+                {t('settings.paymentPoint', { defaultValue: 'Payment point' })}
+              </span>
+              <select
+                value={restaurant.paymentPoint}
+                onChange={(e) =>
+                  setRestaurant({ ...restaurant, paymentPoint: e.target.value as PaymentPoint })
+                }
+              >
+                <option value="table">
+                  {t('settings.paymentPointTable', {
+                    defaultValue: 'At the table (waiter collects)',
+                  })}
+                </option>
+                <option value="counter">
+                  {t('settings.paymentPointCounter', {
+                    defaultValue: 'At a counter (cashier collects)',
+                  })}
+                </option>
+              </select>
+            </label>
           </div>
         </section>
 

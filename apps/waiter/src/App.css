@@ -719,9 +719,10 @@
 /* State variants — used on .tf-w-floor__dot, also as chip variants elsewhere. */
 .tf-w-floor__dot--open    { background: var(--bg-elev); color: var(--fg-soft); border-color: var(--line); }
 .tf-w-floor__dot--seated  { background: var(--bg-elev); color: var(--fg); border-color: var(--line); }
-.tf-w-floor__dot--ordered { background: var(--tf-accent-bg); color: var(--tf-accent-ink); border-color: rgba(217, 122, 44, 0.3); }
+.tf-w-floor__dot--ordered { background: var(--info-bg); color: var(--info-ink); border-color: rgba(58, 115, 196, 0.35); }
 .tf-w-floor__dot--cooking { background: var(--tf-accent-bg); color: var(--tf-accent-ink); border-color: var(--tf-accent); }
 .tf-w-floor__dot--ready   { background: var(--tf-lime); color: var(--tf-lime-ink); border-color: var(--tf-lime-ink); }
+.tf-w-floor__dot--eating  { background: #EFE6F5; color: #4A2E6B; border-color: rgba(92, 58, 130, 0.4); }
 .tf-w-floor__dot--paying  { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .tf-w-floor__dot--clean   { background: var(--success-bg); color: var(--success-ink); border-color: rgba(46, 139, 87, 0.4); }
 .tf-w-floor__dot--call    { background: var(--danger); color: #fff; border-color: var(--danger); }
@@ -732,6 +733,19 @@
 }
 .tf-w-floor__dot.is-ready { box-shadow: 0 0 0 4px rgba(166, 245, 98, 0.4); }
 .tf-w-floor__dot.is-overdue { z-index: 2; }
+
+/* Reorder split — bottom-right triangle shows the secondary round's state. */
+.tf-w-floor__dot-split {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+.tf-w-floor__dot-split--ordered { background: var(--info-bg); }
+.tf-w-floor__dot-split--cooking { background: var(--tf-accent-bg); }
+.tf-w-floor__dot-split--ready   { background: var(--tf-lime); }
+.tf-w-floor__dot-split--eating  { background: #EFE6F5; }
+.tf-w-floor__dot.is-reorder { border-style: dashed; }
 
 /* Bottom legend strip */
 .tf-w-floor__legend {
@@ -763,9 +777,10 @@
 }
 .tf-w-floor__legend-chip--open    .tf-w-floor__legend-dot { background: rgba(25, 20, 14, 0.08); }
 .tf-w-floor__legend-chip--seated  .tf-w-floor__legend-dot { background: var(--bg-elev); border-color: var(--line); }
-.tf-w-floor__legend-chip--ordered .tf-w-floor__legend-dot { background: var(--tf-accent-bg); border-color: rgba(217, 122, 44, 0.3); }
+.tf-w-floor__legend-chip--ordered .tf-w-floor__legend-dot { background: var(--info-bg); border-color: rgba(58, 115, 196, 0.35); }
 .tf-w-floor__legend-chip--cooking .tf-w-floor__legend-dot { background: var(--tf-accent-bg); border-color: var(--tf-accent); }
 .tf-w-floor__legend-chip--ready   .tf-w-floor__legend-dot { background: var(--tf-lime); border-color: var(--tf-lime-ink); }
+.tf-w-floor__legend-chip--eating  .tf-w-floor__legend-dot { background: #EFE6F5; border-color: rgba(92, 58, 130, 0.4); }
 .tf-w-floor__legend-chip--paying  .tf-w-floor__legend-dot { background: var(--fg); }
 .tf-w-floor__legend-chip--clean   .tf-w-floor__legend-dot { background: var(--success-bg); border-color: rgba(46, 139, 87, 0.4); }
 .tf-w-floor__legend-chip--call    .tf-w-floor__legend-dot { background: var(--danger); }
@@ -1313,6 +1328,21 @@
   background: rgba(250, 248, 244, 0.94);
   backdrop-filter: blur(20px);
   flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.tf-w-detail__clean-prompt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tf-w-detail__clean-prompt-q {
+  font-weight: 600;
+  text-align: center;
+}
+.tf-w-detail__clean-prompt-row {
   display: flex;
   gap: 8px;
 }

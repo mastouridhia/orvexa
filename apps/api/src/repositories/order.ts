@@ -78,6 +78,21 @@ export class OrderRepository extends BaseRepository {
     return full ?? null;
   }
 
+  async listOpenBills(restaurantId: string): Promise<FullOrder[]> {
+    const rows = await this.db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          ne(orders.status, 'cancelled'),
+          ne(orders.paymentStatus, 'paid'),
+        ),
+      )
+      .orderBy(desc(orders.createdAt));
+    return loadFullOrders(this.db, rows);
+  }
+
   async listActive(restaurantId: string): Promise<FullOrder[]> {
     const rows = await this.db
       .select()

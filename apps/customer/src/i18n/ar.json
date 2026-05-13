@@ -32,7 +32,8 @@
       "napkin": "منديل",
       "straw": "ماصة",
       "water": "ماء",
-      "condiments": "بهارات"
+      "condiments": "بهارات",
+      "cleaning": "تنظيف الطاولة"
     }
   },
   "menu": {
@@ -40,7 +41,9 @@
     "empty": "لا توجد أطباق متاحة حاليا.",
     "unavailable": "غير متاح",
     "serviceHours": "خدمة الغداء · حتى 16:00",
-    "served": "الخدمة"
+    "served": "الخدمة",
+    "activeOrderTitle": "طلب #{{id}} · {{status}}",
+    "activeOrderCta": "تتبع الطلب"
   },
   "dish": {
     "addToCart": "أضف إلى السلة",
@@ -130,7 +133,8 @@
     "callSub": "الرد ~30 ثانية",
     "billTitle": "الفاتورة",
     "billSub": "الدفع على الطاولة",
-    "eta": "~{{minutes}} دقيقة"
+    "eta": "~{{minutes}} دقيقة",
+    "orderMore": "طلب أطباق أخرى"
   },
   "waiter": {
     "idleTitle": "تحتاج مساعدة؟",

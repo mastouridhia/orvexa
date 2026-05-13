@@ -2,6 +2,7 @@ import type {
   Currency,
   LanguageCode,
   PatchRestaurantRequest,
+  PaymentPoint,
   Restaurant,
 } from '@orvexa/shared';
 import {
@@ -23,6 +24,7 @@ export function toRestaurant(row: RestaurantRow): Restaurant {
     servicePercent: row.servicePercent,
     defaultPrepMinutes: row.defaultPrepMinutes,
     timezone: row.timezone,
+    paymentPoint: row.paymentPoint as PaymentPoint,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -50,6 +52,7 @@ export class RestaurantService {
     if (input.servicePercent !== undefined) patch.servicePercent = input.servicePercent;
     if (input.defaultPrepMinutes !== undefined) patch.defaultPrepMinutes = input.defaultPrepMinutes;
     if (input.timezone !== undefined) patch.timezone = input.timezone;
+    if (input.paymentPoint !== undefined) patch.paymentPoint = input.paymentPoint;
 
     if (Object.keys(patch).length === 0) {
       const row = await this.repo.findById(id);

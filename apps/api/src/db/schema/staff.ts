@@ -19,7 +19,9 @@ export const users = pgTable(
       .references(() => restaurants.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
     name: text('name').notNull(),
-    role: text('role', { enum: ['admin', 'manager', 'kitchen', 'waiter'] }).notNull(),
+    role: text('role', {
+      enum: ['admin', 'manager', 'kitchen', 'waiter', 'cashier'],
+    }).notNull(),
     passwordHash: text('password_hash').notNull(),
     disabledAt: timestamp('disabled_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
