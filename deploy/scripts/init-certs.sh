@@ -72,13 +72,15 @@ for d in "${others[@]}"; do
   issue_cert "$d"
 done
 
-# Activate the full HTTPS config: copy from conf.d-https to conf.d, then reload.
-# The proxy mounts both directories (conf.d-https is a staging area).
+# Activate the full HTTPS config: copy from conf.d-https to conf.d on the
+# host (both dirs are mounted read-only into the proxy), then reload nginx
+# inside the container.
 echo "[init-certs] Activating HTTPS config and reloading proxy..."
-compose exec -T proxy sh -c '
-  cp /etc/nginx/conf.d-https/02-orvexa.conf /etc/nginx/conf.d/02-orvexa.conf \
-  && nginx -t \
-  && nginx -s reload
-'
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cp "$REPO_ROOT/deploy/nginx/conf.d-https/02-orvexa.conf" \
+   "$REPO_ROOT/deploy/nginx/conf.d/02-orvexa.conf"
+compose exec -T proxy nginx -t
+compose exec -T proxy nginx -s reload
 
 echo "[init-certs] Done. HTTPS is live."
