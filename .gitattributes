@@ -1,0 +1,7 @@
+# Force LF on shell scripts and other Unix-only files so Windows checkouts
+# don't break them in Docker / on the VPS.
+*.sh        text eol=lf
+Dockerfile* text eol=lf
+*.conf      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
