@@ -38,7 +38,7 @@ issue_cert() {
   done
 
   echo "[init-certs] Requesting cert for: $primary ${*:+(SANs: $*)}"
-  compose run --rm certbot certonly \
+  compose run --rm --entrypoint certbot certbot certonly \
     --webroot --webroot-path=/var/www/certbot \
     --email "$LE_EMAIL" --agree-tos --no-eff-email \
     --non-interactive \
