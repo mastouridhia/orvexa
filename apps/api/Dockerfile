@@ -24,7 +24,10 @@ COPY packages/shared/package.json packages/shared/
 COPY packages/ui/package.json packages/ui/
 COPY packages/api-client/package.json packages/api-client/
 
-RUN npm ci
+# npm ci is strict to the lockfile, which was generated on Windows and is
+# missing linux-x64 native binaries (sharp). Use `npm install` so npm resolves
+# the correct platform-specific optional deps for the current build environment.
+RUN npm install --no-audit --no-fund
 
 # Source for the api dep graph only — frontend sources stay out of the image.
 COPY packages/shared packages/shared
