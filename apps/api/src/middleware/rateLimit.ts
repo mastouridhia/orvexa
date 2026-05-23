@@ -1,5 +1,5 @@
 import type { Request } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { ApiErrorCode } from '@orvexa/shared';
 import { config } from '../config.js';
 import { errorEnvelope } from '../utils/envelope.js';
@@ -31,7 +31,7 @@ export const orderRateLimit = rateLimit({
   limit: 30,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  keyGenerator: (req: Request) => req.customerSession?.id ?? (req.ip ?? ''),
+  keyGenerator: (req: Request) => req.customerSession?.id ?? ipKeyGenerator(req.ip ?? ''),
   handler: tooManyRequestsHandler as never,
 });
 
