@@ -1,4 +1,4 @@
-import { and, asc, between, eq, isNull } from 'drizzle-orm';
+import { and, asc, between, eq, isNull, sql } from 'drizzle-orm';
 import { staffShifts, users } from '../db/schema/staff.js';
 import { BaseRepository } from './base.js';
 
@@ -61,6 +61,13 @@ export class StaffRepository extends BaseRepository {
       .where(eq(users.id, id))
       .returning();
     return row ?? null;
+  }
+
+  async bumpTokenVersion(id: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ tokenVersion: sql`${users.tokenVersion} + 1`, updatedAt: new Date() })
+      .where(eq(users.id, id));
   }
 }
 

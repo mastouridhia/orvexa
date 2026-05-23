@@ -43,6 +43,7 @@
   },
   "card": {
     "readyToPass": "Ready · pass",
+    "sectionDone": "Done · waiting for other station",
     "holdTo": {
       "preparing": "Hold to start",
       "ready": "Hold to mark ready",
@@ -54,7 +55,11 @@
     "firedAgo": "FIRED {{time}} AGO",
     "eta": "Estimated prep time",
     "outOfStock": "86 this dish",
-    "outOfStockConfirm": "Mark this dish as out of stock?"
+    "outOfStockConfirm": "Mark this dish as out of stock?",
+    "done": {
+      "served": "Served",
+      "cancelled": "Cancelled"
+    }
   },
   "empty": {
     "allClear": {
@@ -86,6 +91,10 @@
     "title": "Settings",
     "language": "Language",
     "languageHint": "Picked once — change it here."
+  },
+  "section": {
+    "kitchen": "Kitchen",
+    "bar": "Bar & Café"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {

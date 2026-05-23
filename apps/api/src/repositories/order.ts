@@ -249,4 +249,73 @@ export class OrderRepository extends BaseRepository {
     const [full] = await loadFullOrders(this.db, [row]);
     return full ?? null;
   }
+
+  async countActiveOrders(restaurantId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ value: count() })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          inArray(orders.status, ['received', 'preparing']),
+        ),
+      );
+    return Number(row?.value ?? 0);
+  }
+
+  async advanceSectionItems(input: {
+    orderId: string;
+    section: 'kitchen' | 'bar';
+    itemStatus: 'preparing' | 'ready';
+  }): Promise<FullOrder | null> {
+    return this.db.transaction(async (tx) => {
+      const [currentOrder] = await tx
+        .select()
+        .from(orders)
+        .where(eq(orders.id, input.orderId))
+        .limit(1);
+      if (!currentOrder) return null;
+
+      await tx
+        .update(orderItems)
+        .set({ itemStatus: input.itemStatus })
+        .where(
+          and(
+            eq(orderItems.orderId, input.orderId),
+            eq(orderItems.kitchenSection, input.section),
+          ),
+        );
+
+      const allItems = await tx
+        .select({ itemStatus: orderItems.itemStatus })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, input.orderId));
+
+      const allReady = allItems.every((i) => i.itemStatus === 'ready');
+      const anyActive = allItems.some(
+        (i) => i.itemStatus === 'preparing' || i.itemStatus === 'ready',
+      );
+      const newStatus = allReady ? 'ready' : anyActive ? 'preparing' : 'received';
+
+      const statusPatch: Record<string, unknown> = { status: newStatus, updatedAt: new Date() };
+      if (newStatus !== currentOrder.status) {
+        if (newStatus === 'preparing' && !currentOrder.preparingAt) {
+          statusPatch.preparingAt = new Date();
+        }
+        if (newStatus === 'ready' && !currentOrder.readyAt) {
+          statusPatch.readyAt = new Date();
+        }
+      }
+
+      const [updated] = await tx
+        .update(orders)
+        .set(statusPatch)
+        .where(eq(orders.id, input.orderId))
+        .returning();
+      if (!updated) return null;
+
+      const [full] = await loadFullOrders(tx as unknown as Db, [updated]);
+      return full ?? null;
+    });
+  }
 }

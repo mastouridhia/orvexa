@@ -49,9 +49,16 @@ authRouter.post(
   }),
 );
 
-authRouter.post('/auth/logout', (_req, res) => {
-  sendSuccess(res, { ok: true });
-});
+authRouter.post(
+  '/auth/logout',
+  asyncHandler(async (req, res) => {
+    const { refreshToken } = req.body as { refreshToken?: unknown };
+    if (typeof refreshToken === 'string' && refreshToken.length > 0) {
+      await authService.logout(refreshToken);
+    }
+    sendSuccess(res, { ok: true });
+  }),
+);
 
 authRouter.post(
   '/auth/refresh',

@@ -22,10 +22,17 @@ export function Wall() {
   const authedFetch = useAuthStore((s) => s.authedFetch);
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [doneOrders, setDoneOrders] = useState<Map<string, Order>>(() => new Map());
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const tableLabels = useMemo(() => new Map<string, string>(), []);
   const fetchedRef = useRef(false);
+  const ordersRef = useRef<Order[]>([]);
+  const authedFetchRef = useRef(authedFetch);
+  const connectedOnce = useRef(false);
+
+  ordersRef.current = orders;
+  authedFetchRef.current = authedFetch;
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -52,17 +59,40 @@ export function Wall() {
       setOrders((prev) => (prev.some((o) => o.id === payload.order.id) ? prev : [payload.order, ...prev]));
     };
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
-      setOrders((prev) =>
-        prev
-          .map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o))
-          .filter((o) => o.status === 'received' || o.status === 'preparing' || o.status === 'ready'),
-      );
+      if (payload.status === 'served' || payload.status === 'cancelled') {
+        const order = ordersRef.current.find((o) => o.id === payload.orderId);
+        if (order) {
+          const done: Order = { ...order, status: payload.status };
+          setDoneOrders((m) => new Map(m).set(payload.orderId, done));
+          window.setTimeout(() => {
+            setDoneOrders((m) => { const n = new Map(m); n.delete(payload.orderId); return n; });
+          }, 10_000);
+        }
+        setOrders((prev) => prev.filter((o) => o.id !== payload.orderId));
+      } else {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o)),
+        );
+      }
+    };
+    const onConnect = () => {
+      setError(null);
+      if (!connectedOnce.current) {
+        connectedOnce.current = true;
+        return;
+      }
+      void authedFetchRef.current((tk) => api.listActive(tk)).then((list) => {
+        setOrders(list);
+        setDoneOrders(new Map());
+      }).catch(() => {});
     };
     socket.on('order:created', onCreated);
     socket.on('order:status', onStatus);
+    socket.on('connect', onConnect);
     return () => {
       socket.off('order:created', onCreated);
       socket.off('order:status', onStatus);
+      socket.off('connect', onConnect);
     };
   }, [accessToken]);
 
@@ -71,8 +101,13 @@ export function Wall() {
   const ready = orders.filter((o) => o.status === 'ready');
   const late = orders.filter((o) => o.status !== 'ready' && ageBucket(o.createdAt, now) === 'late');
 
-  // Show the 6 oldest open tickets — design is glanceable, not exhaustive.
-  const visible = [...orders].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, 6);
+  // 6 oldest active tickets + all recent done cards at the end.
+  const active = [...orders]
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .slice(0, 6)
+    .map((o) => ({ order: o, isDone: false }));
+  const done = Array.from(doneOrders.values()).map((o) => ({ order: o, isDone: true }));
+  const visible = [...active, ...done];
 
   const clock = new Date(now).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
 
@@ -109,7 +144,7 @@ export function Wall() {
             <div className="tf-kds__empty-sub">{t('empty.allClear.sub')}</div>
           </div>
         ) : (
-          visible.map((o) => (
+          visible.map(({ order: o, isDone }) => (
             <TicketCard
               key={o.id}
               order={o}
@@ -117,6 +152,7 @@ export function Wall() {
               tableLabels={tableLabels}
               now={now}
               onAdvance={() => Promise.resolve()}
+              isDone={isDone}
               large
             />
           ))

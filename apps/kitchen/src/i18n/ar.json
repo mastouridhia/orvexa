@@ -43,6 +43,7 @@
   },
   "card": {
     "readyToPass": "جاهزة · للتقديم",
+    "sectionDone": "منتهي · انتظار المحطة الأخرى",
     "holdTo": {
       "preparing": "اضغط مطولاً للبدء",
       "ready": "اضغط مطولاً للتعليم كجاهز",
@@ -54,7 +55,11 @@
     "firedAgo": "أُرسلت قبل {{time}}",
     "eta": "وقت التحضير المقدّر",
     "outOfStock": "تحديد كنفاد المخزون",
-    "outOfStockConfirm": "تحديد هذا الطبق كنفاد المخزون؟"
+    "outOfStockConfirm": "تحديد هذا الطبق كنفاد المخزون؟",
+    "done": {
+      "served": "تم التقديم",
+      "cancelled": "ملغاة"
+    }
   },
   "empty": {
     "allClear": {
@@ -86,6 +91,10 @@
     "title": "الإعدادات",
     "language": "اللغة",
     "languageHint": "تُختار مرة واحدة — يمكن تغييرها هنا."
+  },
+  "section": {
+    "kitchen": "المطبخ",
+    "bar": "البار والكافيه"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {

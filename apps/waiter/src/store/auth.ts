@@ -25,7 +25,11 @@ export const useAuthStore = create<AuthState>()(
       loginError: null,
       setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
       setUser: (user) => set({ user }),
-      logout: () => set({ accessToken: null, refreshToken: null, user: null }),
+      logout: () => {
+        const { refreshToken } = get();
+        if (refreshToken) void api.logout(refreshToken).catch(() => undefined);
+        set({ accessToken: null, refreshToken: null, user: null });
+      },
       async login(email, password, restaurantSlug) {
         try {
           const result = await api.login(email, password, restaurantSlug);

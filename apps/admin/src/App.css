@@ -854,6 +854,26 @@
 .dt tr.row-disabled { opacity: 0.55; }
 .dt .right { text-align: end; }
 
+/* Section badges (Kitchen / Bar & Café) */
+.section-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.section-badge--kitchen {
+  background: rgba(245, 154, 77, 0.12);
+  color: #c86a1a;
+  border: 1px solid rgba(245, 154, 77, 0.3);
+}
+.section-badge--bar {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
 /* ── Tabs ────────────────────────────────────────────── */
 .tabs {
   display: flex;

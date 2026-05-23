@@ -4,7 +4,8 @@ import { HttpError, NotFoundError } from '../utils/errors.js';
 import { errorEnvelope } from '../utils/envelope.js';
 
 export const notFoundHandler: RequestHandler = (req, _res, next) => {
-  next(new NotFoundError(`Route not found: ${req.method} ${req.path}`));
+  req.log?.debug({ method: req.method, path: req.path }, 'route not found');
+  next(new NotFoundError('Not found'));
 };
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {

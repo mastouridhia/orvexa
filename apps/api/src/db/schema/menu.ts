@@ -19,6 +19,7 @@ export const categories = pgTable(
     nameAr: text('name_ar').notNull(),
     nameFr: text('name_fr').notNull(),
     nameEn: text('name_en').notNull(),
+    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] }).notNull().default('kitchen'),
     sortOrder: integer('sort_order').notNull().default(0),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

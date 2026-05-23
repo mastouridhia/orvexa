@@ -76,6 +76,15 @@ export class RealtimeBus {
   cartUpdated(payload: CartUpdatedPayload): void {
     this.io.to(tableRoom(payload.tableId)).emit('cart:updated', payload);
   }
+
+  staffRevoked(staffId: string): void {
+    for (const [, socket] of this.io.sockets.sockets) {
+      const identity = socket.data.identity;
+      if (identity?.kind === 'staff' && identity.userId === staffId) {
+        socket.disconnect(true);
+      }
+    }
+  }
 }
 
 let instance: RealtimeBus | null = null;

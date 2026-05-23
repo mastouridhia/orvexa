@@ -57,6 +57,8 @@
   },
   "cart": {
     "title": "سلتك",
+    "titleLead": "",
+    "titleEm": "طلبك",
     "empty": "سلتك فارغة.",
     "subtotal": "المجموع الفرعي",
     "tax": "الضريبة ({{percent}}%)",

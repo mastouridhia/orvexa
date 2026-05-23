@@ -57,6 +57,8 @@
   },
   "cart": {
     "title": "Votre panier",
+    "titleLead": "Votre",
+    "titleEm": "commande",
     "empty": "Votre panier est vide.",
     "subtotal": "Sous-total",
     "tax": "TVA ({{percent}}%)",

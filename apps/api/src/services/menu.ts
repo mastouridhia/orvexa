@@ -29,6 +29,7 @@ export function rowToCategory(row: CategoryRow): Category {
     id: row.id,
     restaurantId: row.restaurantId,
     name: { ar: row.nameAr, fr: row.nameFr, en: row.nameEn },
+    kitchenSection: row.kitchenSection as 'kitchen' | 'bar',
     sortOrder: row.sortOrder,
     isActive: row.isActive,
   };
@@ -159,6 +160,7 @@ export class MenuService {
       nameAr: input.name.ar,
       nameFr: input.name.fr,
       nameEn: input.name.en,
+      kitchenSection: input.kitchenSection ?? 'kitchen',
       sortOrder: input.sortOrder ?? 0,
       isActive: input.isActive ?? true,
     });
@@ -179,6 +181,7 @@ export class MenuService {
       patch.nameFr = input.name.fr;
       patch.nameEn = input.name.en;
     }
+    if (input.kitchenSection !== undefined) patch.kitchenSection = input.kitchenSection;
     if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     if (input.isActive !== undefined) patch.isActive = input.isActive;
     const row = await this.categoryRepo.update(id, patch);

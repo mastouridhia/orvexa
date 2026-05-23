@@ -1,10 +1,14 @@
 import { z } from 'zod';
 import { LocalizedStringSchema, UuidSchema } from './common.js';
 
+export const KitchenSectionSchema = z.enum(['kitchen', 'bar']);
+export type KitchenSection = z.infer<typeof KitchenSectionSchema>;
+
 export const CategorySchema = z.object({
   id: UuidSchema,
   restaurantId: UuidSchema,
   name: LocalizedStringSchema,
+  kitchenSection: KitchenSectionSchema.default('kitchen'),
   sortOrder: z.number().int(),
   isActive: z.boolean(),
 });
@@ -63,6 +67,7 @@ const TriLangDescriptionSchema = z.object({
 
 export const CreateCategoryRequestSchema = z.object({
   name: TriLangNameSchema,
+  kitchenSection: KitchenSectionSchema.optional(),
   sortOrder: z.number().int().nonnegative().optional(),
   isActive: z.boolean().optional(),
 });
@@ -71,6 +76,7 @@ export type CreateCategoryRequest = z.infer<typeof CreateCategoryRequestSchema>;
 export const UpdateCategoryRequestSchema = z
   .object({
     name: TriLangNameSchema,
+    kitchenSection: KitchenSectionSchema,
     sortOrder: z.number().int().nonnegative(),
     isActive: z.boolean(),
   })

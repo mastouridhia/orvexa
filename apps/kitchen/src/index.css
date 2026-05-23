@@ -334,8 +334,11 @@ input:focus {
 }
 
 [data-stagger] > * {
-  opacity: 0;
-  animation: tf-stagger-in 480ms var(--ease-out) forwards;
+  animation: tf-stagger-in 480ms var(--ease-out) both;
+  /* fill-mode 'both': the 'from' keyframe (opacity:0) applies during the delay
+     (backwards), final state (opacity:1) persists after (forwards).
+     No explicit opacity:0 here — that would survive when tf-late-throb overrides
+     this animation, permanently hiding late cards. */
 }
 [data-stagger] > *:nth-child(1) { animation-delay: 40ms; }
 [data-stagger] > *:nth-child(2) { animation-delay: 90ms; }
@@ -352,6 +355,13 @@ input:focus {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  /* The stagger rule's 'both' fill mode is tied to the animation — when animation
+     is effectively disabled, the backwards fill (opacity:0 during delay) would linger
+     for the original delay values (up to 390ms). Kill it explicitly. */
+  [data-stagger] > * {
+    animation: none !important;
+    opacity: 1 !important;
   }
 }
 

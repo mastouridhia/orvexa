@@ -57,6 +57,8 @@
   },
   "cart": {
     "title": "Your cart",
+    "titleLead": "Your",
+    "titleEm": "order",
     "empty": "Your cart is empty.",
     "subtotal": "Subtotal",
     "tax": "Tax ({{percent}}%)",

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import {
   AddOrderItemsRequestSchema,
+  AdvanceSectionRequestSchema,
   OrderHistoryQuerySchema,
   OrderListQuerySchema,
   PlaceOrderRequestSchema,
@@ -21,6 +22,7 @@ import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
+import { orderRateLimit } from '../middleware/rateLimit.js';
 import { registerPath, registerTag } from '../utils/openapi.js';
 import { getBus } from '../realtime/bus.js';
 
@@ -42,6 +44,7 @@ export const ordersRouter = Router();
 ordersRouter.post(
   '/orders',
   requireCustomerSession,
+  orderRateLimit,
   validate({ body: PlaceOrderRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
@@ -83,6 +86,7 @@ ordersRouter.post(
 ordersRouter.post(
   '/orders/:id/items',
   requireCustomerSession,
+  orderRateLimit,
   validate({ params: IdParams, body: AddOrderItemsRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
@@ -168,6 +172,7 @@ ordersRouter.get(
 ordersRouter.get(
   '/orders',
   requireAuth,
+  requireRole('admin', 'manager', 'waiter', 'kitchen'),
   validate({ query: OrderListQuerySchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -207,6 +212,20 @@ ordersRouter.patch(
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
     const order = await service.updateStatus(req.user.restaurantId, req.params.id, req.body);
+    getBus().orderStatusChanged(order);
+    await emitTableStatus(order.restaurantId, order.tableId);
+    sendSuccess(res, order);
+  }),
+);
+
+ordersRouter.patch(
+  '/orders/:id/advance-section',
+  requireAuth,
+  requireRole('admin', 'manager', 'kitchen', 'waiter'),
+  validate({ params: IdParams, body: AdvanceSectionRequestSchema }),
+  asyncHandler(async (req, res) => {
+    if (!req.user) throw new UnauthorizedError('Authentication required');
+    const order = await service.advanceSection(req.user.restaurantId, req.params.id, req.body);
     getBus().orderStatusChanged(order);
     await emitTableStatus(order.restaurantId, order.tableId);
     sendSuccess(res, order);

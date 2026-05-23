@@ -79,12 +79,16 @@ export const orderItems = pgTable(
     unitPriceMillimes: integer('unit_price_millimes').notNull(),
     prepTimeMinutes: integer('prep_time_minutes'),
     quantity: integer('quantity').notNull().default(1),
+    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] }).notNull().default('kitchen'),
+    itemStatus: text('item_status', { enum: ['received', 'preparing', 'ready'] }).notNull().default('received'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index('order_items_order_idx').on(t.orderId),
     index('order_items_dish_idx').on(t.dishId),
+    index('order_items_kitchen_section_idx').on(t.kitchenSection),
+    index('order_items_status_idx').on(t.itemStatus),
   ],
 );
 

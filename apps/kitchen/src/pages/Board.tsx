@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LanguageCode, Order, OrderStatus } from '@orvexa/shared';
+import type { KitchenSection, LanguageCode, Order, OrderStatus } from '@orvexa/shared';
 import { ApiError } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
@@ -28,9 +28,10 @@ import {
   IconSettings,
 } from '../components/tf-icons.js';
 
-type AdvanceTo = 'preparing' | 'ready' | 'served';
+type SectionBumpStatus = 'preparing' | 'ready';
 
 type FilterId = 'all' | 'pushing' | 'received' | 'preparing' | 'ready';
+type SectionId = KitchenSection;
 
 type Counts = {
   open: number;
@@ -59,16 +60,25 @@ export function Board() {
   const authedFetch = useAuthStore((s) => s.authedFetch);
 
   const [orders, setOrders] = useState<Order[]>([]);
+  const [doneOrders, setDoneOrders] = useState<Map<string, Order>>(() => new Map());
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [soundOn, setSoundOn] = useState(isAudioEnabled());
   const [paused, setPaused] = useState(false);
   const [filter, setFilter] = useState<FilterId>('all');
+  const [section, setSection] = useState<SectionId>('kitchen');
   const [now, setNow] = useState(() => Date.now());
   const [recentIds, setRecentIds] = useState<Set<string>>(() => new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const seenOrderIds = useRef<Set<string>>(new Set());
+  const ordersRef = useRef<Order[]>([]);
+  const authedFetchRef = useRef(authedFetch);
+  const connectedOnce = useRef(false);
   const tableLabels = useMemo(() => new Map<string, string>(), []);
+
+  // Keep refs in sync so socket callbacks always see fresh values.
+  ordersRef.current = orders;
+  authedFetchRef.current = authedFetch;
 
   // Tick every second so age + MM:SS counters update live.
   useEffect(() => {
@@ -127,15 +137,37 @@ export function Board() {
       }
     };
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
-      setOrders((prev) =>
-        prev
-          .map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o))
-          // Drop terminal orders — they don't belong on the board
-          .filter((o) => o.status === 'received' || o.status === 'preparing' || o.status === 'ready'),
-      );
+      if (payload.status === 'served' || payload.status === 'cancelled') {
+        // Keep the card visible for 10 s so kitchen can see what happened to a late order.
+        const order = ordersRef.current.find((o) => o.id === payload.orderId);
+        if (order) {
+          const done: Order = { ...order, status: payload.status };
+          setDoneOrders((m) => new Map(m).set(payload.orderId, done));
+          window.setTimeout(() => {
+            setDoneOrders((m) => { const n = new Map(m); n.delete(payload.orderId); return n; });
+          }, 10_000);
+        }
+        setOrders((prev) => prev.filter((o) => o.id !== payload.orderId));
+      } else {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o)),
+        );
+      }
     };
-    // Recover errors when the socket reconnects after a network drop.
-    const onConnect = () => setError(null);
+    // Re-fetch on reconnect to recover any events missed during the disconnect window.
+    // Skip the first connect — the initial fetch effect already covers that.
+    const onConnect = () => {
+      setError(null);
+      if (!connectedOnce.current) {
+        connectedOnce.current = true;
+        return;
+      }
+      void authedFetchRef.current((tk) => api.listActive(tk)).then((list) => {
+        setOrders(list);
+        setDoneOrders(new Map());
+        for (const o of list) seenOrderIds.current.add(o.id);
+      }).catch(() => {});
+    };
     socket.on('order:created', onCreated);
     socket.on('order:status', onStatus);
     socket.on('connect', onConnect);
@@ -146,9 +178,9 @@ export function Board() {
     };
   }, [accessToken]);
 
-  const advance = async (orderId: string, status: AdvanceTo) => {
+  const bumpSection = async (orderId: string, sec: SectionId, status: SectionBumpStatus) => {
     try {
-      const updated = await authedFetch((tk) => api.updateStatus(tk, orderId, status));
+      const updated = await authedFetch((tk) => api.advanceSection(tk, orderId, sec, status));
       setOrders((prev) => {
         if (updated.status === 'served' || updated.status === 'cancelled') {
           return prev.filter((o) => o.id !== updated.id);
@@ -179,7 +211,18 @@ export function Board() {
     }
   };
 
-  // Aggregate counts for the header stat strip + filter pill badges.
+  // Per-section active-order counts for tab badges.
+  const sectionCounts = useMemo(() => {
+    const counts: Record<SectionId, number> = { kitchen: 0, bar: 0 };
+    for (const o of orders) {
+      for (const sec of ['kitchen', 'bar'] as SectionId[]) {
+        if (o.items.some((i) => i.kitchenSection === sec)) counts[sec] += 1;
+      }
+    }
+    return counts;
+  }, [orders]);
+
+  // Aggregate counts for the header stat strip + filter pill badges (scoped to active section).
   const counts = useMemo(() => {
     let received = 0;
     let preparing = 0;
@@ -187,6 +230,7 @@ export function Board() {
     let late = 0;
     let pushing = 0;
     for (const o of orders) {
+      if (!o.items.some((i) => i.kitchenSection === section)) continue;
       if (o.status === 'received') received += 1;
       else if (o.status === 'preparing') preparing += 1;
       else if (o.status === 'ready') ready += 1;
@@ -203,20 +247,36 @@ export function Board() {
       pushing,
       lateOrPushing: late + pushing,
     };
-  }, [orders, now]);
+  }, [orders, now, section]);
 
   const visible = useMemo(() => {
-    const list = orders.filter((o) => {
-      if (filter === 'all') return true;
-      if (filter === 'pushing') {
-        const b = ageBucket(o.createdAt, now);
-        return (b === 'late' || b === 'pushing') && o.status !== 'ready';
-      }
-      return o.status === filter;
-    });
-    // Sort by age desc (oldest first — most urgent at top).
-    return [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  }, [orders, filter, now]);
+    const active = orders
+      .filter((o) => {
+        if (!o.items.some((i) => i.kitchenSection === section)) return false;
+        if (filter === 'all') return true;
+        if (filter === 'pushing') {
+          const b = ageBucket(o.createdAt, now);
+          return (b === 'late' || b === 'pushing') && o.status !== 'ready';
+        }
+        return o.status === filter;
+      })
+      .map((o) => ({
+        order: o,
+        sectionItems: o.items.filter((i) => i.kitchenSection === section),
+        isDone: false,
+      }))
+      .sort((a, b) => a.order.createdAt.localeCompare(b.order.createdAt));
+
+    // Append recently-served/cancelled cards so kitchen can see what happened to late orders.
+    const done = Array.from(doneOrders.values())
+      .filter((o) => o.items.some((i) => i.kitchenSection === section))
+      .map((o) => ({
+        order: o,
+        sectionItems: o.items.filter((i) => i.kitchenSection === section),
+        isDone: true,
+      }));
+    return [...active, ...done];
+  }, [orders, doneOrders, filter, now, section]);
 
   // Full-page network error (handoff "Lost the floor." state).
   const networkDown = error && orders.length === 0;
@@ -327,6 +387,28 @@ export function Board() {
         </Modal>
       ) : null}
 
+      {/* Section tabs */}
+      <nav className="tf-kds__sections" aria-label="Kitchen section">
+        {(['kitchen', 'bar'] as SectionId[]).map((sec) => {
+          const active = section === sec;
+          const count = sectionCounts[sec];
+          return (
+            <button
+              key={sec}
+              type="button"
+              className={`tf-kds__section-tab ${active ? 'is-on' : ''}`}
+              aria-pressed={active}
+              onClick={() => { setSection(sec); setFilter('all'); }}
+            >
+              <span>{t(`section.${sec}`)}</span>
+              {count > 0 && !active ? (
+                <span className="tf-mono tf-kds__section-badge">{count}</span>
+              ) : null}
+            </button>
+          );
+        })}
+      </nav>
+
       {/* Filter strip */}
       <nav className="tf-kds__filters" aria-label="Ticket filter">
         {FILTERS.map((f) => {
@@ -365,16 +447,19 @@ export function Board() {
           <KitchenEmptyQueue filter={filter} />
         ) : (
           <div className="tf-kds__grid" data-stagger>
-            {visible.map((o) => (
+            {visible.map(({ order: o, sectionItems, isDone }) => (
               <TicketCard
                 key={o.id}
                 order={o}
                 lang={lang}
+                section={section}
                 tableLabels={tableLabels}
                 now={now}
-                onAdvance={advance}
-                on86Dish={on86Dish}
-                freshlyArrived={recentIds.has(o.id)}
+                onAdvance={bumpSection}
+                on86Dish={isDone ? undefined : on86Dish}
+                freshlyArrived={!isDone && recentIds.has(o.id)}
+                visibleItems={sectionItems}
+                isDone={isDone}
               />
             ))}
           </div>

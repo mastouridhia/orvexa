@@ -19,9 +19,9 @@ export type OrderCreatedPayload = { order: Order };
 export type OrderStatusPayload = {
   orderId: string;
   status: OrderStatus;
+  tableId: string;
   /** Set when status flips to `ready` and a waiter has been auto-assigned for delivery. */
   assignedWaiterId?: string | null;
-  tableId?: string;
 };
 export type WaiterCalledPayload = { tableId: string; atIso: string };
 export type BillRequestedPayload = {

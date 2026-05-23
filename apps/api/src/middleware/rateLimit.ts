@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import rateLimit from 'express-rate-limit';
 import { ApiErrorCode } from '@orvexa/shared';
 import { config } from '../config.js';
@@ -17,6 +18,20 @@ export const globalRateLimit = rateLimit({
   limit: config.rateLimit.max,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  handler: tooManyRequestsHandler as never,
+});
+
+/**
+ * Per-session order limiter: all tables share the same WiFi exit IP so a
+ * per-IP global limit would let one table starve every other. Keyed on the
+ * customer session id (falls back to IP for requests without a session).
+ */
+export const orderRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => req.customerSession?.id ?? (req.ip ?? ''),
   handler: tooManyRequestsHandler as never,
 });
 

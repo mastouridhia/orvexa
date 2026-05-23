@@ -43,6 +43,7 @@
   },
   "card": {
     "readyToPass": "Prête · à passer",
+    "sectionDone": "Terminé · en attente de l'autre poste",
     "holdTo": {
       "preparing": "Maintenir pour démarrer",
       "ready": "Maintenir pour marquer prête",
@@ -54,7 +55,11 @@
     "firedAgo": "LANCÉ IL Y A {{time}}",
     "eta": "Temps de préparation estimé",
     "outOfStock": "86 (épuisé)",
-    "outOfStockConfirm": "Marquer ce plat comme épuisé ?"
+    "outOfStockConfirm": "Marquer ce plat comme épuisé ?",
+    "done": {
+      "served": "Servi",
+      "cancelled": "Annulé"
+    }
   },
   "empty": {
     "allClear": {
@@ -86,6 +91,10 @@
     "title": "Paramètres",
     "language": "Langue",
     "languageHint": "Choisie une fois — modifiable ici."
+  },
+  "section": {
+    "kitchen": "Cuisine",
+    "bar": "Bar & Café"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {

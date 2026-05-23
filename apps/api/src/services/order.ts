@@ -1,6 +1,8 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type {
   AddOrderItemsRequest,
+  AdvanceSectionRequest,
+  KitchenSection,
   Order,
   OrderHistoryQuery,
   OrderItem,
@@ -14,7 +16,7 @@ import type {
   UpdateOrderStatusRequest,
 } from '@orvexa/shared';
 import { db } from '../db/index.js';
-import { dishes, variants } from '../db/schema/menu.js';
+import { categories, dishes, variants } from '../db/schema/menu.js';
 import { orders } from '../db/schema/orders.js';
 import { users } from '../db/schema/staff.js';
 import {
@@ -56,6 +58,8 @@ export function rowToOrder(row: FullOrder): Order {
         unitPriceMillimes: item.unitPriceMillimes,
         prepTimeMinutes: item.prepTimeMinutes ?? null,
         quantity: item.quantity,
+        kitchenSection: (item.kitchenSection as KitchenSection) ?? 'kitchen',
+        itemStatus: (item.itemStatus ?? 'received') as 'received' | 'preparing' | 'ready',
         variants: itemVariants,
         ...(item.notes ? { notes: item.notes } : {}),
       };
@@ -129,11 +133,10 @@ export class OrderService {
   }): Promise<Order> {
     const restaurant = await this.restaurantRepo.findById(input.restaurantId);
     if (!restaurant) throw new NotFoundError('Restaurant not found');
-    const resolved = await this.resolveItems(
-      input.restaurantId,
-      input.body.items,
-      restaurant.defaultPrepMinutes,
-    );
+    const [resolved, activeOrderCount] = await Promise.all([
+      this.resolveItems(input.restaurantId, input.body.items, restaurant.defaultPrepMinutes),
+      this.orderRepo.countActiveOrders(input.restaurantId),
+    ]);
     const totals = this.computeTotals(restaurant, resolved);
     const created = await this.orderRepo.createWithItems({
       order: {
@@ -150,7 +153,18 @@ export class OrderService {
       },
       items: resolved.map((r) => ({ item: r.item, variants: r.variants })),
     });
-    return rowToOrder(created);
+    const order = rowToOrder(created);
+    // Inject queue-aware ETA: kitchen can run ~2 orders in parallel, each round adds max prep time.
+    const kitchenPrepTimes = order.items
+      .filter((i) => i.kitchenSection === 'kitchen')
+      .map((i) => i.prepTimeMinutes)
+      .filter((v): v is number => v !== null && v > 0);
+    if (kitchenPrepTimes.length > 0) {
+      const maxPrepTime = Math.max(...kitchenPrepTimes);
+      const queueRounds = Math.floor(activeOrderCount / 2);
+      order.etaMinutes = maxPrepTime + queueRounds * maxPrepTime;
+    }
+    return order;
   }
 
   async addItems(input: {
@@ -320,6 +334,25 @@ export class OrderService {
     return rows[0]?.userId ?? null;
   }
 
+  async advanceSection(
+    restaurantId: string,
+    id: string,
+    body: AdvanceSectionRequest,
+  ): Promise<Order> {
+    const row = await this.requireOrder(restaurantId, id);
+    const current = row.status as OrderStatus;
+    if (current === 'served' || current === 'cancelled') {
+      throw new ConflictError(`Cannot advance section on a ${current} order`);
+    }
+    const updated = await this.orderRepo.advanceSectionItems({
+      orderId: id,
+      section: body.section,
+      itemStatus: body.status,
+    });
+    if (!updated) throw new NotFoundError('Order not found');
+    return rowToOrder(updated);
+  }
+
   async cancel(restaurantId: string, id: string): Promise<Order> {
     const row = await this.requireOrder(restaurantId, id);
     const current = row.status as OrderStatus;
@@ -378,13 +411,15 @@ export class OrderService {
     const dishIds = Array.from(new Set(inputs.map((i) => i.dishId)));
     const variantIds = Array.from(new Set(inputs.flatMap((i) => i.variantIds)));
     const dishRows = await db.select().from(dishes).where(inArray(dishes.id, dishIds));
-    const variantRows =
-      variantIds.length === 0
-        ? []
-        : await db.select().from(variants).where(inArray(variants.id, variantIds));
+    const categoryIds = Array.from(new Set(dishRows.map((d) => d.categoryId).filter(Boolean))) as string[];
+    const [variantRows, categoryRows] = await Promise.all([
+      variantIds.length === 0 ? [] : db.select().from(variants).where(inArray(variants.id, variantIds)),
+      categoryIds.length === 0 ? [] : db.select().from(categories).where(inArray(categories.id, categoryIds)),
+    ]);
 
     const dishById = new Map(dishRows.map((d) => [d.id, d] as const));
     const variantById = new Map(variantRows.map((v) => [v.id, v] as const));
+    const categoryById = new Map(categoryRows.map((c) => [c.id, c] as const));
 
     const resolved: ResolvedItem[] = [];
     for (const input of inputs) {
@@ -416,6 +451,7 @@ export class OrderService {
           nameSnapshotEn: dish.nameEn,
           unitPriceMillimes: dish.priceMillimes,
           prepTimeMinutes: dish.prepTimeMinutes ?? defaultPrepMinutes,
+          kitchenSection: (dish.categoryId ? categoryById.get(dish.categoryId)?.kitchenSection : undefined) ?? 'kitchen',
           quantity: input.quantity,
           notes: input.notes ?? null,
         },

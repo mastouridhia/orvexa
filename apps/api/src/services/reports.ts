@@ -23,19 +23,26 @@ function startOfDay(d: Date): Date {
   return x;
 }
 
-// Pin both the granularity (validated enum) and the column reference via sql.raw
-// so SELECT / GROUP BY / ORDER BY emit the identical expression tree — drizzle
-// had been emitting `date_trunc($1, "created_at")` in SELECT but `"orders"."created_at"`
-// in GROUP BY, and Postgres treated those as different expressions.
+// Pin both the granularity and the column reference via sql.raw so SELECT /
+// GROUP BY / ORDER BY emit the identical expression tree — drizzle would emit
+// `date_trunc($1, "created_at")` in SELECT but `"orders"."created_at"` in
+// GROUP BY, and Postgres treats those as different expressions.
 //
-// '15min' uses date_bin (PG14+) anchored to a fixed midnight epoch so buckets
-// land on :00, :15, :30, :45 regardless of the query window. Other granularities
-// keep the native date_trunc.
+// '15min' uses date_bin (PG14+) anchored to midnight so buckets land on
+// :00/:15/:30/:45. Other granularities use date_trunc via a safe lookup map.
+const DATE_TRUNC_LITERAL: Record<Exclude<ReportGranularity, '15min'>, string> = {
+  hour: 'hour',
+  day: 'day',
+  week: 'week',
+  month: 'month',
+};
+
 function truncExpr(granularity: ReportGranularity) {
   if (granularity === '15min') {
     return sql<string>`date_bin('15 minutes', ${sql.raw('"orders"."created_at"')}, '2000-01-01'::timestamp)`;
   }
-  return sql<string>`date_trunc(${sql.raw(`'${granularity}'`)}, ${sql.raw('"orders"."created_at"')})`;
+  const trunc = DATE_TRUNC_LITERAL[granularity];
+  return sql<string>`date_trunc(${sql.raw(`'${trunc}'`)}, ${sql.raw('"orders"."created_at"')})`;
 }
 
 export class ReportsService {

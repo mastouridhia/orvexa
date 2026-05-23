@@ -1,5 +1,6 @@
 import type {
   AuthTokens,
+  KitchenSection,
   Order,
   OrderStatus,
   StaffLoginResponse,
@@ -20,6 +21,9 @@ export const api = {
       body: { refreshToken },
     });
   },
+  logout(refreshToken: string) {
+    return apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST', body: { refreshToken } });
+  },
   me(token: string) {
     return apiRequest<StaffUser>('/auth/me', { token });
   },
@@ -31,6 +35,13 @@ export const api = {
       method: 'PATCH',
       token,
       body: { status },
+    });
+  },
+  advanceSection(token: string, orderId: string, section: KitchenSection, status: 'preparing' | 'ready') {
+    return apiRequest<Order>(`/orders/${orderId}/advance-section`, {
+      method: 'PATCH',
+      token,
+      body: { section, status },
     });
   },
   setDishAvailability(token: string, dishId: string, available: boolean) {

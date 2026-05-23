@@ -1,5 +1,5 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { config } from '../config.js';
 
 export interface ImageStorage {
@@ -26,11 +26,14 @@ export class LocalImageStorage implements ImageStorage {
   }
 
   async save(buffer: Buffer, relativePath: string): Promise<string> {
-    const safe = relativePath.replace(/^\/+/, '');
-    const target = join(this.rootDir, safe);
+    const target = resolve(this.rootDir, relativePath);
+    if (target !== this.rootDir && !target.startsWith(this.rootDir + sep)) {
+      throw new Error('Path escapes upload directory');
+    }
     await mkdir(join(target, '..'), { recursive: true });
     await writeFile(target, buffer);
-    return `${this.publicBaseUrl}${this.publicPathPrefix}/${safe.replaceAll('\\', '/')}`;
+    const rel = target.slice(this.rootDir.length + 1).replaceAll('\\', '/');
+    return `${this.publicBaseUrl}${this.publicPathPrefix}/${rel}`;
   }
 
   toRelative(url: string): string | null {

@@ -26,6 +26,7 @@ export class CustomerSessionRepository extends BaseRepository {
     tableDayTokenId: string;
     locale: LanguageCode;
     expiresAt: Date;
+    absoluteExpiresAt: Date;
   }): Promise<CustomerSessionRow> {
     const [row] = await this.db.insert(customerSessions).values(input).returning();
     if (!row) throw new Error('Failed to create customer session');
@@ -42,9 +43,10 @@ export class CustomerSessionRepository extends BaseRepository {
   }
 
   async extendExpiry(id: string, expiresAt: Date): Promise<CustomerSessionRow | null> {
+    // Clamp to absolute_expires_at so renewals cannot extend past the lifetime cap
     const [row] = await this.db
       .update(customerSessions)
-      .set({ expiresAt })
+      .set({ expiresAt: sql`LEAST(${expiresAt.toISOString()}::timestamptz, absolute_expires_at)` })
       .where(eq(customerSessions.id, id))
       .returning();
     return row ?? null;

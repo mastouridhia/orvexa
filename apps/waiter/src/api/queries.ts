@@ -31,6 +31,9 @@ export const api = {
   refresh(refreshToken: string) {
     return apiRequest<AuthTokens>('/auth/refresh', { method: 'POST', body: { refreshToken } });
   },
+  logout(refreshToken: string) {
+    return apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST', body: { refreshToken } });
+  },
   me(token: string) {
     return apiRequest<StaffUser>('/auth/me', { token });
   },

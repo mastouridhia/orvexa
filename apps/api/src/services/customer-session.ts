@@ -61,13 +61,16 @@ export class CustomerSessionService {
       todayIso(),
     );
 
-    const expiresAt = new Date(Date.now() + ms(config.auth.sessionTtl as StringValue));
+    const ttlMs = ms(config.auth.sessionTtl as StringValue);
+    const expiresAt = new Date(Date.now() + ttlMs);
+    const absoluteExpiresAt = new Date(Date.now() + ttlMs * 2);
     const row = await this.repo.create({
       restaurantId: dayToken.restaurantId,
       tableId: dayToken.tableId,
       tableDayTokenId: dayToken.id,
       locale: input.locale,
       expiresAt,
+      absoluteExpiresAt,
     });
 
     return { session: toCustomerSession(row, table.label), token: this.issueToken(row) };
@@ -77,17 +80,19 @@ export class CustomerSessionService {
     const row = await this.repo.findById(sessionId);
     if (!row) return null;
 
-    const msUntilExpiry = row.expiresAt.getTime() - Date.now();
-    if (msUntilExpiry <= 0) return null;
+    const now = Date.now();
+    if (row.expiresAt.getTime() <= now) return null;
+    if (row.absoluteExpiresAt.getTime() <= now) return null;
 
     const label = await this.tableLabel(row.tableId);
 
+    const msUntilExpiry = row.expiresAt.getTime() - now;
     const threshold = ms(config.auth.sessionRenewThreshold as StringValue);
     if (msUntilExpiry > threshold) {
       return { session: toCustomerSession(row, label), token: this.issueToken(row) };
     }
 
-    const newExpiry = new Date(Date.now() + ms(config.auth.sessionTtl as StringValue));
+    const newExpiry = new Date(now + ms(config.auth.sessionTtl as StringValue));
     const updated = await this.repo.extendExpiry(sessionId, newExpiry);
     if (!updated) return null;
     return { session: toCustomerSession(updated, label), token: this.issueToken(updated) };

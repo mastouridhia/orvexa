@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   Category,
@@ -158,6 +158,38 @@ function CategoriesPanel({
   onDelete: (c: Category) => void;
 }) {
   const { t } = useTranslation();
+  const authedFetch = useAuthStore((s) => s.authedFetch);
+  const [ordered, setOrdered] = useState<Category[]>(categories);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const dragSrc = useRef<number | null>(null);
+
+  useEffect(() => { setOrdered(categories); }, [categories]);
+
+  const onDragOver = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    const src = dragSrc.current;
+    if (src === null || src === targetIdx) return;
+    setOrdered((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(src, 1);
+      next.splice(targetIdx, 0, item);
+      return next;
+    });
+    dragSrc.current = targetIdx;
+  };
+
+  const onDrop = async () => {
+    dragSrc.current = null;
+    setSavingOrder(true);
+    try {
+      await Promise.all(
+        ordered.map((c, i) => authedFetch((tk) => api.updateCategory(tk, c.id, { sortOrder: i + 1 }))),
+      );
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   return (
     <div className="stack">
       <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
@@ -165,22 +197,36 @@ function CategoriesPanel({
           + {t('menu.newCategory')}
         </button>
       </div>
-      {categories.length === 0 ? (
+      {ordered.length === 0 ? (
         <div className="muted">{t('menu.noCategories')}</div>
       ) : (
         <table className="dt">
           <thead>
             <tr>
+              <th style={{ width: 24 }} />
               <th>{t('menu.tabs.categories')}</th>
               <th>{t('menu.active')}</th>
+              <th>{t('menu.section')}</th>
               <th />
             </tr>
           </thead>
           <tbody>
-            {categories.map((c) => (
-              <tr key={c.id}>
+            {ordered.map((c, idx) => (
+              <tr
+                key={c.id}
+                draggable
+                onDragStart={() => { dragSrc.current = idx; }}
+                onDragOver={(e) => onDragOver(e, idx)}
+                onDrop={onDrop}
+              >
+                <td style={{ cursor: 'grab', color: 'var(--fg-soft)', userSelect: 'none', textAlign: 'center' }}>⠿</td>
                 <td>{pickLang(c.name, lang)}</td>
                 <td>{c.isActive ? '✓' : '—'}</td>
+                <td>
+                  <span className={`section-badge section-badge--${c.kitchenSection}`}>
+                    {c.kitchenSection === 'bar' ? t('menu.sectionBar') : t('menu.sectionKitchen')}
+                  </span>
+                </td>
                 <td className="right">
                   <button type="button" className="btn btn-sm" onClick={() => onEdit(c)}>
                     {t('menu.edit')}
@@ -194,6 +240,7 @@ function CategoriesPanel({
           </tbody>
         </table>
       )}
+      {savingOrder ? <div className="muted" style={{ fontSize: '0.8rem', textAlign: 'right' }}>Saving…</div> : null}
     </div>
   );
 }
@@ -213,7 +260,7 @@ function CategoryEditor({
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [name, setName] = useState<LocalizedString>(initial?.name ?? { ...EMPTY_L10N });
   const [isActive, setIsActive] = useState<boolean>(initial?.isActive ?? true);
-  const [sortOrder, setSortOrder] = useState<number>(initial?.sortOrder ?? 0);
+  const [kitchenSection, setKitchenSection] = useState<'kitchen' | 'bar'>(initial?.kitchenSection ?? 'kitchen');
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
@@ -221,10 +268,10 @@ function CategoryEditor({
     try {
       if (initial) {
         await authedFetch((tk) =>
-          api.updateCategory(tk, initial.id, { name, isActive, sortOrder }),
+          api.updateCategory(tk, initial.id, { name, isActive, kitchenSection }),
         );
       } else {
-        await authedFetch((tk) => api.createCategory(tk, { name, isActive, sortOrder }));
+        await authedFetch((tk) => api.createCategory(tk, { name, isActive, kitchenSection }));
       }
       await onSaved();
     } catch (err) {
@@ -264,12 +311,14 @@ function CategoryEditor({
         />
       </label>
       <label>
-        Sort order
-        <input
-          type="number"
-          value={sortOrder}
-          onChange={(e) => setSortOrder(Number(e.target.value))}
-        />
+        {t('menu.section')}
+        <select
+          value={kitchenSection}
+          onChange={(e) => setKitchenSection(e.target.value as 'kitchen' | 'bar')}
+        >
+          <option value="kitchen">{t('menu.sectionKitchen')}</option>
+          <option value="bar">{t('menu.sectionBar')}</option>
+        </select>
       </label>
     </Modal>
   );
@@ -293,8 +342,19 @@ function DishesPanel({
   onDelete: (d: Dish) => void;
 }) {
   const { t } = useTranslation();
-  const catName = (id: string | null) =>
-    id ? pickLang(categories.find((c) => c.id === id)?.name, lang) : '—';
+
+  const grouped = useMemo(() => {
+    const map = new Map<string | null, Dish[]>();
+    for (const cat of categories) map.set(cat.id, []);
+    map.set(null, []);
+    for (const d of dishes) {
+      const key = d.categoryId ?? null;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(d);
+    }
+    return map;
+  }, [dishes, categories]);
+
   return (
     <div className="stack">
       <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
@@ -305,54 +365,122 @@ function DishesPanel({
       {dishes.length === 0 ? (
         <div className="muted">{t('menu.noDishes')}</div>
       ) : (
-        <table className="dt">
-          <thead>
-            <tr>
-              <th>{t('menu.tabs.dishes')}</th>
-              <th>{t('menu.category')}</th>
-              <th className="right">{t('menu.price')}</th>
-              <th>{t('menu.available')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {dishes.map((d) => (
-              <tr
-                key={d.id}
-                style={{ cursor: 'pointer' }}
-                onClick={() => onEdit(d)}
-              >
-                <td>{pickLang(d.name, lang)}</td>
-                <td>{catName(d.categoryId)}</td>
-                <td className="right">{formatMillimes(d.priceMillimes)}</td>
-                <td>{d.available ? '✓' : '—'}</td>
-                <td className="right">
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(d);
-                    }}
-                  >
-                    {t('menu.edit')}
-                  </button>{' '}
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(d);
-                    }}
-                  >
-                    {t('menu.delete')}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          {categories.map((cat) => {
+            const catDishes = grouped.get(cat.id) ?? [];
+            if (catDishes.length === 0) return null;
+            return (
+              <CategoryDishGroup
+                key={cat.id}
+                label={pickLang(cat.name, lang)}
+                dishes={catDishes}
+                lang={lang}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
+            );
+          })}
+          {(grouped.get(null)?.length ?? 0) > 0 && (
+            <CategoryDishGroup
+              key="__none__"
+              label={t('menu.noCategory')}
+              dishes={grouped.get(null)!}
+              lang={lang}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+function CategoryDishGroup({
+  label,
+  dishes,
+  lang,
+  onEdit,
+  onDelete,
+}: {
+  label: string;
+  dishes: Dish[];
+  lang: LanguageCode;
+  onEdit: (d: Dish) => void;
+  onDelete: (d: Dish) => void;
+}) {
+  const { t } = useTranslation();
+  const authedFetch = useAuthStore((s) => s.authedFetch);
+  const [ordered, setOrdered] = useState<Dish[]>(dishes);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const dragSrc = useRef<number | null>(null);
+
+  useEffect(() => { setOrdered(dishes); }, [dishes]);
+
+  const onDragOver = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    const src = dragSrc.current;
+    if (src === null || src === targetIdx) return;
+    setOrdered((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(src, 1);
+      next.splice(targetIdx, 0, item);
+      return next;
+    });
+    dragSrc.current = targetIdx;
+  };
+
+  const onDrop = async () => {
+    dragSrc.current = null;
+    setSavingOrder(true);
+    try {
+      await Promise.all(
+        ordered.map((d, i) => authedFetch((tk) => api.updateDish(tk, d.id, { sortOrder: i + 1 }))),
+      );
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+      <div style={{ padding: '0.45rem 0.75rem', background: 'var(--bg-soft, var(--surface-2))', fontWeight: 600, fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+        <span>{label}</span>
+        {savingOrder && <span className="muted" style={{ fontSize: '0.75rem', fontWeight: 400 }}>Saving…</span>}
+      </div>
+      <table className="dt" style={{ margin: 0 }}>
+        <tbody>
+          {ordered.map((d, idx) => (
+            <tr
+              key={d.id}
+              draggable
+              onDragStart={() => { dragSrc.current = idx; }}
+              onDragOver={(e) => onDragOver(e, idx)}
+              onDrop={onDrop}
+              onClick={() => onEdit(d)}
+              style={{ cursor: 'pointer' }}
+            >
+              <td
+                style={{ width: 24, cursor: 'grab', color: 'var(--fg-soft)', userSelect: 'none', textAlign: 'center' }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                ⠿
+              </td>
+              <td>{pickLang(d.name, lang)}</td>
+              <td className="right">{formatMillimes(d.priceMillimes)}</td>
+              <td>{d.available ? '✓' : '—'}</td>
+              <td className="right">
+                <button type="button" className="btn btn-sm" onClick={(e) => { e.stopPropagation(); onEdit(d); }}>
+                  {t('menu.edit')}
+                </button>{' '}
+                <button type="button" className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); onDelete(d); }}>
+                  {t('menu.delete')}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -386,7 +514,6 @@ function DishEditor({
   );
   const [categoryId, setCategoryId] = useState<string | null>(initial?.categoryId ?? null);
   const [available, setAvailable] = useState(initial?.available ?? true);
-  const [sortOrder, setSortOrder] = useState(initial?.sortOrder ?? 0);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -405,7 +532,6 @@ function DishEditor({
             priceMillimes,
             prepTimeMinutes,
             available,
-            sortOrder,
             categoryId,
           }),
         );
@@ -417,7 +543,6 @@ function DishEditor({
             priceMillimes,
             ...(prepTimeMinutes !== null ? { prepTimeMinutes } : {}),
             available,
-            sortOrder,
             categoryId: categoryId ?? undefined,
           }),
         );
@@ -478,14 +603,6 @@ function DishEditor({
             value={prepTimeInput}
             placeholder={t('menu.prepTimeUseDefault')}
             onChange={(e) => setPrepTimeInput(e.target.value)}
-          />
-        </label>
-        <label style={{ flex: 1 }}>
-          Sort
-          <input
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(Number(e.target.value))}
           />
         </label>
       </div>

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { IsoDateTimeSchema, LocalizedStringSchema, UuidSchema } from './common.js';
+import { KitchenSectionSchema } from './menu.js';
 
 export const OrderStatusSchema = z.enum([
   'received',
@@ -9,6 +10,9 @@ export const OrderStatusSchema = z.enum([
   'cancelled',
 ]);
 export type OrderStatus = z.infer<typeof OrderStatusSchema>;
+
+export const ItemStatusSchema = z.enum(['received', 'preparing', 'ready']);
+export type ItemStatus = z.infer<typeof ItemStatusSchema>;
 
 export const PaymentMethodSchema = z.enum(['cash', 'card', 'mobile']);
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
@@ -32,6 +36,8 @@ export const OrderItemSchema = z.object({
   unitPriceMillimes: z.number().int().nonnegative(),
   prepTimeMinutes: z.number().int().min(1).max(120).nullable(),
   quantity: z.number().int().positive(),
+  kitchenSection: KitchenSectionSchema.default('kitchen'),
+  itemStatus: ItemStatusSchema.default('received'),
   variants: z.array(OrderItemVariantSchema),
   notes: z.string().optional(),
 });
@@ -103,3 +109,9 @@ export const OrderHistoryQuerySchema = z.object({
   pageSize: z.coerce.number().int().positive().max(100).default(20),
 });
 export type OrderHistoryQuery = z.infer<typeof OrderHistoryQuerySchema>;
+
+export const AdvanceSectionRequestSchema = z.object({
+  section: KitchenSectionSchema,
+  status: z.enum(['preparing', 'ready']),
+});
+export type AdvanceSectionRequest = z.infer<typeof AdvanceSectionRequestSchema>;

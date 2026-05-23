@@ -167,6 +167,52 @@
   color: var(--kds-lime);
 }
 
+/* Section tabs */
+.tf-kds__sections {
+  flex-shrink: 0;
+  padding: 0 20px;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--kds-line);
+  background: var(--kds-bg);
+}
+.tf-kds__section-tab {
+  height: 44px;
+  padding: 0 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--kds-mut);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--motion-fast), border-color var(--motion-fast);
+  margin-bottom: -1px;
+}
+.tf-kds__section-tab:hover { color: var(--kds-ink); }
+.tf-kds__section-tab.is-on {
+  color: var(--kds-ink);
+  border-bottom-color: var(--tf-accent);
+}
+.tf-kds__section-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--tf-accent);
+  color: var(--tf-accent-ink);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Filter strip */
 .tf-kds__filters {
   flex-shrink: 0;
@@ -275,6 +321,7 @@
 
 /* ── Ticket card ───────────────────────────────────────── */
 .tf-kds-card {
+  position: relative;
   background: var(--kds-surface);
   border: 1px solid var(--kds-line);
   border-radius: var(--radius-lg);
@@ -294,6 +341,28 @@
   animation: tf-late-throb 1.6s ease-in-out infinite;
 }
 .tf-kds-card.is-ready { opacity: 0.85; }
+.tf-kds-card.is-done {
+  opacity: 0.55;
+  animation: none;
+}
+.tf-kds-card__done-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 12, 10, 0.68);
+  z-index: 2;
+}
+.tf-kds-card__done-label {
+  font-family: var(--tf-display);
+  font-style: italic;
+  font-size: 1.75rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: rgba(245, 239, 230, 0.85);
+  text-transform: uppercase;
+}
 
 /* Header strip */
 .tf-kds-card__head {

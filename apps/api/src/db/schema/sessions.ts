@@ -17,6 +17,7 @@ export const customerSessions = pgTable(
       .references(() => tableDayTokens.id, { onDelete: 'cascade' }),
     locale: text('locale', { enum: ['ar', 'fr', 'en'] }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    absoluteExpiresAt: timestamp('absolute_expires_at', { withTimezone: true }).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

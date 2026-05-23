@@ -10,6 +10,7 @@ export type StaffAccessPayload = {
   sub: string;
   rid: string;
   role: StaffRole;
+  ver: number;
 };
 
 export type StaffRefreshPayload = {
@@ -27,12 +28,12 @@ export type CustomerSessionPayload = {
 };
 
 function sign<T extends object>(payload: T, secret: string, expiresIn: SignExpires): string {
-  return jwt.sign(payload, secret, { expiresIn });
+  return jwt.sign(payload, secret, { expiresIn, algorithm: 'HS256' });
 }
 
 function verify<T>(token: string, secret: string, expectedTyp: string): T {
   try {
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
     if (typeof decoded !== 'object' || decoded === null) {
       throw new UnauthorizedError('Invalid token');
     }

@@ -14,9 +14,17 @@ function parseInteger(raw: string | undefined, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+const DEV_FALLBACK = 'change-me-dev-only';
+
 function requiredSecret(name: string, fallback: string): string {
   const v = process.env[name];
-  if (v && v.length > 0) return v;
+  if (v && v.length > 0) {
+    if (process.env.NODE_ENV === 'production') {
+      if (v.length < 32) throw new Error(`${name} must be at least 32 characters`);
+      if (v === DEV_FALLBACK) throw new Error(`${name} must not be the development fallback in production`);
+    }
+    return v;
+  }
   if (process.env.NODE_ENV === 'production') {
     throw new Error(`${name} must be set in production`);
   }

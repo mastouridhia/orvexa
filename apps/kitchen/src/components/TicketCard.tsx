@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LanguageCode, Order, OrderStatus } from '@orvexa/shared';
+import type { KitchenSection, LanguageCode, Order, OrderStatus } from '@orvexa/shared';
 import { pickLang } from '../utils/format.js';
 import {
   ageBucket,
   AGE_LABELS,
   elapsedMs,
   formatMMSS,
-  nextStatus,
   shortTicketId,
   type AgeBucket,
 } from '../utils/kds.js';
@@ -15,37 +14,60 @@ import { IconBolt, IconCheck, IconInfo, IconUser } from './tf-icons.js';
 
 const HOLD_MS = 600;
 
-type AdvanceTo = 'preparing' | 'ready' | 'served';
+type SectionBumpStatus = 'preparing' | 'ready';
+
+function deriveSectionStatus(items: Order['items']): 'received' | 'preparing' | 'ready' {
+  if (items.every((i) => i.itemStatus === 'ready')) return 'ready';
+  if (items.some((i) => i.itemStatus === 'preparing' || i.itemStatus === 'ready')) return 'preparing';
+  return 'received';
+}
+
+function nextSectionStatus(s: 'received' | 'preparing' | 'ready'): SectionBumpStatus | null {
+  if (s === 'received') return 'preparing';
+  if (s === 'preparing') return 'ready';
+  return null;
+}
 
 export function TicketCard({
   order,
   lang,
+  section = 'kitchen',
   tableLabels,
   now,
   onAdvance,
   on86Dish,
   large = false,
   freshlyArrived = false,
+  visibleItems,
+  isDone = false,
 }: {
   order: Order;
   lang: LanguageCode;
+  section?: KitchenSection;
   tableLabels: Map<string, string>;
   now: number;
-  onAdvance: (orderId: string, status: AdvanceTo) => void | Promise<void>;
+  onAdvance: (orderId: string, section: KitchenSection, status: SectionBumpStatus) => void | Promise<void>;
   on86Dish?: (dishId: string) => void | Promise<void>;
   large?: boolean;
   freshlyArrived?: boolean;
+  visibleItems?: Order['items'];
+  isDone?: boolean;
 }) {
   const { t } = useTranslation();
   const elapsed = elapsedMs(order.createdAt, now);
   const bucket: AgeBucket = ageBucket(order.createdAt, now);
   const meta = AGE_LABELS[bucket];
-  const next = nextStatus(order.status);
   const isNew = order.status === 'received';
   const tableLabel = tableLabels.get(order.tableId) ?? order.tableId.slice(0, 4).toUpperCase();
   const ticketId = shortTicketId(order.id);
+  const items = visibleItems ?? order.items;
 
-  // Hold-to-bump: press for HOLD_MS, then advance.
+  const sectionStatus = deriveSectionStatus(items);
+  const next = nextSectionStatus(sectionStatus);
+
+  // Section is done but the full order is still waiting on another station.
+  const waitingOnOther = sectionStatus === 'ready' && order.status !== 'ready';
+
   const [holdPct, setHoldPct] = useState(0);
   const holdTimerRef = useRef<number | null>(null);
   const holdStartRef = useRef<number>(0);
@@ -67,7 +89,7 @@ export function TicketCard({
         if (holdTimerRef.current !== null) window.clearInterval(holdTimerRef.current);
         holdTimerRef.current = null;
         setHoldPct(0);
-        void onAdvance(order.id, next);
+        void onAdvance(order.id, section, next);
       }
     }, 16);
   };
@@ -82,7 +104,7 @@ export function TicketCard({
 
   return (
     <article
-      className={`tf-kds-card tf-kds-card--${bucket}${order.status === 'ready' ? ' is-ready' : ''}${isNew ? ' is-new' : ''}${freshlyArrived ? ' just-arrived' : ''}${large ? ' is-large' : ''}`}
+      className={`tf-kds-card tf-kds-card--${bucket}${sectionStatus === 'ready' ? ' is-ready' : ''}${isNew ? ' is-new' : ''}${freshlyArrived ? ' just-arrived' : ''}${large ? ' is-large' : ''}${isDone ? ' is-done' : ''}`}
       aria-label={`Order ${ticketId} · ${t(`board.status.${order.status}`)}`}
     >
       {/* Header strip — color reflects age bucket */}
@@ -105,7 +127,7 @@ export function TicketCard({
       <div className="tf-kds-card__meta">
         <span className="tf-kds-card__meta-pax">
           <IconUser />
-          <span>{t('card.itemCount', { count: order.items.length })}</span>
+          <span>{t('card.itemCount', { count: items.length })}</span>
         </span>
         {order.etaMinutes != null ? (
           <span className="tf-mono tf-kds-card__meta-eta" title={t('card.eta')}>
@@ -119,7 +141,7 @@ export function TicketCard({
 
       {/* Items */}
       <div className="tf-kds-card__items">
-        {order.items.map((item) => (
+        {items.map((item) => (
           <div className="tf-kds-card__item" key={item.id}>
             <span className="tf-kds-card__item-qty tf-tabular">{item.quantity}×</span>
             <span className="tf-kds-card__item-body">
@@ -159,12 +181,19 @@ export function TicketCard({
         ))}
       </div>
 
+      {/* Done overlay — covers the card when the order was served or cancelled */}
+      {isDone ? (
+        <div className="tf-kds-card__done-overlay" aria-hidden="true">
+          <span className="tf-kds-card__done-label">{t(`card.done.${order.status}`)}</span>
+        </div>
+      ) : null}
+
       {/* Bump bar */}
       <div className="tf-kds-card__bump">
-        {order.status === 'ready' ? (
+        {sectionStatus === 'ready' ? (
           <div className="tf-kds-card__ready" aria-hidden="true">
             <IconCheck />
-            <span>{t('card.readyToPass')}</span>
+            <span>{waitingOnOther ? t('card.sectionDone') : t('card.readyToPass')}</span>
           </div>
         ) : null}
         {next ? (
@@ -186,7 +215,7 @@ export function TicketCard({
               <span>
                 {holdPct > 0
                   ? t('card.holding', { pct: Math.round(holdPct * 100) })
-                  : t(`card.holdTo.${next as AdvanceTo}`)}
+                  : t(`card.holdTo.${next}`)}
               </span>
             </span>
           </button>

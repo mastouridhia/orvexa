@@ -29,6 +29,7 @@ import {
   ValidationError,
 } from '../utils/errors.js';
 import { registerPath, registerTag } from '../utils/openapi.js';
+import { getBus } from '../realtime/bus.js';
 
 const repo = new StaffRepository();
 const shiftRepo = new StaffShiftRepository();
@@ -133,6 +134,11 @@ staffRouter.patch(
     }
     const row = await repo.update(req.params.id, patch);
     if (!row) throw new NotFoundError('Staff user not found');
+    // Role change invalidates outstanding access tokens immediately
+    if (body.role !== undefined) {
+      await repo.bumpTokenVersion(req.params.id);
+      getBus().staffRevoked(req.params.id);
+    }
     sendSuccess(res, rowToUser(row));
   }),
 );
@@ -155,6 +161,9 @@ staffRouter.post(
     if (existing.disabledAt) throw new ConflictError('Staff user is already disabled');
     const row = await repo.update(req.params.id, { disabledAt: new Date() });
     if (!row) throw new NotFoundError('Staff user not found');
+    // Bump version so outstanding access tokens are rejected immediately
+    await repo.bumpTokenVersion(req.params.id);
+    getBus().staffRevoked(req.params.id);
     sendSuccess(res, rowToUser(row));
   }),
 );
@@ -174,6 +183,8 @@ staffRouter.post(
     if (!existing.disabledAt) throw new ConflictError('Staff user is not disabled');
     const row = await repo.update(req.params.id, { disabledAt: null });
     if (!row) throw new NotFoundError('Staff user not found');
+    // Bump version to force a fresh login after re-enabling
+    await repo.bumpTokenVersion(req.params.id);
     sendSuccess(res, rowToUser(row));
   }),
 );

@@ -1,8 +1,9 @@
 import type { RequestHandler } from 'express';
 import type { StaffRole } from '@orvexa/shared';
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { customerSessions } from '../db/schema/sessions.js';
+import { users } from '../db/schema/staff.js';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
 import {
   extractBearerToken,
@@ -10,11 +11,20 @@ import {
   verifyStaffAccessToken,
 } from '../utils/jwt.js';
 
-export const requireAuth: RequestHandler = (req, _res, next) => {
+export const requireAuth: RequestHandler = async (req, _res, next) => {
   const token = extractBearerToken(req.get('authorization'));
   if (!token) return next(new UnauthorizedError('Missing bearer token'));
   try {
     const payload = verifyStaffAccessToken(token);
+    // Verify tokenVersion matches DB — rejects stale tokens after role change or disable
+    const [row] = await db
+      .select({ tokenVersion: users.tokenVersion })
+      .from(users)
+      .where(and(eq(users.id, payload.sub), isNull(users.disabledAt)))
+      .limit(1);
+    if (!row || row.tokenVersion !== payload.ver) {
+      return next(new UnauthorizedError('Token invalidated'));
+    }
     req.user = { id: payload.sub, restaurantId: payload.rid, role: payload.role };
     next();
   } catch (err) {
@@ -66,6 +76,14 @@ export const requireAnyAuth: RequestHandler = async (req, res, next) => {
 
   try {
     const payload = verifyStaffAccessToken(token);
+    const [row] = await db
+      .select({ tokenVersion: users.tokenVersion })
+      .from(users)
+      .where(and(eq(users.id, payload.sub), isNull(users.disabledAt)))
+      .limit(1);
+    if (!row || row.tokenVersion !== payload.ver) {
+      return next(new UnauthorizedError('Token invalidated'));
+    }
     req.user = { id: payload.sub, restaurantId: payload.rid, role: payload.role };
     return next();
   } catch {
