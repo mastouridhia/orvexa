@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TableWithDerived, TableZone } from '@orvexa/shared';
+import type { TableWithDerived } from '@orvexa/shared';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { apiBaseUrl } from '../api/client.js';
 import { useAuthStore } from '../store/auth.js';
 import { Modal } from '@orvexa/ui';
-import { FloorPlanEditor } from '../components/FloorPlanEditor.js';
 
 type Tab = 'list' | 'floorPlan';
 
@@ -15,15 +14,12 @@ export function TablesManager() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [tables, setTables] = useState<TableWithDerived[]>([]);
-  const [zones, setZones] = useState<TableZone[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<TableWithDerived | 'new' | null>(null);
   const [printing, setPrinting] = useState(false);
   const [tab, setTab] = useState<Tab>('list');
   const [reloadKey, setReloadKey] = useState(0);
-  const [zonesReloadKey, setZonesReloadKey] = useState(0);
   const reload = () => setReloadKey((k) => k + 1);
-  const reloadZones = () => setZonesReloadKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,21 +35,6 @@ export function TablesManager() {
       cancelled = true;
     };
   }, [authedFetch, reloadKey]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const list = await authedFetch((tk) => api.listTableZones(tk));
-        if (!cancelled) setZones(list);
-      } catch (err) {
-        if (!cancelled) setError(getErrorMessage(err));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authedFetch, zonesReloadKey]);
 
   if (printing)
     return <PrintSheet tables={tables} token={accessToken} onDone={() => setPrinting(false)} />;
