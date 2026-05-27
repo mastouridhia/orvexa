@@ -18,16 +18,15 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        ref={cardRef}
-        className="modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
+      <div ref={cardRef} className="modal-card" role="dialog" aria-modal="true" aria-label={title}>
         <header>
           <h2>{title}</h2>
-          <button type="button" className="close btn btn-ghost" aria-label="Close" onClick={onClose}>
+          <button
+            type="button"
+            className="close btn btn-ghost"
+            aria-label="Close"
+            onClick={onClose}
+          >
             ×
           </button>
         </header>

@@ -6,19 +6,18 @@ import {
   type WaiterCall,
   type WaiterCallKind,
 } from '@orvexa/shared';
-import {
-  WaiterCallRepository,
-  type WaiterCallRow,
-} from '../repositories/waiter-call.js';
+import { WaiterCallRepository, type WaiterCallRow } from '../repositories/waiter-call.js';
 import { TableService } from '../services/table.js';
-import {
-  requireAuth,
-  requireRole,
-} from '../middleware/auth.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
-import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from '../utils/errors.js';
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../utils/errors.js';
 import { registerPath, registerTag } from '../utils/openapi.js';
 import { getBus } from '../realtime/bus.js';
 
@@ -75,10 +74,7 @@ waiterCallsRouter.post(
     }
     const updated = await repo.clear(req.params.id, req.user.id);
     if (!updated) throw new NotFoundError('Waiter call not found');
-    const status = await tableService.deriveForTable(
-      updated.restaurantId,
-      updated.tableId,
-    );
+    const status = await tableService.deriveForTable(updated.restaurantId, updated.tableId);
     if (status) {
       getBus().tableStatusChanged(updated.restaurantId, updated.tableId, status);
     }

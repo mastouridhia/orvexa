@@ -67,17 +67,13 @@ export function visualStateOf(
  * total count. We don't have zone/floor-plan metadata yet (see TASKS Phase 18.x);
  * this lays them out in a 5-wide grid filling the artboard 0–1.
  */
-export function autoPosition(
-  index: number,
-  total: number,
-  cols = 5,
-): { x: number; y: number } {
+export function autoPosition(index: number, total: number, cols = 5): { x: number; y: number } {
   const rows = Math.max(1, Math.ceil(total / cols));
   const col = index % cols;
   const row = Math.floor(index / cols);
   // padding inside the artboard so dots don't kiss the edges
-  const padX = 0.10;
-  const padY = 0.10;
+  const padX = 0.1;
+  const padY = 0.1;
   const innerW = 1 - padX * 2;
   const innerH = 1 - padY * 2;
   const x = cols === 1 ? 0.5 : padX + (col / (cols - 1)) * innerW;

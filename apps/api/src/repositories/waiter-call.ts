@@ -18,11 +18,7 @@ export class WaiterCallRepository extends BaseRepository {
   }
 
   async findById(id: string): Promise<WaiterCallRow | null> {
-    const [row] = await this.db
-      .select()
-      .from(waiterCalls)
-      .where(eq(waiterCalls.id, id))
-      .limit(1);
+    const [row] = await this.db.select().from(waiterCalls).where(eq(waiterCalls.id, id)).limit(1);
     return row ?? null;
   }
 

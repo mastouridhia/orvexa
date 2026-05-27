@@ -14,8 +14,9 @@ async function placeAndAdvanceToReady(
     .set('Authorization', `Bearer ${customerToken}`)
     .send({ items: [{ dishId, variantIds: [], quantity: 1 }] });
   if (place.status !== 201) throw new Error(`place: ${place.status}`);
-  const orderId = place.body.data.id as string;
-  const totalMillimes = place.body.data.totalMillimes as number;
+  // placeMulti returns Order[] — take the first order
+  const orderId = place.body.data[0].id as string;
+  const totalMillimes = place.body.data[0].totalMillimes as number;
   await request(app())
     .patch(`/orders/${orderId}/status`)
     .set('Authorization', `Bearer ${staffToken}`)

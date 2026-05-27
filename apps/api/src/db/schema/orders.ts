@@ -79,8 +79,12 @@ export const orderItems = pgTable(
     unitPriceMillimes: integer('unit_price_millimes').notNull(),
     prepTimeMinutes: integer('prep_time_minutes'),
     quantity: integer('quantity').notNull().default(1),
-    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] }).notNull().default('kitchen'),
-    itemStatus: text('item_status', { enum: ['received', 'preparing', 'ready'] }).notNull().default('received'),
+    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] })
+      .notNull()
+      .default('kitchen'),
+    itemStatus: text('item_status', { enum: ['received', 'preparing', 'ready'] })
+      .notNull()
+      .default('received'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },

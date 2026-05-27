@@ -144,8 +144,7 @@ export function BillPage() {
           const o = await api.getOrder(token, oid);
           if (o.status !== 'cancelled') fetched.push(o);
         } catch (err) {
-          if (!cancelled)
-            setError(handleApiError(err, t));
+          if (!cancelled) setError(handleApiError(err, t));
         }
       }
       // Show oldest round first so the bill reads chronologically.
@@ -237,9 +236,7 @@ export function BillPage() {
         <h1 className="tf-bill__title">
           {restaurantName}
           {' · '}
-          <em>
-            {t('bill.subtitle', { label: tableShort })}
-          </em>
+          <em>{t('bill.subtitle', { label: tableShort })}</em>
         </h1>
       </div>
 
@@ -303,9 +300,7 @@ export function BillPage() {
                 ) : null}
                 <div className="divider" aria-hidden="true" />
                 <div className="tf-receipt__grand">
-                  <span className="tf-receipt__grand-label">
-                    {t('bill.totalLabel')}
-                  </span>
+                  <span className="tf-receipt__grand-label">{t('bill.totalLabel')}</span>
                   <span className="tf-receipt__grand-value">
                     {formatMillimes(totals.totalMillimes)}
                   </span>
@@ -410,23 +405,13 @@ export function BillPage() {
               <div className="tf-bill__sent-title">{t('bill.sentTitle')}</div>
               <div className="tf-bill__sent-sub">{t('bill.sentSub')}</div>
             </div>
-            <button
-              type="button"
-              className="tf-bill__again"
-              onClick={requestBill}
-              disabled={busy}
-            >
+            <button type="button" className="tf-bill__again" onClick={requestBill} disabled={busy}>
               {t('bill.requestAgain')}
             </button>
           </div>
         )}
         <div className="tf-bill__row">
-          <button
-            type="button"
-            className="tf-bill__secondary"
-            disabled={busy}
-            onClick={callWaiter}
-          >
+          <button type="button" className="tf-bill__secondary" disabled={busy} onClick={callWaiter}>
             {t('bill.callWaiter')}
           </button>
           <button
@@ -438,11 +423,7 @@ export function BillPage() {
             {t('bill.download')}
           </button>
         </div>
-        <button
-          type="button"
-          className="tf-bill__back-menu"
-          onClick={() => navigate('/menu')}
-        >
+        <button type="button" className="tf-bill__back-menu" onClick={() => navigate('/menu')}>
           {t('order.back')}
         </button>
       </div>

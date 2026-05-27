@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import { config } from './config.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { requestId } from './middleware/requestId.js';
-import { requestLogger } from './middleware/requestLogger.js';
+import { requestLogger, slowRequestLogger } from './middleware/requestLogger.js';
 import { globalRateLimit } from './middleware/rateLimit.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import { apiRouter } from './routes/index.js';
@@ -17,6 +17,7 @@ export function createApp(): Express {
 
   app.use(requestId);
   app.use(requestLogger);
+  app.use(slowRequestLogger);
 
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(corsMiddleware);
@@ -26,10 +27,13 @@ export function createApp(): Express {
 
   app.use(globalRateLimit);
 
-  app.use('/uploads', express.static(resolve(process.cwd(), config.uploads.dir), {
-    maxAge: '7d',
-    index: false,
-  }));
+  app.use(
+    '/uploads',
+    express.static(resolve(process.cwd(), config.uploads.dir), {
+      maxAge: '7d',
+      index: false,
+    }),
+  );
 
   app.use(apiRouter);
 

@@ -1,11 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { StaffRole } from '@orvexa/shared';
 import { db } from '../db/index.js';
 import { customerSessions } from '../db/schema/sessions.js';
-import {
-  verifyCustomerSessionToken,
-  verifyStaffAccessToken,
-} from '../utils/jwt.js';
+import { users } from '../db/schema/staff.js';
+import { verifyCustomerSessionToken, verifyStaffAccessToken } from '../utils/jwt.js';
 
 export type StaffIdentity = {
   kind: 'staff';
@@ -40,22 +38,29 @@ function readToken(handshake: RawHandshake): string | null {
   return null;
 }
 
-export async function resolveHandshakeIdentity(
-  handshake: RawHandshake,
-): Promise<SocketIdentity> {
+export async function resolveHandshakeIdentity(handshake: RawHandshake): Promise<SocketIdentity> {
   const token = readToken(handshake);
   if (!token) throw new Error('Missing auth token');
 
+  let isStaffToken = false;
   try {
     const staff = verifyStaffAccessToken(token);
+    isStaffToken = true;
+    const [row] = await db
+      .select({ tokenVersion: users.tokenVersion })
+      .from(users)
+      .where(and(eq(users.id, staff.sub), isNull(users.disabledAt)))
+      .limit(1);
+    if (!row || row.tokenVersion !== staff.ver) throw new Error('Token revoked');
     return {
       kind: 'staff',
       userId: staff.sub,
       restaurantId: staff.rid,
       role: staff.role,
     };
-  } catch {
-    // fall through to customer path
+  } catch (err) {
+    if (isStaffToken) throw err; // DB check failed — reject, don't fall through to customer path
+    // JWT parse failed — this isn't a staff token, try customer path
   }
 
   const customer = verifyCustomerSessionToken(token);

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Outlet, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode } from '@orvexa/shared';
@@ -6,21 +6,41 @@ import { ErrorBoundary, setDocumentLocale } from '@orvexa/ui';
 import { Header } from './components/Header.js';
 import { OfflineBanner } from './components/OfflineBanner.js';
 import { WaiterCallBanner } from './components/WaiterCallBanner.js';
+// Initial QR-flow pages stay synchronous — they must render before any JS chunk fetch
 import { Welcome } from './pages/Welcome.js';
 import { SessionBoot } from './pages/SessionBoot.js';
 import { ScanLanguage } from './pages/ScanLanguage.js';
-import { Menu } from './pages/Menu.js';
-import { OrderPage } from './pages/Order.js';
-import { History } from './pages/History.js';
-import { WaiterPage } from './pages/Waiter.js';
-import { BillPage } from './pages/Bill.js';
+// Heavy pages are code-split so the initial bundle stays small
+const Menu = lazy(() => import('./pages/Menu.js').then((m) => ({ default: m.Menu })));
+const OrderPage = lazy(() => import('./pages/Order.js').then((m) => ({ default: m.OrderPage })));
+const RoundPage = lazy(() => import('./pages/Round.js').then((m) => ({ default: m.RoundPage })));
+const BillPage = lazy(() => import('./pages/Bill.js').then((m) => ({ default: m.BillPage })));
+const WaiterPage = lazy(() => import('./pages/Waiter.js').then((m) => ({ default: m.WaiterPage })));
+const History = lazy(() => import('./pages/History.js').then((m) => ({ default: m.History })));
 import { useSessionStore } from './store/session.js';
 import { connectCustomerSocket, disconnectCustomerSocket } from './socket/client.js';
 import { useCartSync } from './hooks/useCartSync.js';
+import { useSessionRenewal } from './hooks/useSessionRenewal.js';
 import './App.css';
+
+function PageLoader() {
+  return (
+    <div style={{ padding: '40px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="skeleton"
+          style={{ height: 80, borderRadius: 14 }}
+          aria-hidden="true"
+        />
+      ))}
+    </div>
+  );
+}
 
 function Layout() {
   useCartSync();
+  useSessionRenewal();
   return (
     <div className="app-shell">
       <Header />
@@ -28,7 +48,9 @@ function Layout() {
       <WaiterCallBanner />
       <main className="main">
         <ErrorBoundary>
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </ErrorBoundary>
       </main>
     </div>
@@ -68,6 +90,7 @@ export default function App() {
         <Route path="/t/:token" element={<ScanLanguage />} />
         <Route path="/t/:token/open" element={<SessionBoot />} />
         <Route path="/menu" element={<Menu />} />
+        <Route path="/orders/round" element={<RoundPage />} />
         <Route path="/orders/:id" element={<OrderPage />} />
         <Route path="/waiter" element={<WaiterPage />} />
         <Route path="/bill" element={<BillPage />} />

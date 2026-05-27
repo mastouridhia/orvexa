@@ -1,12 +1,4 @@
-import {
-  boolean,
-  index,
-  integer,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { restaurants } from './restaurants.js';
 
 export const categories = pgTable(
@@ -19,7 +11,9 @@ export const categories = pgTable(
     nameAr: text('name_ar').notNull(),
     nameFr: text('name_fr').notNull(),
     nameEn: text('name_en').notNull(),
-    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] }).notNull().default('kitchen'),
+    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] })
+      .notNull()
+      .default('kitchen'),
     sortOrder: integer('sort_order').notNull().default(0),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -48,6 +42,7 @@ export const dishes = pgTable(
     prepTimeMinutes: integer('prep_time_minutes'),
     available: boolean('available').notNull().default(true),
     sortOrder: integer('sort_order').notNull().default(0),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },

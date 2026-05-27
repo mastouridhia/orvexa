@@ -54,7 +54,7 @@ export const api = {
     return apiRequest<MenuTreeCategory[]>('/menu', { token });
   },
   placeOrder(token: string, body: PlaceOrderRequest) {
-    return apiRequest<Order>('/orders', { method: 'POST', token, body });
+    return apiRequest<Order[]>('/orders', { method: 'POST', token, body });
   },
   addItemsToOrder(token: string, orderId: string, body: AddOrderItemsRequest) {
     return apiRequest<Order>(`/orders/${orderId}/items`, { method: 'POST', token, body });
@@ -107,8 +107,7 @@ export const api = {
       };
       return {
         ...l,
-        variantIds:
-          l.variantIds ?? (l.variants ?? []).map((v) => v.variantId),
+        variantIds: l.variantIds ?? (l.variants ?? []).map((v) => v.variantId),
       };
     });
     return apiRequest<{
@@ -133,14 +132,11 @@ export const api = {
       token,
     });
   },
-  submitFeedback(
-    token: string,
-    orderId: string,
-    body: { rating: number; comment?: string },
-  ) {
-    return apiRequest<{ id: string; createdAt: string }>(
-      `/orders/${orderId}/feedback`,
-      { method: 'POST', token, body },
-    );
+  submitFeedback(token: string, orderId: string, body: { rating: number; comment?: string }) {
+    return apiRequest<{ id: string; createdAt: string }>(`/orders/${orderId}/feedback`, {
+      method: 'POST',
+      token,
+      body,
+    });
   },
 };

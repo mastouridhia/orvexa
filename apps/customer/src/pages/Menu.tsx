@@ -145,7 +145,7 @@ export function Menu() {
     if (!openDish || !tree) return;
     const fresh = tree.flatMap((c) => c.dishes).find((d) => d.id === openDish.id);
     if (fresh) queueMicrotask(() => setOpenDish(fresh));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tree]);
 
   const lineCount = cartLineCount(lines);
@@ -164,10 +164,7 @@ export function Menu() {
     return undefined;
   }, [lineCount, t]);
 
-  const visibleCategories = useMemo(
-    () => (tree ?? []).filter((c) => c.dishes.length > 0),
-    [tree],
-  );
+  const visibleCategories = useMemo(() => (tree ?? []).filter((c) => c.dishes.length > 0), [tree]);
 
   // Default to first category once tree loads
   useEffect(() => {
@@ -262,18 +259,17 @@ export function Menu() {
             />
           </div>
         </div>
-        <button
-          type="button"
-          className="tf-menu__extras"
-          onClick={() => setOpenExtras(true)}
-        >
+        <button type="button" className="tf-menu__extras" onClick={() => setOpenExtras(true)}>
           {t('extras.openCta')}
         </button>
       </div>
 
       {/* Category strip */}
       {tree !== null && visibleCategories.length > 0 ? (
-        <nav className="tf-cat-strip" aria-label={t('menu.categories', { defaultValue: 'Categories' })}>
+        <nav
+          className="tf-cat-strip"
+          aria-label={t('menu.categories', { defaultValue: 'Categories' })}
+        >
           <div className="tf-cat-strip__inner">
             {visibleCategories.map((c) => (
               <button
@@ -292,7 +288,14 @@ export function Menu() {
 
       {/* List */}
       <div className="tf-menu__list">
-        {error ? <div className="error-banner">{error}</div> : null}
+        {error ? (
+          <div className="error-banner">
+            <span>{error}</span>
+            <button type="button" onClick={() => setReloadKey((k) => k + 1)}>
+              {t('errors.retry', { defaultValue: 'Retry' })}
+            </button>
+          </div>
+        ) : null}
 
         {isLoading ? (
           <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>

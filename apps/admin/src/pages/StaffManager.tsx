@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StaffRole, StaffShift, StaffUser } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { Modal } from '@orvexa/ui';
@@ -39,7 +39,7 @@ export function StaffManager() {
           setShifts(shiftRows);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -64,7 +64,7 @@ export function StaffManager() {
         return next;
       });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -74,7 +74,7 @@ export function StaffManager() {
       else await authedFetch((tk) => api.disableStaff(tk, u.id));
       reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -134,11 +134,7 @@ export function StaffManager() {
                 <td className="right">
                   {canManage && u.id !== me?.id ? (
                     <>
-                      <button
-                        type="button"
-                        className="btn btn-sm"
-                        onClick={() => setEditing(u)}
-                      >
+                      <button type="button" className="btn btn-sm" onClick={() => setEditing(u)}>
                         {t('staff.save')}
                       </button>{' '}
                       <button
@@ -207,7 +203,7 @@ function StaffEditor({
       }
       await onSaved();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }

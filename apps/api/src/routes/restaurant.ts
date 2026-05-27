@@ -1,7 +1,12 @@
 import { Router } from 'express';
 import { PatchRestaurantRequestSchema } from '@orvexa/shared';
 import { RestaurantService } from '../services/restaurant.js';
-import { requireAnyAuth, requireAuth, requireRole, resolveRestaurantId } from '../middleware/auth.js';
+import {
+  requireAnyAuth,
+  requireAuth,
+  requireRole,
+  resolveRestaurantId,
+} from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';

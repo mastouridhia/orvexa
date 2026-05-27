@@ -63,7 +63,12 @@ export async function loadSeededIds(): Promise<SeededIds> {
 
   return {
     restaurantId,
-    staff: { admin: byRole('admin'), manager: byRole('manager'), kitchen: byRole('kitchen'), waiter: byRole('waiter') },
+    staff: {
+      admin: byRole('admin'),
+      manager: byRole('manager'),
+      kitchen: byRole('kitchen'),
+      waiter: byRole('waiter'),
+    },
     tableIds: t.map((x) => x.id),
     categoryIds: { starters: catBy('Starters'), mains: catBy('Mains'), drinks: catBy('Drinks') },
     dishIds: {
@@ -76,4 +81,3 @@ export async function loadSeededIds(): Promise<SeededIds> {
     },
   };
 }
-

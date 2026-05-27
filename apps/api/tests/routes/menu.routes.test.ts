@@ -12,9 +12,7 @@ describe('Menu routes', () => {
   it('GET /menu via customer session returns categories with dishes', async () => {
     const ids = await loadSeededIds();
     const customer = await openCustomerSession(ids.restaurantId, ids.tableIds[0]!);
-    const res = await request(app())
-      .get('/menu')
-      .set('Authorization', `Bearer ${customer.token}`);
+    const res = await request(app()).get('/menu').set('Authorization', `Bearer ${customer.token}`);
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(3);
     const drinks = res.body.data.find((c: { name: { en: string } }) => c.name.en === 'Drinks');

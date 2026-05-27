@@ -18,7 +18,8 @@ type SectionBumpStatus = 'preparing' | 'ready';
 
 function deriveSectionStatus(items: Order['items']): 'received' | 'preparing' | 'ready' {
   if (items.every((i) => i.itemStatus === 'ready')) return 'ready';
-  if (items.some((i) => i.itemStatus === 'preparing' || i.itemStatus === 'ready')) return 'preparing';
+  if (items.some((i) => i.itemStatus === 'preparing' || i.itemStatus === 'ready'))
+    return 'preparing';
   return 'received';
 }
 
@@ -46,7 +47,11 @@ export function TicketCard({
   section?: KitchenSection;
   tableLabels: Map<string, string>;
   now: number;
-  onAdvance: (orderId: string, section: KitchenSection, status: SectionBumpStatus) => void | Promise<void>;
+  onAdvance: (
+    orderId: string,
+    section: KitchenSection,
+    status: SectionBumpStatus,
+  ) => void | Promise<void>;
   on86Dish?: (dishId: string) => void | Promise<void>;
   large?: boolean;
   freshlyArrived?: boolean;
@@ -108,10 +113,7 @@ export function TicketCard({
       aria-label={`Order ${ticketId} · ${t(`board.status.${order.status}`)}`}
     >
       {/* Header strip — color reflects age bucket */}
-      <div
-        className="tf-kds-card__head"
-        style={{ background: meta.bg, color: meta.ink }}
-      >
+      <div className="tf-kds-card__head" style={{ background: meta.bg, color: meta.ink }}>
         {isNew ? <span className="tf-kds-card__sweep" aria-hidden="true" /> : null}
         <div className="tf-kds-card__head-left">
           <span className="tf-mono tf-kds-card__head-table">T-{tableLabel}</span>

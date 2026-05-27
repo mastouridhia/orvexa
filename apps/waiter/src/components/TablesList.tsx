@@ -72,11 +72,7 @@ export function TablesList({
             {list.map((table, idx) => {
               const order = pickActiveOrder(orders, table.id);
               const call = callsByTable.get(table.id) ?? null;
-              const state: WaiterVisualState = visualStateOf(
-                table,
-                order ? [order] : [],
-                call,
-              );
+              const state: WaiterVisualState = visualStateOf(table, order ? [order] : [], call);
               const minsInOrder = order
                 ? Math.max(0, Math.floor((now - new Date(order.createdAt).getTime()) / 60000))
                 : 0;

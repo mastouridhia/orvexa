@@ -188,24 +188,57 @@ dishesRouter.post(
 registerTag('dishes', 'Dish (menu item) management.');
 
 const okResponses = { '200': { description: 'OK' } };
-registerPath('get', '/dishes', { summary: 'List dishes (staff)', tags: ['dishes'], responses: okResponses });
-registerPath('get', '/dishes/{id}', { summary: 'Get a single dish (with variant groups)', tags: ['dishes'], responses: okResponses });
-registerPath('post', '/dishes', { summary: 'Create dish (admin/manager)', tags: ['dishes'], responses: { '201': { description: 'Created' } } });
-registerPath('patch', '/dishes/{id}', { summary: 'Update dish (admin/manager)', tags: ['dishes'], responses: okResponses });
+registerPath('get', '/dishes', {
+  summary: 'List dishes (staff)',
+  tags: ['dishes'],
+  responses: okResponses,
+});
+registerPath('get', '/dishes/{id}', {
+  summary: 'Get a single dish (with variant groups)',
+  tags: ['dishes'],
+  responses: okResponses,
+});
+registerPath('post', '/dishes', {
+  summary: 'Create dish (admin/manager)',
+  tags: ['dishes'],
+  responses: { '201': { description: 'Created' } },
+});
+registerPath('patch', '/dishes/{id}', {
+  summary: 'Update dish (admin/manager)',
+  tags: ['dishes'],
+  responses: okResponses,
+});
 registerPath('patch', '/dishes/{id}/availability', {
   summary: 'Toggle availability (admin/manager/kitchen — kitchen toggles 86’d items)',
   tags: ['dishes'],
   responses: okResponses,
 });
-registerPath('delete', '/dishes/{id}', { summary: 'Delete dish (cascades to variant groups + image)', tags: ['dishes'], responses: okResponses });
+registerPath('delete', '/dishes/{id}', {
+  summary: 'Delete dish (cascades to variant groups + image)',
+  tags: ['dishes'],
+  responses: okResponses,
+});
 registerPath('post', '/dishes/{id}/image', {
-  summary: 'Upload dish image (multipart, field name `image`) — resized to 1024px and converted to webp',
+  summary:
+    'Upload dish image (multipart, field name `image`) — resized to 1024px and converted to webp',
   tags: ['dishes'],
   responses: { '201': { description: 'Created' } },
 });
-registerPath('delete', '/dishes/{id}/image', { summary: 'Remove dish image', tags: ['dishes'], responses: okResponses });
-registerPath('delete', '/dishes/{id}/images/{idx}', { summary: 'Remove one dish image by index', tags: ['dishes'], responses: okResponses });
-registerPath('get', '/dishes/{id}/variant-groups', { summary: 'List a dish’s variant groups', tags: ['dishes'], responses: okResponses });
+registerPath('delete', '/dishes/{id}/image', {
+  summary: 'Remove dish image',
+  tags: ['dishes'],
+  responses: okResponses,
+});
+registerPath('delete', '/dishes/{id}/images/{idx}', {
+  summary: 'Remove one dish image by index',
+  tags: ['dishes'],
+  responses: okResponses,
+});
+registerPath('get', '/dishes/{id}/variant-groups', {
+  summary: 'List a dish’s variant groups',
+  tags: ['dishes'],
+  responses: okResponses,
+});
 registerPath('post', '/dishes/{id}/variant-groups', {
   summary: 'Create a variant group for a dish (optionally with nested variants)',
   tags: ['dishes'],

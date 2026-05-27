@@ -19,12 +19,7 @@ import { db } from '../db/index.js';
 import { categories, dishes, variants } from '../db/schema/menu.js';
 import { orders } from '../db/schema/orders.js';
 import { users } from '../db/schema/staff.js';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../utils/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
 import {
   ACTIVE_ORDER_STATUSES,
   OrderRepository,
@@ -104,6 +99,12 @@ const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 };
 
+// Transitions each role may perform; admin/manager inherit all valid transitions.
+const ROLE_TRANSITIONS: Partial<Record<string, OrderStatus[]>> = {
+  kitchen: ['preparing', 'ready'],
+  waiter: ['served'],
+};
+
 function isOpenForCustomerEdits(status: OrderStatus): boolean {
   return status === 'received';
 }
@@ -124,47 +125,64 @@ export class OrderService {
     this.restaurantRepo = restaurantRepo;
   }
 
-  async place(input: {
+  async placeMulti(input: {
     restaurantId: string;
     tableId: string;
     tableDayTokenId: string | null;
     sessionId: string | null;
     body: PlaceOrderRequest;
-  }): Promise<Order> {
+  }): Promise<Order[]> {
     const restaurant = await this.restaurantRepo.findById(input.restaurantId);
     if (!restaurant) throw new NotFoundError('Restaurant not found');
-    const [resolved, activeOrderCount] = await Promise.all([
+
+    const [resolved, activeOrderCount, maxRound] = await Promise.all([
       this.resolveItems(input.restaurantId, input.body.items, restaurant.defaultPrepMinutes),
       this.orderRepo.countActiveOrders(input.restaurantId),
+      this.orderRepo.maxRoundForTable(input.tableId),
     ]);
-    const totals = this.computeTotals(restaurant, resolved);
-    const created = await this.orderRepo.createWithItems({
-      order: {
-        restaurantId: input.restaurantId,
-        tableId: input.tableId,
-        tableDayTokenId: input.tableDayTokenId,
-        sessionId: input.sessionId,
-        status: 'received',
-        round: 1,
-        subtotalMillimes: totals.subtotalMillimes,
-        taxMillimes: totals.taxMillimes,
-        serviceMillimes: totals.serviceMillimes,
-        totalMillimes: totals.totalMillimes,
-      },
-      items: resolved.map((r) => ({ item: r.item, variants: r.variants })),
-    });
-    const order = rowToOrder(created);
-    // Inject queue-aware ETA: kitchen can run ~2 orders in parallel, each round adds max prep time.
-    const kitchenPrepTimes = order.items
-      .filter((i) => i.kitchenSection === 'kitchen')
-      .map((i) => i.prepTimeMinutes)
-      .filter((v): v is number => v !== null && v > 0);
-    if (kitchenPrepTimes.length > 0) {
-      const maxPrepTime = Math.max(...kitchenPrepTimes);
-      const queueRounds = Math.floor(activeOrderCount / 2);
-      order.etaMinutes = maxPrepTime + queueRounds * maxPrepTime;
+
+    const nextRound = maxRound + 1;
+
+    // Split items by kitchenSection — one order per section.
+    const bySection = new Map<string, ResolvedItem[]>();
+    for (const item of resolved) {
+      const sec = item.item.kitchenSection ?? 'kitchen';
+      const bucket = bySection.get(sec) ?? [];
+      bucket.push(item);
+      bySection.set(sec, bucket);
     }
-    return order;
+
+    const result: Order[] = [];
+    for (const [sec, items] of bySection) {
+      const totals = this.computeTotals(restaurant, items);
+      const created = await this.orderRepo.createWithItems({
+        order: {
+          restaurantId: input.restaurantId,
+          tableId: input.tableId,
+          tableDayTokenId: input.tableDayTokenId,
+          sessionId: input.sessionId,
+          status: 'received',
+          round: nextRound,
+          ...totals,
+        },
+        items: items.map((r) => ({ item: r.item, variants: r.variants })),
+      });
+      const order = rowToOrder(created);
+      // Queue-aware ETA only meaningful for kitchen orders.
+      if (sec === 'kitchen') {
+        const prepTimes = order.items
+          .map((i) => i.prepTimeMinutes)
+          .filter((v): v is number => v !== null && v > 0);
+        if (prepTimes.length > 0) {
+          const maxPrepTime = Math.max(...prepTimes);
+          const queueRounds = Math.floor(activeOrderCount / 2);
+          order.etaMinutes = maxPrepTime + queueRounds * maxPrepTime;
+        }
+      }
+      result.push(order);
+    }
+
+    return result;
   }
 
   async addItems(input: {
@@ -178,7 +196,9 @@ export class OrderService {
       throw new ForbiddenError('Order belongs to a different session');
     }
     if (!isOpenForCustomerEdits(order.status as OrderStatus)) {
-      throw new ConflictError(`Order is in '${order.status}', items can only be added while 'received'`);
+      throw new ConflictError(
+        `Order is in '${order.status}', items can only be added while 'received'`,
+      );
     }
     const restaurant = await this.restaurantRepo.findById(input.restaurantId);
     if (!restaurant) throw new NotFoundError('Restaurant not found');
@@ -187,10 +207,7 @@ export class OrderService {
       input.body.items,
       restaurant.defaultPrepMinutes,
     );
-    const allItemTotals = order.items.reduce(
-      (sum, it) => sum + this.itemLineTotal(it),
-      0,
-    );
+    const allItemTotals = order.items.reduce((sum, it) => sum + this.itemLineTotal(it), 0);
     const newSubtotal = allItemTotals + newItems.reduce((sum, n) => sum + n.lineTotalMillimes, 0);
     const totals = this.computeTotalsFromSubtotal(restaurant, newSubtotal);
     const updated = await this.orderRepo.appendItems({
@@ -212,7 +229,9 @@ export class OrderService {
       throw new ForbiddenError('Order belongs to a different session');
     }
     if (!isOpenForCustomerEdits(order.status as OrderStatus)) {
-      throw new ConflictError(`Order is in '${order.status}', items can only be removed while 'received'`);
+      throw new ConflictError(
+        `Order is in '${order.status}', items can only be removed while 'received'`,
+      );
     }
     const target = order.items.find((i) => i.id === input.itemId);
     if (!target) throw new NotFoundError('Order item not found');
@@ -283,12 +302,18 @@ export class OrderService {
     restaurantId: string,
     id: string,
     body: UpdateOrderStatusRequest,
+    callerRole?: string,
   ): Promise<Order> {
     const row = await this.requireOrder(restaurantId, id);
     const current = row.status as OrderStatus;
     const next = body.status as OrderStatus;
     if (!STATUS_TRANSITIONS[current].includes(next)) {
       throw new ConflictError(`Cannot transition order from '${current}' to '${next}'`);
+    }
+    // Restrict kitchen/waiter to only the transitions their role owns.
+    const allowed = callerRole ? ROLE_TRANSITIONS[callerRole] : undefined;
+    if (allowed && !allowed.includes(next)) {
+      throw new ForbiddenError(`Role '${callerRole}' cannot set order status to '${next}'`);
     }
     const patch: Record<string, unknown> = {
       status: next,
@@ -316,10 +341,7 @@ export class OrderService {
       .from(users)
       .leftJoin(
         orders,
-        and(
-          eq(orders.assignedWaiterId, users.id),
-          inArray(orders.status, ['ready']),
-        ),
+        and(eq(orders.assignedWaiterId, users.id), inArray(orders.status, ['ready'])),
       )
       .where(
         and(
@@ -411,10 +433,16 @@ export class OrderService {
     const dishIds = Array.from(new Set(inputs.map((i) => i.dishId)));
     const variantIds = Array.from(new Set(inputs.flatMap((i) => i.variantIds)));
     const dishRows = await db.select().from(dishes).where(inArray(dishes.id, dishIds));
-    const categoryIds = Array.from(new Set(dishRows.map((d) => d.categoryId).filter(Boolean))) as string[];
+    const categoryIds = Array.from(
+      new Set(dishRows.map((d) => d.categoryId).filter(Boolean)),
+    ) as string[];
     const [variantRows, categoryRows] = await Promise.all([
-      variantIds.length === 0 ? [] : db.select().from(variants).where(inArray(variants.id, variantIds)),
-      categoryIds.length === 0 ? [] : db.select().from(categories).where(inArray(categories.id, categoryIds)),
+      variantIds.length === 0
+        ? []
+        : db.select().from(variants).where(inArray(variants.id, variantIds)),
+      categoryIds.length === 0
+        ? []
+        : db.select().from(categories).where(inArray(categories.id, categoryIds)),
     ]);
 
     const dishById = new Map(dishRows.map((d) => [d.id, d] as const));
@@ -437,10 +465,7 @@ export class OrderService {
         if (!variant.isActive) throw new ConflictError(`Variant ${vid} is inactive`);
         return variant;
       });
-      const variantPriceDelta = inputVariants.reduce(
-        (sum, v) => sum + v.priceDeltaMillimes,
-        0,
-      );
+      const variantPriceDelta = inputVariants.reduce((sum, v) => sum + v.priceDeltaMillimes, 0);
       const lineTotalMillimes = (dish.priceMillimes + variantPriceDelta) * input.quantity;
       resolved.push({
         item: {
@@ -451,7 +476,9 @@ export class OrderService {
           nameSnapshotEn: dish.nameEn,
           unitPriceMillimes: dish.priceMillimes,
           prepTimeMinutes: dish.prepTimeMinutes ?? defaultPrepMinutes,
-          kitchenSection: (dish.categoryId ? categoryById.get(dish.categoryId)?.kitchenSection : undefined) ?? 'kitchen',
+          kitchenSection:
+            (dish.categoryId ? categoryById.get(dish.categoryId)?.kitchenSection : undefined) ??
+            'kitchen',
           quantity: input.quantity,
           notes: input.notes ?? null,
         },

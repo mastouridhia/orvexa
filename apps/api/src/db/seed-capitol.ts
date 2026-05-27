@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
 import { eq, inArray } from 'drizzle-orm';
 import { db, pool } from './client.js';
@@ -10,9 +11,7 @@ async function main() {
   console.log('[seed-capitol] looking up restaurant…');
   const [restaurant] = await db.select().from(restaurants).where(eq(restaurants.slug, SLUG));
   if (!restaurant) {
-    throw new Error(
-      `[seed-capitol] restaurant slug="${SLUG}" not found — run db:provision first`,
-    );
+    throw new Error(`[seed-capitol] restaurant slug="${SLUG}" not found — run db:provision first`);
   }
   console.log(`[seed-capitol] restaurant ${restaurant.name} (id=${restaurant.id})`);
 

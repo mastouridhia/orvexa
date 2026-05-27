@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode, PaymentPoint, Restaurant } from '@orvexa/shared';
 import { LanguageSelector } from '@orvexa/ui';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
-import { IconGlobe, IconHome, IconLogout, IconMonitor, IconReceipt } from '../components/tf-icons.js';
+import {
+  IconGlobe,
+  IconHome,
+  IconLogout,
+  IconMonitor,
+  IconReceipt,
+} from '../components/tf-icons.js';
 
 const LANGS: LanguageCode[] = ['fr', 'ar', 'en'];
 const LANG_LABELS: Record<LanguageCode, string> = { fr: 'Français', ar: 'العربية', en: 'English' };
@@ -27,10 +33,12 @@ export function Settings() {
         const r = await authedFetch((tk) => api.getRestaurant(tk));
         if (!cancelled) setRestaurant(r);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [authedFetch]);
 
   const save = async () => {
@@ -53,7 +61,7 @@ export function Settings() {
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -73,10 +81,11 @@ export function Settings() {
     return (
       <div className="tf-a-settings__loading">
         <h1 className="page-title">{t('settings.title')}</h1>
-        {error
-          ? <div className="error-banner">{error}</div>
-          : <div className="tf-a-settings__skeleton" />
-        }
+        {error ? (
+          <div className="error-banner">{error}</div>
+        ) : (
+          <div className="tf-a-settings__skeleton" />
+        )}
       </div>
     );
   }
@@ -84,23 +93,23 @@ export function Settings() {
   return (
     <>
       <div className="tf-a-settings__topbar">
-        <h1 className="page-title" style={{ margin: 0 }}>{t('settings.title')}</h1>
+        <h1 className="page-title" style={{ margin: 0 }}>
+          {t('settings.title')}
+        </h1>
         <div className="tf-a-settings__topbar-right">
-          {saved && <span className="tf-a-settings__flash tf-a-settings__flash--ok">✓ {t('settings.saved')}</span>}
+          {saved && (
+            <span className="tf-a-settings__flash tf-a-settings__flash--ok">
+              ✓ {t('settings.saved')}
+            </span>
+          )}
           {error && <span className="tf-a-settings__flash tf-a-settings__flash--err">{error}</span>}
-          <button
-            type="button"
-            className="btn btn-sm btn-primary"
-            disabled={busy}
-            onClick={save}
-          >
+          <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={save}>
             {t('settings.save')}
           </button>
         </div>
       </div>
 
       <div className="tf-a-settings">
-
         {/* ── Restaurant ── */}
         <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
@@ -132,8 +141,12 @@ export function Settings() {
               <IconGlobe />
             </span>
             <div>
-              <div className="tf-a-settings__section-title">{t('settings.sectionLocalization')}</div>
-              <div className="tf-a-settings__section-sub">{t('settings.sectionLocalizationSub')}</div>
+              <div className="tf-a-settings__section-title">
+                {t('settings.sectionLocalization')}
+              </div>
+              <div className="tf-a-settings__section-sub">
+                {t('settings.sectionLocalizationSub')}
+              </div>
             </div>
           </div>
           <div className="tf-a-settings__section-body">
@@ -151,11 +164,16 @@ export function Settings() {
                 <select
                   value={restaurant.defaultLanguage}
                   onChange={(e) =>
-                    setRestaurant({ ...restaurant, defaultLanguage: e.target.value as LanguageCode })
+                    setRestaurant({
+                      ...restaurant,
+                      defaultLanguage: e.target.value as LanguageCode,
+                    })
                   }
                 >
                   {LANGS.map((l) => (
-                    <option key={l} value={l}>{LANG_LABELS[l]}</option>
+                    <option key={l} value={l}>
+                      {LANG_LABELS[l]}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -280,7 +298,9 @@ export function Settings() {
             </span>
             <div>
               <div className="tf-a-settings__section-title">{t('nav.logout')}</div>
-              <div className="tf-a-settings__section-sub">{t('settings.logoutHint', { defaultValue: 'End this session on this device.' })}</div>
+              <div className="tf-a-settings__section-sub">
+                {t('settings.logoutHint', { defaultValue: 'End this session on this device.' })}
+              </div>
             </div>
           </div>
           <div className="tf-a-settings__section-body">
@@ -290,13 +310,18 @@ export function Settings() {
               onClick={logout}
               aria-label={t('nav.logout')}
               title={t('nav.logout')}
-              style={{ width: 44, height: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+              style={{
+                width: 44,
+                height: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <IconLogout />
             </button>
           </div>
         </section>
-
       </div>
     </>
   );

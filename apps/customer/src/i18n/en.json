@@ -7,7 +7,12 @@
     "scanAgain": "Scan again",
     "browseMenu": "Browse menu"
   },
-  "header": { "table": "Table {{label}}", "tableShort": "Table", "open": "Open", "settings": "Settings" },
+  "header": {
+    "table": "Table {{label}}",
+    "tableShort": "Table",
+    "open": "Open",
+    "settings": "Settings"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
@@ -136,7 +141,15 @@
     "billTitle": "The bill",
     "billSub": "Pay at table",
     "eta": "~{{minutes}} min",
-    "orderMore": "Order more items"
+    "orderMore": "Order more items",
+    "round": {
+      "barSection": "Bar",
+      "kitchenSection": "Kitchen",
+      "grandTotal": "Grand total",
+      "partialReadyTitle": "Partially ready.",
+      "partialReadySub": "Bar is on its way — kitchen coming up.",
+      "cookingSub": "Your orders are being prepared."
+    }
   },
   "waiter": {
     "idleTitle": "Need a hand?",
@@ -179,7 +192,8 @@
     "retry": "Retry",
     "offline": "You're offline.",
     "sessionExpired": "Your session expired. Scan the QR code again.",
-    "boot": "Could not start session. Check your connection."
+    "boot": "Could not start session. Check your connection.",
+    "reconnecting": "Reconnecting…"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
 }

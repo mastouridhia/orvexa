@@ -29,7 +29,11 @@ async function req(path, { method = 'GET', token, body, raw = false } = {}) {
   if (raw) return res;
   const text = await res.text();
   let json;
-  try { json = JSON.parse(text); } catch { json = { _raw: text }; }
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { _raw: text };
+  }
   if (!res.ok) throw new Error(`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`);
   return json.data ?? json;
 }
@@ -50,7 +54,9 @@ function connectSocket(label, token) {
   });
 }
 
-function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function wait(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 function pickEvents(received, event) {
   return received.filter((e) => e.event === event);
@@ -97,7 +103,10 @@ async function main() {
   let dishId = null;
   for (const cat of menu) {
     for (const d of cat.dishes) {
-      if (d.variantGroups.length === 0) { dishId = d.id; break; }
+      if (d.variantGroups.length === 0) {
+        dishId = d.id;
+        break;
+      }
     }
     if (dishId) break;
   }
@@ -117,8 +126,12 @@ async function main() {
   const tableStatusOnCreate = pickEvents(waiter.received, 'table:status');
   const createStatus = tableStatusOnCreate.at(-1)?.payload.status;
 
-  console.log(`[order:created]  kitchen=${label(kitchenCreated.length === 1, 1)}  waiter=${label(waiterCreated.length === 1, 1)}  table=${label(customerCreated.length === 1, 1)}`);
-  console.log(`[table:status]   on create → ${createStatus} ${label(createStatus === 'waiting', "'waiting'")}`);
+  console.log(
+    `[order:created]  kitchen=${label(kitchenCreated.length === 1, 1)}  waiter=${label(waiterCreated.length === 1, 1)}  table=${label(customerCreated.length === 1, 1)}`,
+  );
+  console.log(
+    `[table:status]   on create → ${createStatus} ${label(createStatus === 'waiting', "'waiting'")}`,
+  );
 
   // Advance order status: received → preparing
   await req(`/orders/${order.id}/status`, {
@@ -130,23 +143,31 @@ async function main() {
 
   const customerStatus = pickEvents(customer.received, 'order:status');
   const waiterStatus = pickEvents(waiter.received, 'order:status');
-  console.log(`[order:status]   customer=${label(customerStatus.length === 1, 1)}  waiter=${label(waiterStatus.length === 1, 1)}  payload=${JSON.stringify(customerStatus.at(-1)?.payload)}`);
+  console.log(
+    `[order:status]   customer=${label(customerStatus.length === 1, 1)}  waiter=${label(waiterStatus.length === 1, 1)}  payload=${JSON.stringify(customerStatus.at(-1)?.payload)}`,
+  );
 
   // Customer calls waiter
   await req(`/tables/${table.id}/call-waiter`, { method: 'POST', token: customerToken });
   await wait(300);
   const calls = pickEvents(waiter.received, 'waiter:called');
-  console.log(`[waiter:called]  waiter=${label(calls.length === 1, 1)}  payload=${JSON.stringify(calls.at(-1)?.payload)}`);
+  console.log(
+    `[waiter:called]  waiter=${label(calls.length === 1, 1)}  payload=${JSON.stringify(calls.at(-1)?.payload)}`,
+  );
 
   // Customer requests bill
   await req(`/tables/${table.id}/request-bill`, { method: 'POST', token: customerToken });
   await wait(300);
   const bills = pickEvents(waiter.received, 'bill:requested');
-  console.log(`[bill:requested] waiter=${label(bills.length === 1, 1)}  payload=${JSON.stringify(bills.at(-1)?.payload)}`);
+  console.log(
+    `[bill:requested] waiter=${label(bills.length === 1, 1)}  payload=${JSON.stringify(bills.at(-1)?.payload)}`,
+  );
 
   const tableStatusFinal = pickEvents(waiter.received, 'table:status');
   const finalStatus = tableStatusFinal.at(-1)?.payload.status;
-  console.log(`[table:status]   final → ${finalStatus} ${label(finalStatus === 'needs_bill', "'needs_bill'")}`);
+  console.log(
+    `[table:status]   final → ${finalStatus} ${label(finalStatus === 'needs_bill', "'needs_bill'")}`,
+  );
 
   // Manager patches a category — broadcast menu:updated
   const categories = await req('/categories', { token: mgr.accessToken });
@@ -158,12 +179,21 @@ async function main() {
   await wait(300);
   const menuUpdCustomer = pickEvents(customer.received, 'menu:updated');
   const menuUpdKitchen = pickEvents(kitchen.received, 'menu:updated');
-  console.log(`[menu:updated]   customer=${label(menuUpdCustomer.length === 1, 1)}  kitchen=${label(menuUpdKitchen.length === 1, 1)}`);
+  console.log(
+    `[menu:updated]   customer=${label(menuUpdCustomer.length === 1, 1)}  kitchen=${label(menuUpdKitchen.length === 1, 1)}`,
+  );
 
   // Unauthorized handshake
   const bad = await new Promise((resolve) => {
-    const s = ioClient(API, { auth: { token: 'not-a-token' }, transports: ['websocket'], reconnection: false });
-    s.on('connect', () => { s.disconnect(); resolve('connected'); });
+    const s = ioClient(API, {
+      auth: { token: 'not-a-token' },
+      transports: ['websocket'],
+      reconnection: false,
+    });
+    s.on('connect', () => {
+      s.disconnect();
+      resolve('connected');
+    });
     s.on('connect_error', (err) => resolve(err.message));
   });
   console.log(`[unauth]         rejected → "${bad}" ${label(bad !== 'connected', 'rejection')}`);

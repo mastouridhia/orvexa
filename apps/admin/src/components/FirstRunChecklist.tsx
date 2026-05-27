@@ -21,8 +21,8 @@ export function FirstRunChecklist() {
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [steps, setSteps] = useState<Step[] | null>(null);
-  const [dismissed, setDismissed] = useState<boolean>(() =>
-    typeof window !== 'undefined' && window.localStorage.getItem(DISMISS_KEY) === '1',
+  const [dismissed, setDismissed] = useState<boolean>(
+    () => typeof window !== 'undefined' && window.localStorage.getItem(DISMISS_KEY) === '1',
   );
 
   useEffect(() => {
@@ -38,9 +38,7 @@ export function FirstRunChecklist() {
           authedFetch((tk) => api.listStaff(tk)),
         ]);
         if (cancelled) return;
-        const hasNonAdminStaff = staff.some(
-          (u) => u.role !== 'admin' && !u.disabledAt,
-        );
+        const hasNonAdminStaff = staff.some((u) => u.role !== 'admin' && !u.disabledAt);
         const hasMenu = categories.length > 0 && dishes.length > 0;
         const computed: Step[] = [
           {
@@ -74,7 +72,10 @@ export function FirstRunChecklist() {
 
   return (
     <div className="card" style={{ marginBottom: '1rem' }}>
-      <div className="row-gap" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <div
+        className="row-gap"
+        style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}
+      >
         <div>
           <h2 style={{ margin: 0, fontSize: '1rem' }}>{t('firstRun.title')}</h2>
           <p className="muted" style={{ margin: '0.25rem 0 0', fontSize: '0.85rem' }}>
@@ -85,7 +86,16 @@ export function FirstRunChecklist() {
           {t('firstRun.dismiss')}
         </button>
       </div>
-      <ul style={{ listStyle: 'none', padding: 0, margin: '0.75rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: '0.75rem 0 0',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.4rem',
+        }}
+      >
         {steps.map((step) => (
           <li
             key={step.key}

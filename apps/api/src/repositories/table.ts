@@ -30,11 +30,7 @@ export class TableRepository extends BaseRepository {
   }
 
   async findByPublicSlug(slug: string): Promise<TableRow | null> {
-    const [row] = await this.db
-      .select()
-      .from(tables)
-      .where(eq(tables.publicSlug, slug))
-      .limit(1);
+    const [row] = await this.db.select().from(tables).where(eq(tables.publicSlug, slug)).limit(1);
     return row ?? null;
   }
 

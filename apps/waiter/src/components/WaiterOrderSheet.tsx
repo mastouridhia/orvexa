@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Dish, LanguageCode, VariantGroup } from '@orvexa/shared';
 import { Modal } from '@orvexa/ui';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api, type MenuTreeCategory } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
@@ -73,7 +73,7 @@ export function WaiterOrderSheet({
         if (!cancelled) setTree(data);
       })
       .catch((err) => {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       });
     return () => {
       cancelled = true;
@@ -108,13 +108,16 @@ export function WaiterOrderSheet({
     setError(null);
     try {
       const items = buildItems(lines);
-      const order = existingOrderId
-        ? await authedFetch((tk) => api.addItemsStaff(tk, existingOrderId, { items }))
-        : await authedFetch((tk) => api.placeOrderForTable(tk, tableId, { items }));
-      onSaved(order.id);
+      if (existingOrderId) {
+        const order = await authedFetch((tk) => api.addItemsStaff(tk, existingOrderId, { items }));
+        onSaved(order.id);
+      } else {
+        const orders = await authedFetch((tk) => api.placeOrderForTable(tk, tableId, { items }));
+        onSaved(orders[0]!.id);
+      }
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -126,10 +129,17 @@ export function WaiterOrderSheet({
       <div className="tf-w-order__sheet" role="dialog" aria-label={t('tables.title')}>
         <div className="tf-w-order__head">
           <div>
-            <div className="tf-caption">{t('detail.titleLead')} {tableLabel}</div>
+            <div className="tf-caption">
+              {t('detail.titleLead')} {tableLabel}
+            </div>
             <h2 className="tf-w-order__title">{t('menu.title', { defaultValue: 'Menu' })}</h2>
           </div>
-          <button type="button" className="tf-w-order__close" onClick={onClose} aria-label={t('common.close')}>
+          <button
+            type="button"
+            className="tf-w-order__close"
+            onClick={onClose}
+            aria-label={t('common.close')}
+          >
             ✕
           </button>
         </div>
@@ -158,7 +168,9 @@ export function WaiterOrderSheet({
                   disabled={!d.available}
                 >
                   <span className="tf-w-order__row-name">{pickLang(d.name, lang)}</span>
-                  <span className="tf-mono tf-w-order__row-price">{formatMillimes(d.priceMillimes)}</span>
+                  <span className="tf-mono tf-w-order__row-price">
+                    {formatMillimes(d.priceMillimes)}
+                  </span>
                 </button>
               ))}
             </div>
@@ -167,10 +179,17 @@ export function WaiterOrderSheet({
 
         <div className="tf-w-order__bar">
           <div className="tf-w-order__bar-left">
-            <span className="tf-caption">{t('cart.items', { count: lines.reduce((s, l) => s + l.quantity, 0) })}</span>
+            <span className="tf-caption">
+              {t('cart.items', { count: lines.reduce((s, l) => s + l.quantity, 0) })}
+            </span>
             <span className="tf-mono">{formatMillimes(subtotal)}</span>
           </div>
-          <button type="button" className="btn btn-primary" disabled={busy || lines.length === 0} onClick={confirm}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy || lines.length === 0}
+            onClick={confirm}
+          >
             {busy ? t('detail.saving') : t('cart.confirmOrder', { defaultValue: 'Confirm' })}
           </button>
         </div>
@@ -214,7 +233,10 @@ function DishAddModal({
       } else {
         const has = current.includes(variantId);
         if (has) {
-          next.set(group.id, current.filter((id) => id !== variantId));
+          next.set(
+            group.id,
+            current.filter((id) => id !== variantId),
+          );
         } else if (current.length < group.max) {
           next.set(group.id, [...current, variantId]);
         }
@@ -261,7 +283,10 @@ function DishAddModal({
           {groups.map((g) => {
             const selectedIds = selection.get(g.id) ?? [];
             return (
-              <div key={g.id} style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 12 }}>
+              <div
+                key={g.id}
+                style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 12 }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                   <strong>{pickLang(g.name, lang)}</strong>
                   <span className="tf-caption">
@@ -273,26 +298,31 @@ function DishAddModal({
                   </span>
                 </div>
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {(g.variants ?? []).filter((v) => v.isActive).map((v) => {
-                    const checked = selectedIds.includes(v.id);
-                    return (
-                      <label key={v.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <input
-                          type={g.selectionType === 'single' ? 'radio' : 'checkbox'}
-                          name={g.id}
-                          checked={checked}
-                          onChange={() => toggle(g, v.id)}
-                        />
-                        <span style={{ flex: 1 }}>{pickLang(v.name, lang)}</span>
-                        {v.priceDeltaMillimes !== 0 ? (
-                          <span className="tf-mono" style={{ color: 'var(--fg-soft)' }}>
-                            {v.priceDeltaMillimes > 0 ? '+' : ''}
-                            {formatMillimes(v.priceDeltaMillimes)}
-                          </span>
-                        ) : null}
-                      </label>
-                    );
-                  })}
+                  {(g.variants ?? [])
+                    .filter((v) => v.isActive)
+                    .map((v) => {
+                      const checked = selectedIds.includes(v.id);
+                      return (
+                        <label
+                          key={v.id}
+                          style={{ display: 'flex', alignItems: 'center', gap: 10 }}
+                        >
+                          <input
+                            type={g.selectionType === 'single' ? 'radio' : 'checkbox'}
+                            name={g.id}
+                            checked={checked}
+                            onChange={() => toggle(g, v.id)}
+                          />
+                          <span style={{ flex: 1 }}>{pickLang(v.name, lang)}</span>
+                          {v.priceDeltaMillimes !== 0 ? (
+                            <span className="tf-mono" style={{ color: 'var(--fg-soft)' }}>
+                              {v.priceDeltaMillimes > 0 ? '+' : ''}
+                              {formatMillimes(v.priceDeltaMillimes)}
+                            </span>
+                          ) : null}
+                        </label>
+                      );
+                    })}
                 </div>
               </div>
             );
@@ -303,11 +333,19 @@ function DishAddModal({
       <div style={{ marginTop: 12 }}>
         <div className="tf-caption">{t('dish.quantity')}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6 }}>
-          <button type="button" className="btn btn-ghost" onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+          >
             −
           </button>
           <span className="tf-mono">{quantity}</span>
-          <button type="button" className="btn btn-ghost" onClick={() => setQuantity((q) => Math.min(99, q + 1))}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setQuantity((q) => Math.min(99, q + 1))}
+          >
             +
           </button>
         </div>
@@ -326,4 +364,3 @@ function DishAddModal({
     </Modal>
   );
 }
-

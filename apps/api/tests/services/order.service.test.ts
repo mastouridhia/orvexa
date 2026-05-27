@@ -25,7 +25,7 @@ describe('OrderService.place — totals', () => {
 
   it('computes subtotal, 19% tax, 10% service, total for a single item', async () => {
     const ids = await loadSeededIds();
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
@@ -33,51 +33,49 @@ describe('OrderService.place — totals', () => {
       body: { items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] },
     });
     // brik = 4500
-    expect(order.subtotalMillimes).toBe(4500);
-    expect(order.taxMillimes).toBe(Math.round(4500 * 0.19)); // 855
-    expect(order.serviceMillimes).toBe(Math.round(4500 * 0.1)); // 450
-    expect(order.totalMillimes).toBe(4500 + 855 + 450); // 5805
+    expect(order!.subtotalMillimes).toBe(4500);
+    expect(order!.taxMillimes).toBe(Math.round(4500 * 0.19)); // 855
+    expect(order!.serviceMillimes).toBe(Math.round(4500 * 0.1)); // 450
+    expect(order!.totalMillimes).toBe(4500 + 855 + 450); // 5805
   });
 
   it('includes variant price deltas in the line total', async () => {
     const ids = await loadSeededIds();
     // water 2000 + Large variant +1500 = 3500
-    const variantsRows = await db
-      .select()
-      .from(variants);
+    const variantsRows = await db.select().from(variants);
     const sizeVariants = variantsRows.filter((v) => v.nameEn === 'Large');
     const largeId = sizeVariants[0]?.id;
     if (!largeId) throw new Error('test fixture: Large variant missing');
 
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
       sessionId: null,
       body: { items: [{ dishId: ids.dishIds.water, variantIds: [largeId], quantity: 2 }] },
     });
-    expect(order.subtotalMillimes).toBe(7000); // 2 × (2000 + 1500)
-    expect(order.totalMillimes).toBe(7000 + Math.round(7000 * 0.19) + Math.round(7000 * 0.1));
+    expect(order!.subtotalMillimes).toBe(7000); // 2 × (2000 + 1500)
+    expect(order!.totalMillimes).toBe(7000 + Math.round(7000 * 0.19) + Math.round(7000 * 0.1));
   });
 
   it('snapshots names + prices into order_items so menu edits do not retro-mutate orders', async () => {
     const ids = await loadSeededIds();
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
       sessionId: null,
       body: { items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] },
     });
-    expect(order.items[0]?.nameSnapshot.fr).toBe('Brik à l’œuf');
-    expect(order.items[0]?.nameSnapshot.en).toBe('Egg Brik');
-    expect(order.items[0]?.unitPriceMillimes).toBe(4500);
+    expect(order!.items[0]?.nameSnapshot.fr).toBe('Brik à l’œuf');
+    expect(order!.items[0]?.nameSnapshot.en).toBe('Egg Brik');
+    expect(order!.items[0]?.unitPriceMillimes).toBe(4500);
   });
 
   it('rejects a dish from a different restaurant', async () => {
     const ids = await loadSeededIds();
     await expect(
-      service.place({
+      service.placeMulti({
         restaurantId: '11111111-1111-1111-1111-111111111111',
         tableId: ids.tableIds[0]!,
         tableDayTokenId: null,
@@ -90,7 +88,7 @@ describe('OrderService.place — totals', () => {
   it('rejects an empty items array', async () => {
     const ids = await loadSeededIds();
     await expect(
-      service.place({
+      service.placeMulti({
         restaurantId: ids.restaurantId,
         tableId: ids.tableIds[0]!,
         tableDayTokenId: null,
@@ -108,14 +106,14 @@ describe('OrderService — state machine', () => {
 
   async function placeOne() {
     const ids = await loadSeededIds();
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
       sessionId: null,
       body: { items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] },
     });
-    return { ids, order };
+    return { ids, order: order! };
   }
 
   it('walks received → preparing → ready → served', async () => {
@@ -165,7 +163,7 @@ describe('OrderService — customer edits', () => {
   it('addItems while received recomputes totals; rejects after preparing', async () => {
     const ids = await loadSeededIds();
     const sessionId = '00000000-0000-0000-0000-000000000aaa';
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
@@ -175,18 +173,18 @@ describe('OrderService — customer edits', () => {
 
     const after = await service.addItems({
       restaurantId: ids.restaurantId,
-      orderId: order.id,
+      orderId: order!.id,
       sessionId: null,
       body: { items: [{ dishId: ids.dishIds.salad, variantIds: [], quantity: 1 }] },
     });
     expect(after.subtotalMillimes).toBe(4500 + 6000);
     expect(after.items).toHaveLength(2);
 
-    await service.updateStatus(ids.restaurantId, order.id, { status: 'preparing' });
+    await service.updateStatus(ids.restaurantId, order!.id, { status: 'preparing' });
     await expect(
       service.addItems({
         restaurantId: ids.restaurantId,
-        orderId: order.id,
+        orderId: order!.id,
         sessionId: null,
         body: { items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] },
       }),
@@ -198,7 +196,7 @@ describe('OrderService — customer edits', () => {
 
   it('cancelForCustomer enforces session ownership', async () => {
     const ids = await loadSeededIds();
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
@@ -206,7 +204,7 @@ describe('OrderService — customer edits', () => {
       body: { items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] },
     });
     await expect(
-      service.cancelForCustomer('00000000-0000-0000-0000-000000000bbb', order.id),
+      service.cancelForCustomer('00000000-0000-0000-0000-000000000bbb', order!.id),
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });
@@ -219,7 +217,7 @@ describe('OrderService — variant resolution coverage', () => {
   it('serializes selected variant snapshots correctly', async () => {
     const ids = await loadSeededIds();
     const variantId = await pickFirstVariant(ids.dishIds.couscous);
-    const order = await service.place({
+    const [order] = await service.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
@@ -228,7 +226,7 @@ describe('OrderService — variant resolution coverage', () => {
         items: [{ dishId: ids.dishIds.couscous, variantIds: [variantId], quantity: 1 }],
       },
     });
-    expect(order.items[0]?.variants).toHaveLength(1);
-    expect(order.items[0]?.variants[0]?.variantId).toBe(variantId);
+    expect(order!.items[0]?.variants).toHaveLength(1);
+    expect(order!.items[0]?.variants[0]?.variantId).toBe(variantId);
   });
 });

@@ -71,7 +71,7 @@ Walk through these end-to-end with the actual restaurant team **before** day one
 - [ ] Kitchen flow: order arrives → start → mark ready → confirm waiter assignment shows up.
 - [ ] Waiter flow: see assigned ready order → mark served → take cash payment → confirm table clears.
 - [ ] Edge: two tables merged for a party → one customer requests bill → confirm both tables' orders show on the consolidated bill.
-- [ ] Edge: kitchen flips a popular dish to *Unavailable* → confirm it disappears from open customer menus within 5 seconds (via `menu:updated` socket).
+- [ ] Edge: kitchen flips a popular dish to _Unavailable_ → confirm it disappears from open customer menus within 5 seconds (via `menu:updated` socket).
 - [ ] Edge: server restart while an order is mid-flight → confirm the order is still there and live updates resume after the client reconnects.
 
 ## Rollback plan

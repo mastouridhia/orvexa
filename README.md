@@ -60,17 +60,17 @@ npm run dev:shared
 
 ## Scripts
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start API + shared watch + all 4 frontends |
+| Command                 | What it does                                                      |
+| ----------------------- | ----------------------------------------------------------------- |
+| `npm run dev`           | Start API + shared watch + all 4 frontends                        |
 | `npm run dev:<service>` | Start one service (api, customer, kitchen, waiter, admin, shared) |
-| `npm run build` | Build all workspaces |
-| `npm run typecheck` | Type-check all workspaces |
-| `npm run lint` | Lint all workspaces |
-| `npm run db:up` | Start Docker stack (Postgres + Adminer + Redis) |
-| `npm run db:down` | Stop Docker stack (keeps data) |
-| `npm run db:logs` | Tail Postgres logs |
-| `npm run redis:logs` | Tail Redis logs |
+| `npm run build`         | Build all workspaces                                              |
+| `npm run typecheck`     | Type-check all workspaces                                         |
+| `npm run lint`          | Lint all workspaces                                               |
+| `npm run db:up`         | Start Docker stack (Postgres + Adminer + Redis)                   |
+| `npm run db:down`       | Stop Docker stack (keeps data)                                    |
+| `npm run db:logs`       | Tail Postgres logs                                                |
+| `npm run redis:logs`    | Tail Redis logs                                                   |
 
 ## Environment Variables
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode, Order, TableWithDerived, WaiterCall } from '@orvexa/shared';
 import { useEscapeKey, useFocusTrap } from '@orvexa/ui';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatMillimes, parseMillimes, pickLang } from '../utils/format.js';
@@ -76,7 +76,7 @@ export function TableDetail({
       onOrderChange(result.order);
       setPendingPaymentId(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -87,8 +87,7 @@ export function TableDetail({
 
   const state: WaiterVisualState = visualStateOf(table, orders, call);
   const assignedToMe = order !== null && me !== null && order.assignedWaiterId === me.id;
-  const assignedToOther =
-    order !== null && order.assignedWaiterId !== null && !assignedToMe;
+  const assignedToOther = order !== null && order.assignedWaiterId !== null && !assignedToMe;
   const canSettleBill = unpaidOrders.some((o) => o.status === 'served');
 
   const advance = async (next: 'preparing' | 'ready' | 'served') => {
@@ -99,7 +98,7 @@ export function TableDetail({
       const updated = await authedFetch((tk) => api.updateOrderStatus(tk, order.id, next));
       onOrderChange(updated);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -115,7 +114,7 @@ export function TableDetail({
       const updated = await authedFetch((tk) => api.cancelOrder(tk, orderId));
       onOrderChange(updated);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -130,9 +129,7 @@ export function TableDetail({
       // requires the order to be in a payable state.
       for (const o of unpaidOrders) {
         if (o.status === 'ready') {
-          const updated = await authedFetch((tk) =>
-            api.updateOrderStatus(tk, o.id, 'served'),
-          );
+          const updated = await authedFetch((tk) => api.updateOrderStatus(tk, o.id, 'served'));
           onOrderChange(updated);
         }
       }
@@ -149,7 +146,7 @@ export function TableDetail({
         } catch (err) {
           // Stale UI: order was paid in another tab/by another waiter.
           // Refresh it and keep going instead of surfacing as an error.
-          const msg = err instanceof ApiError ? err.message : (err as Error).message;
+          const msg = getErrorMessage(err);
           if (/already fully paid/i.test(msg)) {
             const fresh = await authedFetch((tk) => api.getOrder(tk, target.id));
             onOrderChange(fresh);
@@ -160,7 +157,7 @@ export function TableDetail({
       }
       setShowPay(false);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -174,7 +171,7 @@ export function TableDetail({
       await authedFetch((tk) => api.clearWaiterCall(tk, call.id));
       onCallCleared(call.id);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -188,7 +185,7 @@ export function TableDetail({
       onDismissCleanPrompt();
       onClose();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -256,10 +253,7 @@ export function TableDetail({
         {orders.length > 0 ? (
           orders.map((o, idx) => {
             const isPrimary = order !== null && o.id === order.id;
-            const oMins = Math.max(
-              0,
-              Math.floor((now - new Date(o.createdAt).getTime()) / 60000),
-            );
+            const oMins = Math.max(0, Math.floor((now - new Date(o.createdAt).getTime()) / 60000));
             return (
               <section className="tf-w-detail__order-card" key={o.id}>
                 <div className="tf-w-detail__order-head">
@@ -294,7 +288,9 @@ export function TableDetail({
                     <div className="tf-w-detail__item" key={item.id}>
                       <span className="tf-mono tf-w-detail__item-qty">{item.quantity}×</span>
                       <span className="tf-w-detail__item-body">
-                        <span className="tf-w-detail__item-name">{pickLang(item.nameSnapshot, lang)}</span>
+                        <span className="tf-w-detail__item-name">
+                          {pickLang(item.nameSnapshot, lang)}
+                        </span>
                         {lang !== 'ar' && item.nameSnapshot.ar ? (
                           <span className="tf-w-detail__item-ar" dir="rtl">
                             {item.nameSnapshot.ar}
@@ -324,9 +320,7 @@ export function TableDetail({
                   <Row k={t('detail.tax')} v={formatMillimes(o.taxMillimes)} />
                   <Row k={t('detail.service')} v={formatMillimes(o.serviceMillimes)} />
                   <Row k={t('detail.total')} v={formatMillimes(o.totalMillimes)} grand />
-                  {o.paymentStatus === 'paid' ? (
-                    <Row k={t('detail.paid')} v="✓" success />
-                  ) : null}
+                  {o.paymentStatus === 'paid' ? <Row k={t('detail.paid')} v="✓" success /> : null}
                 </div>
                 {isPrimary && showPay ? (
                   <div className="tf-w-detail__pay">
@@ -402,9 +396,7 @@ export function TableDetail({
           </>
         ) : cleanPromptOpen ? (
           <div className="tf-w-detail__clean-prompt">
-            <div className="tf-w-detail__clean-prompt-q">
-              {t('detail.cleanPrompt.question')}
-            </div>
+            <div className="tf-w-detail__clean-prompt-q">{t('detail.cleanPrompt.question')}</div>
             <div className="tf-w-detail__clean-prompt-row">
               <button
                 type="button"

@@ -28,7 +28,7 @@ npm run db:seed
 
 This calls `seedDemoData()` (split out into `apps/api/src/db/seed-data.ts` for reuse from tests). It creates:
 
-- One restaurant — `slug=demo`, name *"Demo Restaurant"*, 19% TVA + 10% service, Africa/Tunis timezone.
+- One restaurant — `slug=demo`, name _"Demo Restaurant"_, 19% TVA + 10% service, Africa/Tunis timezone.
 - 4 staff users with password `orvexa`:
   - `admin@demo.tn` (admin)
   - `manager@demo.tn` (manager)
@@ -71,7 +71,15 @@ export function DemoBanner() {
   }, []);
   if (!demoMode) return null;
   return (
-    <div role="status" style={{ background: '#fff8e3', padding: '0.5rem 1rem', textAlign: 'center', fontSize: '0.85rem' }}>
+    <div
+      role="status"
+      style={{
+        background: '#fff8e3',
+        padding: '0.5rem 1rem',
+        textAlign: 'center',
+        fontSize: '0.85rem',
+      }}
+    >
       Demo data — resets daily at 04:00 UTC.
     </div>
   );

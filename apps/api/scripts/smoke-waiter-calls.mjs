@@ -14,7 +14,11 @@ async function req(path, { method = 'GET', token, body, raw = false } = {}) {
   if (raw) return res;
   const text = await res.text();
   let json;
-  try { json = JSON.parse(text); } catch { json = { _raw: text }; }
+  try {
+    json = JSON.parse(text);
+  } catch {
+    json = { _raw: text };
+  }
   if (!res.ok) throw new Error(`${method} ${path} → ${res.status}: ${JSON.stringify(json)}`);
   return json.data ?? json;
 }
@@ -23,12 +27,20 @@ function label(ok, expected) {
   return ok ? 'PASS' : `FAIL (expected ${expected})`;
 }
 
-function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+function wait(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 async function main() {
   console.log(`→ API: ${API}`);
-  const mgr = await req('/auth/login', { method: 'POST', body: { email: 'manager@demo.tn', password: PASS } });
-  const wat = await req('/auth/login', { method: 'POST', body: { email: 'waiter@demo.tn', password: PASS } });
+  const mgr = await req('/auth/login', {
+    method: 'POST',
+    body: { email: 'manager@demo.tn', password: PASS },
+  });
+  const wat = await req('/auth/login', {
+    method: 'POST',
+    body: { email: 'waiter@demo.tn', password: PASS },
+  });
   console.log(`→ logged in manager + waiter`);
 
   const tables = await req('/tables', { token: mgr.accessToken });
@@ -61,12 +73,16 @@ async function main() {
   // List open waiter calls
   const open = await req('/waiter-calls?status=open', { token: wat.accessToken });
   const ours = open.filter((c) => c.tableId === t.id);
-  console.log(`[list open] count=${ours.length} kinds=${ours.map((c) => c.kind).join(',')} ${label(ours.length === 2, 2)}`);
+  console.log(
+    `[list open] count=${ours.length} kinds=${ours.map((c) => c.kind).join(',')} ${label(ours.length === 2, 2)}`,
+  );
 
   // Confirm derived status reflects open calls (request_bill should win)
   const tablesAfter = await req('/tables', { token: mgr.accessToken });
   const tNow = tablesAfter.find((x) => x.id === t.id);
-  console.log(`[derived]   ${tNow.derivedStatus} ${label(tNow.derivedStatus === 'needs_bill', "'needs_bill'")}`);
+  console.log(
+    `[derived]   ${tNow.derivedStatus} ${label(tNow.derivedStatus === 'needs_bill', "'needs_bill'")}`,
+  );
 
   // Clear the bill request → derived should fall back to 'call_waiter'
   const billCall = ours.find((c) => c.kind === 'request_bill');
@@ -74,7 +90,9 @@ async function main() {
   await wait(200);
   const tablesAfter2 = await req('/tables', { token: mgr.accessToken });
   const tNow2 = tablesAfter2.find((x) => x.id === t.id);
-  console.log(`[after bill clear] ${tNow2.derivedStatus} ${label(tNow2.derivedStatus === 'call_waiter', "'call_waiter'")}`);
+  console.log(
+    `[after bill clear] ${tNow2.derivedStatus} ${label(tNow2.derivedStatus === 'call_waiter', "'call_waiter'")}`,
+  );
 
   // Re-clear (should 409)
   const reclear = await fetch(`${API}/waiter-calls/${billCall.id}/clear`, {
@@ -89,10 +107,14 @@ async function main() {
   await wait(200);
   const tablesAfter3 = await req('/tables', { token: mgr.accessToken });
   const tNow3 = tablesAfter3.find((x) => x.id === t.id);
-  console.log(`[after both clears] ${tNow3.derivedStatus} ${label(tNow3.derivedStatus === 'free' || tNow3.derivedStatus === 'waiting', "'free' or 'waiting'")}`);
+  console.log(
+    `[after both clears] ${tNow3.derivedStatus} ${label(tNow3.derivedStatus === 'free' || tNow3.derivedStatus === 'waiting', "'free' or 'waiting'")}`,
+  );
 
   // Confirm waiter received table:status events on each clear (>= 2 from the clears, plus possibly initial ones from the two POSTs)
-  console.log(`[socket table:status events received] count=${tableStatusEvents.length} statuses=${tableStatusEvents.map((e) => e.status).join(',')} ${label(tableStatusEvents.length >= 2, '≥ 2')}`);
+  console.log(
+    `[socket table:status events received] count=${tableStatusEvents.length} statuses=${tableStatusEvents.map((e) => e.status).join(',')} ${label(tableStatusEvents.length >= 2, '≥ 2')}`,
+  );
 
   // Cross-restaurant guard: 404 on bogus id
   const bogus = await fetch(`${API}/waiter-calls/00000000-0000-0000-0000-000000000000/clear`, {
@@ -102,9 +124,16 @@ async function main() {
   console.log(`[bogus id → 404] ${bogus.status} ${label(bogus.status === 404, 404)}`);
 
   // Kitchen role cannot list/clear (admin/manager/waiter only)
-  const kit = await req('/auth/login', { method: 'POST', body: { email: 'kitchen@demo.tn', password: PASS } });
-  const kitForbidden = await fetch(`${API}/waiter-calls`, { headers: { authorization: `Bearer ${kit.accessToken}` } });
-  console.log(`[kitchen role → 403] ${kitForbidden.status} ${label(kitForbidden.status === 403, 403)}`);
+  const kit = await req('/auth/login', {
+    method: 'POST',
+    body: { email: 'kitchen@demo.tn', password: PASS },
+  });
+  const kitForbidden = await fetch(`${API}/waiter-calls`, {
+    headers: { authorization: `Bearer ${kit.accessToken}` },
+  });
+  console.log(
+    `[kitchen role → 403] ${kitForbidden.status} ${label(kitForbidden.status === 403, 403)}`,
+  );
 
   waiterSocket.disconnect();
   console.log(`\n✓ waiter-calls smoke done`);

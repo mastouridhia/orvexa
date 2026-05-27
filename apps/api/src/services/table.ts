@@ -12,15 +12,8 @@ import { ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { CustomerSessionRepository } from '../repositories/customer-session.js';
 import { OrderRepository, type OrderRow } from '../repositories/order.js';
 import { TableCartRepository } from '../repositories/table-cart.js';
-import {
-  TableRepository,
-  TableZoneRepository,
-  type TableRow,
-} from '../repositories/table.js';
-import {
-  WaiterCallRepository,
-  type WaiterCallRow,
-} from '../repositories/waiter-call.js';
+import { TableRepository, TableZoneRepository, type TableRow } from '../repositories/table.js';
+import { WaiterCallRepository, type WaiterCallRow } from '../repositories/waiter-call.js';
 
 export function toTable(row: TableRow): Table {
   return {
@@ -183,11 +176,7 @@ export class TableService {
     return toTable(row);
   }
 
-  async update(
-    restaurantId: string,
-    id: string,
-    input: UpdateTableRequest,
-  ): Promise<Table> {
+  async update(restaurantId: string, id: string, input: UpdateTableRequest): Promise<Table> {
     const existing = await this.tableRepo.findById(id);
     if (!existing) throw new NotFoundError('Table not found');
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
@@ -229,10 +218,7 @@ export class TableService {
     return rows.map(toTable);
   }
 
-  private async assertZoneBelongsToRestaurant(
-    restaurantId: string,
-    zoneId: string,
-  ): Promise<void> {
+  private async assertZoneBelongsToRestaurant(restaurantId: string, zoneId: string): Promise<void> {
     const zoneRepo = new TableZoneRepository();
     const zone = await zoneRepo.findById(zoneId);
     if (!zone) throw new NotFoundError('Zone not found');
@@ -282,7 +268,11 @@ export class TableService {
     const url = `${config.customer.appUrl}/t/${table.publicSlug}`;
 
     if (format === 'svg') {
-      const body = await QRCode.toString(url, { type: 'svg', errorCorrectionLevel: 'M', margin: 1 });
+      const body = await QRCode.toString(url, {
+        type: 'svg',
+        errorCorrectionLevel: 'M',
+        margin: 1,
+      });
       return { format, url, token: table.publicSlug, body, contentType: 'image/svg+xml' };
     }
     const body = await QRCode.toBuffer(url, {
@@ -302,11 +292,7 @@ export class TableService {
     return this.recordCall(restaurantId, tableId, 'request_bill');
   }
 
-  async requestExtras(
-    restaurantId: string,
-    tableId: string,
-    note: string,
-  ): Promise<WaiterCallRow> {
+  async requestExtras(restaurantId: string, tableId: string, note: string): Promise<WaiterCallRow> {
     return this.recordCall(restaurantId, tableId, 'request_extras', note);
   }
 

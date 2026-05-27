@@ -108,6 +108,10 @@
   background: var(--kds-faint);
   animation: none;
 }
+.tf-kds__live-dot.is-offline {
+  background: var(--kds-saffron, #f59e0b);
+  animation: tf-pulse 0.8s ease-in-out infinite;
+}
 .tf-kds__live-label {
   font-size: 10px;
   letter-spacing: 1.4px;

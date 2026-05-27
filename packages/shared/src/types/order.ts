@@ -2,13 +2,7 @@ import { z } from 'zod';
 import { IsoDateTimeSchema, LocalizedStringSchema, UuidSchema } from './common.js';
 import { KitchenSectionSchema } from './menu.js';
 
-export const OrderStatusSchema = z.enum([
-  'received',
-  'preparing',
-  'ready',
-  'served',
-  'cancelled',
-]);
+export const OrderStatusSchema = z.enum(['received', 'preparing', 'ready', 'served', 'cancelled']);
 export type OrderStatus = z.infer<typeof OrderStatusSchema>;
 
 export const ItemStatusSchema = z.enum(['received', 'preparing', 'ready']);

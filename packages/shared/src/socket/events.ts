@@ -46,6 +46,8 @@ export type CartUpdatedPayload = {
   updatedAt: string;
 };
 
+export type DayClosedPayload = { restaurantId: string; closedAt: string };
+
 export type CustomerSubscribePayload = { tableId: string };
 export type StaffSubscribePayload = { role: StaffRole };
 
@@ -57,6 +59,7 @@ export type ServerToClientEvents = {
   'menu:updated': (payload: MenuUpdatedPayload) => void;
   'table:status': (payload: TableStatusPayload) => void;
   'cart:updated': (payload: CartUpdatedPayload) => void;
+  'day:closed': (payload: DayClosedPayload) => void;
 };
 
 export type ClientToServerEvents = {

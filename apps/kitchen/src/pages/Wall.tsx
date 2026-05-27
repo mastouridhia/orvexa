@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LanguageCode, Order, OrderStatus } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import type { KitchenSection, LanguageCode, Order, OrderStatus } from '@orvexa/shared';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { connectStaffSocket } from '../socket/client.js';
@@ -11,15 +11,20 @@ import { navigate } from '../utils/nav.js';
 import { IconTablet } from '../components/tf-icons.js';
 
 /**
- * Read-only "wall display" — designed for the line cook's overhead screen.
+ * Read-only "wall display" — designed for overhead screens at each station.
+ * /wall → kitchen section, /wall/bar → bar section.
  * No interaction; just a glanceable grid of the 6 oldest open tickets and a
- * stat strip. Rendered at /wall (auth still required).
+ * stat strip. Auth still required.
  */
 export function Wall() {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
   const accessToken = useAuthStore((s) => s.accessToken);
   const authedFetch = useAuthStore((s) => s.authedFetch);
+
+  const section: KitchenSection = window.location.pathname.startsWith('/wall/bar')
+    ? 'bar'
+    : 'kitchen';
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [doneOrders, setDoneOrders] = useState<Map<string, Order>>(() => new Map());
@@ -31,8 +36,11 @@ export function Wall() {
   const authedFetchRef = useRef(authedFetch);
   const connectedOnce = useRef(false);
 
-  ordersRef.current = orders;
-  authedFetchRef.current = authedFetch;
+  // Keep refs in sync so socket callbacks always see fresh values without stale closures.
+  useLayoutEffect(() => {
+    ordersRef.current = orders;
+    authedFetchRef.current = authedFetch;
+  });
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
@@ -47,7 +55,7 @@ export function Wall() {
         const list = await authedFetch((tk) => api.listActive(tk));
         setOrders(list);
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : (err as Error).message);
+        setError(getErrorMessage(err));
       }
     })();
   }, [accessToken, authedFetch]);
@@ -56,7 +64,9 @@ export function Wall() {
     if (!accessToken) return;
     const socket = connectStaffSocket(accessToken);
     const onCreated = (payload: { order: Order }) => {
-      setOrders((prev) => (prev.some((o) => o.id === payload.order.id) ? prev : [payload.order, ...prev]));
+      setOrders((prev) =>
+        prev.some((o) => o.id === payload.order.id) ? prev : [payload.order, ...prev],
+      );
     };
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
       if (payload.status === 'served' || payload.status === 'cancelled') {
@@ -65,7 +75,11 @@ export function Wall() {
           const done: Order = { ...order, status: payload.status };
           setDoneOrders((m) => new Map(m).set(payload.orderId, done));
           window.setTimeout(() => {
-            setDoneOrders((m) => { const n = new Map(m); n.delete(payload.orderId); return n; });
+            setDoneOrders((m) => {
+              const n = new Map(m);
+              n.delete(payload.orderId);
+              return n;
+            });
           }, 10_000);
         }
         setOrders((prev) => prev.filter((o) => o.id !== payload.orderId));
@@ -81,10 +95,13 @@ export function Wall() {
         connectedOnce.current = true;
         return;
       }
-      void authedFetchRef.current((tk) => api.listActive(tk)).then((list) => {
-        setOrders(list);
-        setDoneOrders(new Map());
-      }).catch(() => {});
+      void authedFetchRef
+        .current((tk) => api.listActive(tk))
+        .then((list) => {
+          setOrders(list);
+          setDoneOrders(new Map());
+        })
+        .catch(() => {});
     };
     socket.on('order:created', onCreated);
     socket.on('order:status', onStatus);
@@ -96,17 +113,33 @@ export function Wall() {
     };
   }, [accessToken]);
 
-  // Stat strip data
-  const open = orders.filter((o) => o.status !== 'ready');
-  const ready = orders.filter((o) => o.status === 'ready');
-  const late = orders.filter((o) => o.status !== 'ready' && ageBucket(o.createdAt, now) === 'late');
+  // Only orders that have at least one item for this station.
+  const sectionOrders = orders.filter((o) => o.items.some((i) => i.kitchenSection === section));
+  const sectionDone = Array.from(doneOrders.values()).filter((o) =>
+    o.items.some((i) => i.kitchenSection === section),
+  );
+
+  // Stat strip data — scoped to this station's items.
+  const open = sectionOrders.filter((o) => o.status !== 'ready');
+  const ready = sectionOrders.filter((o) => o.status === 'ready');
+  const late = sectionOrders.filter(
+    (o) => o.status !== 'ready' && ageBucket(o.createdAt, now) === 'late',
+  );
 
   // 6 oldest active tickets + all recent done cards at the end.
-  const active = [...orders]
+  const active = [...sectionOrders]
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
     .slice(0, 6)
-    .map((o) => ({ order: o, isDone: false }));
-  const done = Array.from(doneOrders.values()).map((o) => ({ order: o, isDone: true }));
+    .map((o) => ({
+      order: o,
+      isDone: false,
+      items: o.items.filter((i) => i.kitchenSection === section),
+    }));
+  const done = sectionDone.map((o) => ({
+    order: o,
+    isDone: true,
+    items: o.items.filter((i) => i.kitchenSection === section),
+  }));
   const visible = [...active, ...done];
 
   const clock = new Date(now).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
@@ -116,7 +149,7 @@ export function Wall() {
       <header className="tf-kds__wall-head">
         <div className="tf-kds__wall-brand">
           <span className="tf-display tf-kds__wall-brand-name">Pass</span>
-          <span className="tf-mono tf-kds__wall-brand-sub">{t('wall.subtitle')}</span>
+          <span className="tf-mono tf-kds__wall-brand-sub">{t(`section.${section}`)}</span>
         </div>
         <div className="tf-kds__wall-stats">
           <WallStat label={t('stat.open')} value={open.length} />
@@ -144,15 +177,17 @@ export function Wall() {
             <div className="tf-kds__empty-sub">{t('empty.allClear.sub')}</div>
           </div>
         ) : (
-          visible.map(({ order: o, isDone }) => (
+          visible.map(({ order: o, isDone, items }) => (
             <TicketCard
               key={o.id}
               order={o}
               lang={lang}
+              section={section}
               tableLabels={tableLabels}
               now={now}
               onAdvance={() => Promise.resolve()}
               isDone={isDone}
+              visibleItems={items}
               large
             />
           ))

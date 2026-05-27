@@ -1,10 +1,10 @@
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { ApiErrorCode } from '@orvexa/shared';
 import { config } from '../config.js';
 import { errorEnvelope } from '../utils/envelope.js';
 
-const tooManyRequestsHandler = (_req: unknown, res: { status: (n: number) => { json: (o: unknown) => unknown } }): void => {
+const tooManyRequestsHandler = (_req: Request, res: Response): void => {
   res.status(429).json(
     errorEnvelope({
       code: ApiErrorCode.RATE_LIMITED,
@@ -18,7 +18,7 @@ export const globalRateLimit = rateLimit({
   limit: config.rateLimit.max,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  handler: tooManyRequestsHandler as never,
+  handler: tooManyRequestsHandler,
 });
 
 /**
@@ -32,7 +32,7 @@ export const orderRateLimit = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req: Request) => req.customerSession?.id ?? ipKeyGenerator(req.ip ?? ''),
-  handler: tooManyRequestsHandler as never,
+  handler: tooManyRequestsHandler,
 });
 
 /**
@@ -48,5 +48,5 @@ export const authRateLimit = rateLimit({
   // Skip successful auth — only count failures + early aborts. Keeps a busy
   // logged-in session from being self-throttled when the access token expires.
   skipSuccessfulRequests: true,
-  handler: tooManyRequestsHandler as never,
+  handler: tooManyRequestsHandler,
 });

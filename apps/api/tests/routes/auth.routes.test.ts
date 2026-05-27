@@ -29,9 +29,7 @@ describe('POST /auth/login', () => {
   });
 
   it('400 on missing email with VALIDATION_ERROR code', async () => {
-    const res = await request(app())
-      .post('/auth/login')
-      .send({ password: 'orvexa' });
+    const res = await request(app()).post('/auth/login').send({ password: 'orvexa' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
@@ -45,15 +43,11 @@ describe('POST /auth/login', () => {
       refreshToken: string;
     };
 
-    const refresh = await request(app())
-      .post('/auth/refresh')
-      .send({ refreshToken });
+    const refresh = await request(app()).post('/auth/refresh').send({ refreshToken });
     expect(refresh.status).toBe(200);
     expect(typeof refresh.body.data.accessToken).toBe('string');
 
-    const xtyp = await request(app())
-      .post('/auth/refresh')
-      .send({ refreshToken: accessToken });
+    const xtyp = await request(app()).post('/auth/refresh').send({ refreshToken: accessToken });
     expect(xtyp.status).toBe(401);
   });
 });

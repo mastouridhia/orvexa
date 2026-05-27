@@ -41,27 +41,19 @@ export function WaiterCallBanner() {
       role="status"
       aria-live="polite"
     >
-      <button
-        type="button"
-        className="tf-waiter-banner__main"
-        onClick={() => navigate('/waiter')}
-      >
+      <button type="button" className="tf-waiter-banner__main" onClick={() => navigate('/waiter')}>
         <span className="tf-waiter-banner__icon" aria-hidden="true">
           <IconBellRing size={18} />
         </span>
         <span className="tf-waiter-banner__text">
-          <strong>
-            {acknowledged ? t('waiter.banner.onWay') : t('waiter.banner.calling')}
-          </strong>
+          <strong>{acknowledged ? t('waiter.banner.onWay') : t('waiter.banner.calling')}</strong>
           <span className="tf-waiter-banner__sub">
             {acknowledged
               ? t('waiter.banner.onWaySub', { defaultValue: 'A server is heading to your table.' })
               : t('waiter.banner.callingSub', { defaultValue: 'Notifying the team…' })}
           </span>
         </span>
-        <span className="tf-waiter-banner__elapsed tf-tabular">
-          {formatElapsed(elapsed)}
-        </span>
+        <span className="tf-waiter-banner__elapsed tf-tabular">{formatElapsed(elapsed)}</span>
       </button>
       <button
         type="button"

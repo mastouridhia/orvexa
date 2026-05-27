@@ -17,7 +17,12 @@ export type MenuTreeCategory = Category & { dishes: Dish[] };
 
 export type RecordPaymentResult = {
   order: Order;
-  payment: { id: string; status: 'pending' | 'paid' | 'refunded' | 'failed'; amountMillimes: number; tipMillimes: number };
+  payment: {
+    id: string;
+    status: 'pending' | 'paid' | 'refunded' | 'failed';
+    amountMillimes: number;
+    tipMillimes: number;
+  };
   fullyPaid: boolean;
 };
 
@@ -55,10 +60,22 @@ export const api = {
   getOrder(token: string, orderId: string) {
     return apiRequest<Order>(`/orders/${orderId}`, { token });
   },
-  placeOrderForTable(token: string, tableId: string, body: { items: Array<{ dishId: string; quantity: number; variantIds: string[]; notes?: string }> }) {
-    return apiRequest<Order>(`/tables/${tableId}/orders`, { method: 'POST', token, body });
+  placeOrderForTable(
+    token: string,
+    tableId: string,
+    body: {
+      items: Array<{ dishId: string; quantity: number; variantIds: string[]; notes?: string }>;
+    },
+  ) {
+    return apiRequest<Order[]>(`/tables/${tableId}/orders`, { method: 'POST', token, body });
   },
-  addItemsStaff(token: string, orderId: string, body: { items: Array<{ dishId: string; quantity: number; variantIds: string[]; notes?: string }> }) {
+  addItemsStaff(
+    token: string,
+    orderId: string,
+    body: {
+      items: Array<{ dishId: string; quantity: number; variantIds: string[]; notes?: string }>;
+    },
+  ) {
     return apiRequest<Order>(`/orders/${orderId}/items/staff`, { method: 'POST', token, body });
   },
   updateOrderStatus(token: string, orderId: string, status: 'preparing' | 'ready' | 'served') {
@@ -88,9 +105,7 @@ export const api = {
     });
   },
   listOrderPayments(token: string, orderId: string): Promise<Receipt['payments']> {
-    return apiRequest<Receipt>(`/orders/${orderId}/receipt`, { token }).then(
-      (r) => r.payments,
-    );
+    return apiRequest<Receipt>(`/orders/${orderId}/receipt`, { token }).then((r) => r.payments);
   },
   listOpenWaiterCalls(token: string) {
     return apiRequest<WaiterCall[]>('/waiter-calls?status=open', { token });

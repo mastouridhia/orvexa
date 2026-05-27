@@ -14,12 +14,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/**/*.ts'],
-      exclude: [
-        'src/**/*.test.ts',
-        'src/db/migrate.ts',
-        'src/db/seed.ts',
-        'src/db/reset.ts',
-      ],
+      exclude: ['src/**/*.test.ts', 'src/db/migrate.ts', 'src/db/seed.ts', 'src/db/reset.ts'],
       // Thresholds lock in current baseline (run `npm run test:coverage` to regenerate).
       // Bump these as the test suite grows.
       thresholds: {

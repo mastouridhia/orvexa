@@ -25,9 +25,7 @@ export async function openCustomerSession(
 ): Promise<{ token: string; sessionId: string; tableId: string }> {
   // Lazy-create today's table_day_token by hitting the QR helper.
   const qr = await tableService.qr(restaurantId, tableId, 'svg');
-  const res = await request(app())
-    .post('/sessions')
-    .send({ qrToken: qr.token, locale: 'fr' });
+  const res = await request(app()).post('/sessions').send({ qrToken: qr.token, locale: 'fr' });
   if (res.status !== 201) {
     throw new Error(`open session failed: ${res.status} ${JSON.stringify(res.body)}`);
   }

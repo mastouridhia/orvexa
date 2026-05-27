@@ -7,7 +7,12 @@
     "scanAgain": "أعد المسح",
     "browseMenu": "تصفّح القائمة"
   },
-  "header": { "table": "الطاولة {{label}}", "tableShort": "طاولة", "open": "مفتوحة", "settings": "الإعدادات" },
+  "header": {
+    "table": "الطاولة {{label}}",
+    "tableShort": "طاولة",
+    "open": "مفتوحة",
+    "settings": "الإعدادات"
+  },
   "settings": {
     "title": "الإعدادات",
     "language": "اللغة",
@@ -136,7 +141,15 @@
     "billTitle": "الفاتورة",
     "billSub": "الدفع على الطاولة",
     "eta": "~{{minutes}} دقيقة",
-    "orderMore": "طلب أطباق أخرى"
+    "orderMore": "طلب أطباق أخرى",
+    "round": {
+      "barSection": "البار",
+      "kitchenSection": "المطبخ",
+      "grandTotal": "المجموع الكلي",
+      "partialReadyTitle": "جزء منه جاهز.",
+      "partialReadySub": "البار أرسل — المطبخ في الطريق.",
+      "cookingSub": "طلباتك قيد التحضير."
+    }
   },
   "waiter": {
     "idleTitle": "تحتاج مساعدة؟",
@@ -179,7 +192,8 @@
     "retry": "أعد المحاولة",
     "offline": "أنت غير متصل.",
     "sessionExpired": "انتهت صلاحية جلستك. أعد مسح رمز QR.",
-    "boot": "تعذر بدء الجلسة. تحقق من الاتصال."
+    "boot": "تعذر بدء الجلسة. تحقق من الاتصال.",
+    "reconnecting": "جارٍ إعادة الاتصال…"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
 }

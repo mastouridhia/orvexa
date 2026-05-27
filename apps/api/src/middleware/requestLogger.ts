@@ -1,4 +1,6 @@
 import { pinoHttp } from 'pino-http';
+import type { Request, Response, NextFunction } from 'express';
+import { config } from '../config.js';
 import { logger } from '../utils/logger.js';
 
 export const requestLogger = pinoHttp({
@@ -9,7 +11,8 @@ export const requestLogger = pinoHttp({
     if (res.statusCode >= 400) return 'warn';
     return 'info';
   },
-  customSuccessMessage: (req, res) => `${req.method} ${req.url} -> ${res.statusCode}`,
+  customSuccessMessage: (req, res, responseTime) =>
+    `${req.method} ${req.url} -> ${res.statusCode} (${responseTime}ms)`,
   customErrorMessage: (req, res, err) =>
     `${req.method} ${req.url} -> ${res.statusCode} (${err.message})`,
   serializers: {
@@ -22,3 +25,18 @@ export const requestLogger = pinoHttp({
     res: (res) => ({ statusCode: res.statusCode }),
   },
 });
+
+/** Emit a separate warn log entry for any request that exceeds the threshold. */
+export function slowRequestLogger(req: Request, res: Response, next: NextFunction): void {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    if (ms >= config.slowRequest.thresholdMs) {
+      logger.warn(
+        { method: req.method, url: req.url, statusCode: res.statusCode, ms },
+        'slow request',
+      );
+    }
+  });
+  next();
+}

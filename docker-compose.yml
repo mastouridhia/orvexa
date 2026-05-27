@@ -8,11 +8,11 @@ services:
       POSTGRES_USER: orvexa
       POSTGRES_PASSWORD: orvexa
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - orvexa_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U orvexa -d orvexa"]
+      test: ['CMD-SHELL', 'pg_isready -U orvexa -d orvexa']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
     container_name: orvexa_adminer
     restart: unless-stopped
     ports:
-      - "8081:8080"
+      - '8081:8080'
     environment:
       ADMINER_DEFAULT_SERVER: db
       ADMINER_DESIGN: pepa-linha
@@ -34,13 +34,13 @@ services:
     image: redis:7-alpine
     container_name: orvexa_redis
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - orvexa_redisdata:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,4 +48,3 @@ services:
 volumes:
   orvexa_pgdata:
   orvexa_redisdata:
-

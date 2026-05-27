@@ -29,7 +29,9 @@ export function ScanLanguage() {
   const [error, setError] = useState<string | null>(null);
 
   const initial = useMemo<LanguageCode>(() => {
-    return ((i18n.resolvedLanguage as LanguageCode | undefined) ?? storedLocale ?? 'fr') as LanguageCode;
+    return ((i18n.resolvedLanguage as LanguageCode | undefined) ??
+      storedLocale ??
+      'fr') as LanguageCode;
   }, [i18n.resolvedLanguage, storedLocale]);
 
   useEffect(() => {
@@ -71,9 +73,7 @@ export function ScanLanguage() {
 
       <h1 className="tf-welcome__title">
         <span>{t('welcome.title')}</span>
-        <span className="tf-display tf-welcome__brand">
-          {restaurant?.name ?? 'Orvexa'}
-        </span>
+        <span className="tf-display tf-welcome__brand">{restaurant?.name ?? 'Orvexa'}</span>
       </h1>
 
       <p className="tf-welcome__sub">{t('settings.languageHint')}</p>
@@ -95,4 +95,3 @@ export function ScanLanguage() {
     </section>
   );
 }
-

@@ -17,5 +17,9 @@ export function OfflineBanner() {
   }, []);
 
   if (online) return null;
-  return <div className="offline-banner" role="status">{t('errors.offline')}</div>;
+  return (
+    <div className="offline-banner" role="status">
+      {t('errors.offline')}
+    </div>
+  );
 }

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
 import { hash } from '@node-rs/argon2';
 import { eq } from 'drizzle-orm';
@@ -27,9 +28,10 @@ function parseArgs(): Args {
   const slug = out.slug;
   const name = out.name;
   const adminEmail = out['admin-email'];
-  if (!slug || !name || !adminEmail) {
+  const adminPassword = out['admin-password'];
+  if (!slug || !name || !adminEmail || !adminPassword) {
     console.error(
-      'Usage: npm run db:provision -w @orvexa/api -- --slug=<slug> --name="<name>" --admin-email=<email> [--admin-password=<pw>] [--admin-name="<name>"] [--tables=<n>] [--currency=TND] [--tax=19] [--service=10] [--timezone=Africa/Tunis]',
+      'Usage: npm run db:provision -w @orvexa/api -- --slug=<slug> --name="<name>" --admin-email=<email> --admin-password=<pw> [--admin-name="<name>"] [--tables=<n>] [--currency=TND] [--tax=19] [--service=10] [--timezone=Africa/Tunis]',
     );
     process.exit(1);
   }
@@ -38,7 +40,7 @@ function parseArgs(): Args {
     slug,
     name,
     adminEmail,
-    adminPassword: out['admin-password'] ?? 'orvexa',
+    adminPassword,
     adminName: out['admin-name'] ?? 'Owner',
     tables: out.tables ? Number(out.tables) : 0,
     currency: out.currency ?? 'TND',
@@ -53,7 +55,9 @@ async function main() {
 
   const existing = await db.select().from(restaurants).where(eq(restaurants.slug, args.slug));
   if (existing.length > 0) {
-    console.error(`[provision] restaurant slug "${args.slug}" already exists (id=${existing[0]!.id})`);
+    console.error(
+      `[provision] restaurant slug "${args.slug}" already exists (id=${existing[0]!.id})`,
+    );
     process.exit(1);
   }
 
@@ -100,7 +104,7 @@ async function main() {
 
   console.log('[provision] done');
   console.log(`  restaurant: ${restaurant.name} (slug=${restaurant.slug}, id=${restaurant.id})`);
-  console.log(`  admin: ${admin.email} (password: ${args.adminPassword})`);
+  console.log(`  admin: ${admin.email} (password: [set — not logged]`);
   if (tableCount > 0) console.log(`  tables: ${tableCount}`);
 }
 

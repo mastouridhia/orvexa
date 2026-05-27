@@ -7,11 +7,7 @@ import {
   type LanguageCode,
 } from '@orvexa/shared';
 import { FeedbackService } from '../services/feedback.js';
-import {
-  requireAuth,
-  requireCustomerSession,
-  requireRole,
-} from '../middleware/auth.js';
+import { requireAuth, requireCustomerSession, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';

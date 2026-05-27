@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  TableLayoutEntry,
-  TableWithDerived,
-  TableZone,
-} from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import type { TableLayoutEntry, TableWithDerived, TableZone } from '@orvexa/shared';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 
@@ -51,8 +47,10 @@ function zoneColor(idx: number) {
 
 // ── Decor system ───────────────────────────────────────────────────────────
 type DecorType =
-  | 'wall-h' | 'wall-v'
-  | 'divider-h' | 'divider-v'
+  | 'wall-h'
+  | 'wall-v'
+  | 'divider-h'
+  | 'divider-v'
   | 'garden'
   | 'pillar'
   | 'stairs'
@@ -68,32 +66,36 @@ interface DecorItem {
 }
 
 const DECOR_DEFAULTS: Record<DecorType, { w: number; h: number }> = {
-  'wall-h':    { w: 0.15,  h: 0.025 },
-  'wall-v':    { w: 0.025, h: 0.15  },
-  'divider-h': { w: 0.80,  h: 0.012 },
-  'divider-v': { w: 0.012, h: 0.70  },
-  'garden':    { w: 0.13,  h: 0.11  },
-  'pillar':    { w: 0.04,  h: 0.04  },
-  'stairs':    { w: 0.09,  h: 0.07  },
-  'bar':       { w: 0.20,  h: 0.055 },
+  'wall-h': { w: 0.15, h: 0.025 },
+  'wall-v': { w: 0.025, h: 0.15 },
+  'divider-h': { w: 0.8, h: 0.012 },
+  'divider-v': { w: 0.012, h: 0.7 },
+  garden: { w: 0.13, h: 0.11 },
+  pillar: { w: 0.04, h: 0.04 },
+  stairs: { w: 0.09, h: 0.07 },
+  bar: { w: 0.2, h: 0.055 },
 };
 
 const DECOR_LABELS: Record<DecorType, string> = {
-  'wall-h': 'Wall (H)', 'wall-v': 'Wall (V)',
-  'divider-h': 'Divider (H)', 'divider-v': 'Divider (V)',
-  'garden': 'Garden', 'pillar': 'Pillar',
-  'stairs': 'Stairs', 'bar': 'Bar counter',
+  'wall-h': 'Wall (H)',
+  'wall-v': 'Wall (V)',
+  'divider-h': 'Divider (H)',
+  'divider-v': 'Divider (V)',
+  garden: 'Garden',
+  pillar: 'Pillar',
+  stairs: 'Stairs',
+  bar: 'Bar counter',
 };
 
 const DECOR_TOOLS: { type: DecorType; icon: string }[] = [
-  { type: 'wall-h',    icon: '▬' },
-  { type: 'wall-v',    icon: '▮' },
+  { type: 'wall-h', icon: '▬' },
+  { type: 'wall-v', icon: '▮' },
   { type: 'divider-h', icon: '⋯' },
   { type: 'divider-v', icon: '⋮' },
-  { type: 'garden',    icon: '🌿' },
-  { type: 'pillar',    icon: '⬤' },
-  { type: 'stairs',    icon: '🪜' },
-  { type: 'bar',       icon: '🍹' },
+  { type: 'garden', icon: '🌿' },
+  { type: 'pillar', icon: '⬤' },
+  { type: 'stairs', icon: '🪜' },
+  { type: 'bar', icon: '🍹' },
 ];
 
 const STORAGE_KEY = 'tf:floor-decor-v1';
@@ -109,7 +111,11 @@ function loadDecor(): DecorItem[] {
 
 // ── Component ──────────────────────────────────────────────────────────────
 export function FloorPlanEditor({
-  tables, zones, onZonesChanged, onTablesChanged, onError,
+  tables,
+  zones,
+  onZonesChanged,
+  onTablesChanged,
+  onError,
 }: Props) {
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
@@ -192,7 +198,9 @@ export function FloorPlanEditor({
   }, [selectedDecorId]);
 
   // ── Table drag ─────────────────────────────────────────────────────────
-  const tableDragRef = useRef<{ id: string; pointerId: number; keepZone: string | null } | null>(null);
+  const tableDragRef = useRef<{ id: string; pointerId: number; keepZone: string | null } | null>(
+    null,
+  );
 
   const moveTableTo = useCallback(
     (tableId: string, clientX: number, clientY: number, forceZone?: string | null) => {
@@ -201,9 +209,12 @@ export function FloorPlanEditor({
       const rect = canvas.getBoundingClientRect();
       let x = clamp01((clientX - rect.left) / rect.width);
       let y = clamp01((clientY - rect.top) / rect.height);
-      if (snapToGrid) { x = snap(x); y = snap(y); }
+      if (snapToGrid) {
+        x = snap(x);
+        y = snap(y);
+      }
       setDrafts((prev) => {
-        const zoneId = forceZone !== undefined ? forceZone : prev[tableId]?.zoneId ?? null;
+        const zoneId = forceZone !== undefined ? forceZone : (prev[tableId]?.zoneId ?? null);
         return { ...prev, [tableId]: { id: tableId, zoneId, x, y } };
       });
     },
@@ -237,13 +248,19 @@ export function FloorPlanEditor({
 
   // ── Decor drag & resize ────────────────────────────────────────────────
   const decorDragRef = useRef<{
-    id: string; pointerId: number; ox: number; oy: number;
+    id: string;
+    pointerId: number;
+    ox: number;
+    oy: number;
   } | null>(null);
 
   const decorResizeRef = useRef<{
-    id: string; pointerId: number;
-    startX: number; startY: number;
-    origW: number; origH: number;
+    id: string;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    origW: number;
+    origH: number;
   } | null>(null);
 
   const startDecorDrag = (item: DecorItem, e: React.PointerEvent) => {
@@ -263,9 +280,12 @@ export function FloorPlanEditor({
     e.preventDefault();
     e.stopPropagation();
     decorResizeRef.current = {
-      id: item.id, pointerId: e.pointerId,
-      startX: e.clientX, startY: e.clientY,
-      origW: item.w, origH: item.h,
+      id: item.id,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      origW: item.w,
+      origH: item.h,
     };
     (e.target as Element).setPointerCapture?.(e.pointerId);
   };
@@ -283,8 +303,11 @@ export function FloorPlanEditor({
       const rect = canvas.getBoundingClientRect();
       let x = clamp01((e.clientX - rect.left) / rect.width - dd.ox);
       let y = clamp01((e.clientY - rect.top) / rect.height - dd.oy);
-      if (snapToGrid) { x = snap(x); y = snap(y); }
-      setDecor((prev) => prev.map((d) => d.id === dd.id ? { ...d, x, y } : d));
+      if (snapToGrid) {
+        x = snap(x);
+        y = snap(y);
+      }
+      setDecor((prev) => prev.map((d) => (d.id === dd.id ? { ...d, x, y } : d)));
     }
 
     const dr = decorResizeRef.current;
@@ -299,7 +322,7 @@ export function FloorPlanEditor({
         w = Math.max(SNAP_STEP, Math.round(w / SNAP_STEP) * SNAP_STEP);
         h = Math.max(SNAP_STEP, Math.round(h / SNAP_STEP) * SNAP_STEP);
       }
-      setDecor((prev) => prev.map((d) => d.id === dr.id ? { ...d, w, h } : d));
+      setDecor((prev) => prev.map((d) => (d.id === dr.id ? { ...d, w, h } : d)));
     }
   };
 
@@ -321,7 +344,10 @@ export function FloorPlanEditor({
     const def = DECOR_DEFAULTS[activeTool];
     let x = clamp01((e.clientX - rect.left) / rect.width - def.w / 2);
     let y = clamp01((e.clientY - rect.top) / rect.height - def.h / 2);
-    if (snapToGrid) { x = snap(x); y = snap(y); }
+    if (snapToGrid) {
+      x = snap(x);
+      y = snap(y);
+    }
     const item: DecorItem = { id: uid(), type: activeTool, x, y, ...def };
     setDecor((prev) => [...prev, item]);
     setActiveTool('select');
@@ -339,7 +365,7 @@ export function FloorPlanEditor({
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 1400);
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -358,13 +384,16 @@ export function FloorPlanEditor({
     const baseName = t('tables.floorPlan.newZoneName');
     let name = baseName;
     let i = 2;
-    while (zones.some((z) => z.name === name)) { name = `${baseName} ${i}`; i += 1; }
+    while (zones.some((z) => z.name === name)) {
+      name = `${baseName} ${i}`;
+      i += 1;
+    }
     try {
       const created = await authedFetch((tk) => api.createTableZone(tk, { name }));
       await onZonesChanged();
       setActiveZoneId(created.id);
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     }
   };
 
@@ -375,7 +404,7 @@ export function FloorPlanEditor({
       await authedFetch((tk) => api.updateTableZone(tk, zone.id, { name: next.trim() }));
       await onZonesChanged();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     }
   };
 
@@ -386,7 +415,7 @@ export function FloorPlanEditor({
       await onZonesChanged();
       await onTablesChanged();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     }
   };
 
@@ -395,7 +424,6 @@ export function FloorPlanEditor({
     <div className="tf-a-floor">
       {/* Rail */}
       <aside className="tf-a-floor__rail">
-
         {/* Zones */}
         <div className="tf-a-floor__rail-section">
           <div className="tf-a-floor__rail-head">
@@ -414,14 +442,8 @@ export function FloorPlanEditor({
                 const isActive = z.id === activeZoneId;
                 const isHighlit = z.id === highlightZoneId;
                 return (
-                  <li
-                    key={z.id}
-                    className={`tf-a-floor__rail-item${isActive ? ' is-active' : ''}`}
-                  >
-                    <span
-                      className="tf-a-floor__zone-dot"
-                      style={{ background: color.token }}
-                    />
+                  <li key={z.id} className={`tf-a-floor__rail-item${isActive ? ' is-active' : ''}`}>
+                    <span className="tf-a-floor__zone-dot" style={{ background: color.token }} />
                     <button
                       type="button"
                       className="tf-a-floor__rail-pick"
@@ -439,13 +461,17 @@ export function FloorPlanEditor({
                         className="btn btn-sm btn-ghost"
                         onClick={() => renameZone(z)}
                         aria-label={t('tables.floorPlan.renameZone')}
-                      >✎</button>
+                      >
+                        ✎
+                      </button>
                       <button
                         type="button"
                         className="btn btn-sm btn-ghost btn-danger"
                         onClick={() => deleteZone(z)}
                         aria-label={t('tables.floorPlan.deleteZone')}
-                      >✕</button>
+                      >
+                        ✕
+                      </button>
                     </div>
                   </li>
                 );
@@ -507,8 +533,7 @@ export function FloorPlanEditor({
           </div>
           {zones.length > 0 && activeZoneId && (
             <p className="tf-a-floor__tray-target">
-              Placing into:{' '}
-              <strong>{zones.find((z) => z.id === activeZoneId)?.name}</strong>
+              Placing into: <strong>{zones.find((z) => z.id === activeZoneId)?.name}</strong>
             </p>
           )}
           {unplacedTables.length === 0 ? (
@@ -592,7 +617,9 @@ export function FloorPlanEditor({
             'tf-a-floor__canvas',
             snapToGrid ? 'is-grid' : '',
             activeTool !== 'select' ? 'is-placing' : '',
-          ].filter(Boolean).join(' ')}
+          ]
+            .filter(Boolean)
+            .join(' ')}
           onClick={onCanvasClick}
           onPointerMove={onCanvasPointerMove}
           onPointerUp={onCanvasPointerUp}
@@ -616,7 +643,9 @@ export function FloorPlanEditor({
                   'tf-a-floor__decor',
                   `tf-a-floor__decor--${item.type}`,
                   isSelected ? 'is-selected' : '',
-                ].filter(Boolean).join(' ')}
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 style={{
                   left: `${item.x * 100}%`,
                   top: `${item.y * 100}%`,
@@ -630,15 +659,9 @@ export function FloorPlanEditor({
                   setSelectedDecorId(null);
                 }}
               >
-                {item.type === 'garden' && (
-                  <span className="tf-a-floor__decor-icon">🌿</span>
-                )}
-                {item.type === 'stairs' && (
-                  <span className="tf-a-floor__decor-icon">🪜</span>
-                )}
-                {item.type === 'bar' && (
-                  <span className="tf-a-floor__decor-text">BAR</span>
-                )}
+                {item.type === 'garden' && <span className="tf-a-floor__decor-icon">🌿</span>}
+                {item.type === 'stairs' && <span className="tf-a-floor__decor-icon">🪜</span>}
+                {item.type === 'bar' && <span className="tf-a-floor__decor-text">BAR</span>}
                 {isSelected && (
                   <div
                     className="tf-a-floor__resize-handle"
@@ -662,21 +685,23 @@ export function FloorPlanEditor({
               <button
                 key={tb.id}
                 type="button"
-                className={[
-                  'tf-a-floor__token',
-                  isDim ? 'is-dim' : '',
-                ].filter(Boolean).join(' ')}
-                style={{
-                  left: `${x * 100}%`,
-                  top: `${y * 100}%`,
-                  width: size,
-                  height: size,
-                  borderRadius: tb.seats === 1 ? size / 2 : 10,
-                  borderColor: color?.border ?? undefined,
-                  color: color?.token ?? undefined,
-                } as React.CSSProperties}
+                className={['tf-a-floor__token', isDim ? 'is-dim' : ''].filter(Boolean).join(' ')}
+                style={
+                  {
+                    left: `${x * 100}%`,
+                    top: `${y * 100}%`,
+                    width: size,
+                    height: size,
+                    borderRadius: tb.seats === 1 ? size / 2 : 10,
+                    borderColor: color?.border ?? undefined,
+                    color: color?.token ?? undefined,
+                  } as React.CSSProperties
+                }
                 onPointerDown={(e) => startTableDrag(tb.id, e)}
-                onDoubleClick={(e) => { e.stopPropagation(); removeFromZone(tb.id); }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  removeFromZone(tb.id);
+                }}
                 aria-label={tb.label}
                 title={`${tb.label} — double-click to unplace`}
               >

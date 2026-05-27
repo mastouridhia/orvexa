@@ -1,19 +1,10 @@
 import type { Server as HttpServer } from 'node:http';
 import { Server as SocketServer } from 'socket.io';
-import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
-  StaffRole,
-} from '@orvexa/shared';
+import type { ClientToServerEvents, ServerToClientEvents, StaffRole } from '@orvexa/shared';
 import { corsOptions } from '../middleware/cors.js';
 import { logger } from '../utils/logger.js';
 import { resolveHandshakeIdentity, type SocketIdentity } from './auth.js';
-import {
-  kitchenRoom,
-  restaurantRoom,
-  tableRoom,
-  waiterRoom,
-} from './rooms.js';
+import { kitchenRoom, restaurantRoom, tableRoom, waiterRoom } from './rooms.js';
 import {
   RealtimeBus,
   setBus,

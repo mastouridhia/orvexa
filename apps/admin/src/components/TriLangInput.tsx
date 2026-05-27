@@ -22,12 +22,7 @@ export function TriLangInput({
         <span style={{ fontSize: '0.82rem', color: 'var(--fg-soft)' }}>{label}</span>
         <div className="trilang-tabs" style={{ marginInlineStart: 'auto' }}>
           {LANGS.map((l) => (
-            <button
-              key={l}
-              type="button"
-              aria-pressed={active === l}
-              onClick={() => setActive(l)}
-            >
+            <button key={l} type="button" aria-pressed={active === l} onClick={() => setActive(l)}>
               {l.toUpperCase()}
             </button>
           ))}

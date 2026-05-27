@@ -81,7 +81,10 @@ export function ItemDetailModal({
       } else {
         const has = current.includes(variantId);
         if (has) {
-          next.set(group.id, current.filter((id) => id !== variantId));
+          next.set(
+            group.id,
+            current.filter((id) => id !== variantId),
+          );
         } else if (current.length < group.max) {
           next.set(group.id, [...current, variantId]);
         }
@@ -123,11 +126,7 @@ export function ItemDetailModal({
         className="tf-sheet__scroll"
         onScroll={(e) => setScrollY((e.target as HTMLDivElement).scrollTop)}
       >
-        <div
-          className="tf-sheet__hero"
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
+        <div className="tf-sheet__hero" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <div
             className="tf-sheet__hero-img"
             style={{
@@ -147,10 +146,7 @@ export function ItemDetailModal({
           {images.length > 1 ? (
             <div className="tf-sheet__dots" aria-hidden="true">
               {images.map((u, i) => (
-                <span
-                  key={u}
-                  className={`tf-sheet__dot${i === activeIdx ? ' is-active' : ''}`}
-                />
+                <span key={u} className={`tf-sheet__dot${i === activeIdx ? ' is-active' : ''}`} />
               ))}
             </div>
           ) : null}
@@ -159,7 +155,10 @@ export function ItemDetailModal({
 
         <div className="tf-sheet__body">
           {images.length > 1 ? (
-            <div className="tf-sheet__thumbs" aria-label={t('menu.photos', { defaultValue: 'Photos' })}>
+            <div
+              className="tf-sheet__thumbs"
+              aria-label={t('menu.photos', { defaultValue: 'Photos' })}
+            >
               {images.map((url, i) => (
                 <button
                   key={url}
@@ -181,9 +180,7 @@ export function ItemDetailModal({
             <h1 id="dish-title" className="tf-sheet__title">
               {pickLang(dish.name, lang)}
             </h1>
-            <div className="tf-sheet__price tf-tabular">
-              {formatMillimes(dish.priceMillimes)}
-            </div>
+            <div className="tf-sheet__price tf-tabular">{formatMillimes(dish.priceMillimes)}</div>
           </div>
           {dish.description ? (
             <p className="tf-sheet__desc">{pickLang(dish.description, lang)}</p>
@@ -204,36 +201,36 @@ export function ItemDetailModal({
                     <div className="tf-vgroup__head">
                       <h4 className="tf-vgroup__name">
                         {pickLang(g.name, lang)}
-                        {g.required ? (
-                          <span style={{ color: 'var(--tf-accent)' }}> *</span>
-                        ) : null}
+                        {g.required ? <span style={{ color: 'var(--tf-accent)' }}> *</span> : null}
                       </h4>
                       <span className="tf-vgroup__hint">{help}</span>
                     </div>
                     <div className="tf-vgroup__list">
-                      {(g.variants ?? []).filter((v) => v.isActive).map((v) => {
-                        const selected = selectedIds.includes(v.id);
-                        return (
-                          <label
-                            key={v.id}
-                            className={`tf-vgroup__opt${selected ? ' is-selected' : ''}`}
-                          >
-                            <input
-                              type={g.selectionType === 'single' ? 'radio' : 'checkbox'}
-                              name={g.id}
-                              checked={selected}
-                              onChange={() => toggle(g, v.id)}
-                            />
-                            <span className="tf-vgroup__opt-name">{pickLang(v.name, lang)}</span>
-                            {v.priceDeltaMillimes !== 0 ? (
-                              <span className="tf-vgroup__opt-delta">
-                                {v.priceDeltaMillimes > 0 ? '+' : ''}
-                                {formatMillimes(v.priceDeltaMillimes)}
-                              </span>
-                            ) : null}
-                          </label>
-                        );
-                      })}
+                      {(g.variants ?? [])
+                        .filter((v) => v.isActive)
+                        .map((v) => {
+                          const selected = selectedIds.includes(v.id);
+                          return (
+                            <label
+                              key={v.id}
+                              className={`tf-vgroup__opt${selected ? ' is-selected' : ''}`}
+                            >
+                              <input
+                                type={g.selectionType === 'single' ? 'radio' : 'checkbox'}
+                                name={g.id}
+                                checked={selected}
+                                onChange={() => toggle(g, v.id)}
+                              />
+                              <span className="tf-vgroup__opt-name">{pickLang(v.name, lang)}</span>
+                              {v.priceDeltaMillimes !== 0 ? (
+                                <span className="tf-vgroup__opt-delta">
+                                  {v.priceDeltaMillimes > 0 ? '+' : ''}
+                                  {formatMillimes(v.priceDeltaMillimes)}
+                                </span>
+                              ) : null}
+                            </label>
+                          );
+                        })}
                     </div>
                   </div>
                 );
@@ -242,10 +239,7 @@ export function ItemDetailModal({
           ) : null}
 
           <div className="tf-notes">
-            <div
-              className="tf-vgroup__hint"
-              style={{ marginBottom: 8 }}
-            >
+            <div className="tf-vgroup__hint" style={{ marginBottom: 8 }}>
               {t('dish.notes')}
             </div>
             <textarea
@@ -269,7 +263,9 @@ export function ItemDetailModal({
           >
             <IconMinus size={18} />
           </button>
-          <span className="tf-stepper__val" aria-live="polite">{quantity}</span>
+          <span className="tf-stepper__val" aria-live="polite">
+            {quantity}
+          </span>
           <button
             type="button"
             className="tf-stepper__btn"
@@ -279,12 +275,7 @@ export function ItemDetailModal({
             <IconPlus size={18} />
           </button>
         </div>
-        <button
-          type="button"
-          className="tf-add-cta"
-          disabled={!allValid}
-          onClick={add}
-        >
+        <button type="button" className="tf-add-cta" disabled={!allValid} onClick={add}>
           <span>{t('dish.addToCart')}</span>
           <span className="tf-tabular">{formatMillimes(lineTotal)}</span>
         </button>

@@ -14,7 +14,10 @@ export function Header() {
   return (
     <header className="tf-app-header" role="banner">
       {session?.tableId ? (
-        <div className="tf-table-chip" aria-label={t('header.table', { label: session.tableLabel })}>
+        <div
+          className="tf-table-chip"
+          aria-label={t('header.table', { label: session.tableLabel })}
+        >
           <div className="tf-table-chip__num">
             <span className="tf-table-chip__label">{t('header.tableShort')}</span>
             <span className="tf-table-chip__value">{session.tableLabel}</span>

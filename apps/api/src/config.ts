@@ -21,7 +21,8 @@ function requiredSecret(name: string, fallback: string): string {
   if (v && v.length > 0) {
     if (process.env.NODE_ENV === 'production') {
       if (v.length < 32) throw new Error(`${name} must be at least 32 characters`);
-      if (v === DEV_FALLBACK) throw new Error(`${name} must not be the development fallback in production`);
+      if (v === DEV_FALLBACK)
+        throw new Error(`${name} must not be the development fallback in production`);
     }
     return v;
   }
@@ -69,7 +70,8 @@ export const config = {
 
   uploads: {
     dir: process.env.UPLOADS_DIR ?? 'uploads',
-    publicBaseUrl: process.env.PUBLIC_BASE_URL ?? `http://localhost:${parseInteger(process.env.PORT, 4000)}`,
+    publicBaseUrl:
+      process.env.PUBLIC_BASE_URL ?? `http://localhost:${parseInteger(process.env.PORT, 4000)}`,
     maxBytes: parseInteger(process.env.UPLOADS_MAX_BYTES, 5 * 1024 * 1024),
   },
 
@@ -79,6 +81,16 @@ export const config = {
    * to provide a sandboxed evaluation environment. Frontends read this from
    * `GET /version` so a single env flag drives the UX everywhere.
    */
+  db: {
+    maxConnections: parseInteger(process.env.DB_POOL_MAX, 20),
+    idleTimeoutMs: parseInteger(process.env.DB_IDLE_TIMEOUT_MS, 30_000),
+    connectionTimeoutMs: parseInteger(process.env.DB_CONNECT_TIMEOUT_MS, 5_000),
+  },
+
+  slowRequest: {
+    thresholdMs: parseInteger(process.env.SLOW_REQUEST_THRESHOLD_MS, 500),
+  },
+
   demoMode: (process.env.DEMO_MODE ?? '').toLowerCase() === 'true',
 } as const;
 

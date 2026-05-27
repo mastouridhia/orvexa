@@ -89,10 +89,7 @@ export class TableCartService {
     await this.repo.deleteByTableId(input.tableId);
   }
 
-  private async assertSessionOnSameToken(
-    sessionId: string,
-    cart: TableCartRow,
-  ): Promise<void> {
+  private async assertSessionOnSameToken(sessionId: string, cart: TableCartRow): Promise<void> {
     const session = await this.sessionRepo.findById(sessionId);
     if (!session) throw new ForbiddenError('Session not found');
     if (session.tableDayTokenId !== cart.tableDayTokenId) {

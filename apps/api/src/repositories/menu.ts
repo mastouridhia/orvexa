@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 import { categories, dishes, variantGroups, variants } from '../db/schema/menu.js';
 import { BaseRepository } from './base.js';
 
@@ -32,26 +32,32 @@ export class CategoryRepository extends BaseRepository {
   }
 
   async create(input: CategoryInsert): Promise<CategoryRow> {
-    const [row] = await this.db.insert(categories).values(input).returning();
-    if (!row) throw new Error('Failed to insert category');
-    return row;
+    return this.run(async () => {
+      const [row] = await this.db.insert(categories).values(input).returning();
+      if (!row) throw new Error('Failed to insert category');
+      return row;
+    });
   }
 
   async update(id: string, patch: CategoryPatch): Promise<CategoryRow | null> {
-    const [row] = await this.db
-      .update(categories)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(eq(categories.id, id))
-      .returning();
-    return row ?? null;
+    return this.run(async () => {
+      const [row] = await this.db
+        .update(categories)
+        .set({ ...patch, updatedAt: new Date() })
+        .where(eq(categories.id, id))
+        .returning();
+      return row ?? null;
+    });
   }
 
   async delete(id: string): Promise<boolean> {
-    const rows = await this.db
-      .delete(categories)
-      .where(eq(categories.id, id))
-      .returning({ id: categories.id });
-    return rows.length > 0;
+    return this.run(async () => {
+      const rows = await this.db
+        .delete(categories)
+        .where(eq(categories.id, id))
+        .returning({ id: categories.id });
+      return rows.length > 0;
+    });
   }
 
   async reorder(restaurantId: string, ids: string[]): Promise<CategoryRow[]> {
@@ -76,7 +82,7 @@ export class DishRepository extends BaseRepository {
     return this.db
       .select()
       .from(dishes)
-      .where(eq(dishes.restaurantId, restaurantId))
+      .where(and(eq(dishes.restaurantId, restaurantId), isNull(dishes.deletedAt)))
       .orderBy(asc(dishes.sortOrder), asc(dishes.nameFr));
   }
 
@@ -84,36 +90,53 @@ export class DishRepository extends BaseRepository {
     return this.db
       .select()
       .from(dishes)
-      .where(and(eq(dishes.restaurantId, restaurantId), eq(dishes.available, true)))
+      .where(
+        and(
+          eq(dishes.restaurantId, restaurantId),
+          eq(dishes.available, true),
+          isNull(dishes.deletedAt),
+        ),
+      )
       .orderBy(asc(dishes.sortOrder), asc(dishes.nameFr));
   }
 
   async findById(id: string): Promise<DishRow | null> {
-    const [row] = await this.db.select().from(dishes).where(eq(dishes.id, id)).limit(1);
+    const [row] = await this.db
+      .select()
+      .from(dishes)
+      .where(and(eq(dishes.id, id), isNull(dishes.deletedAt)))
+      .limit(1);
     return row ?? null;
   }
 
   async create(input: DishInsert): Promise<DishRow> {
-    const [row] = await this.db.insert(dishes).values(input).returning();
-    if (!row) throw new Error('Failed to insert dish');
-    return row;
+    return this.run(async () => {
+      const [row] = await this.db.insert(dishes).values(input).returning();
+      if (!row) throw new Error('Failed to insert dish');
+      return row;
+    });
   }
 
   async update(id: string, patch: DishPatch): Promise<DishRow | null> {
-    const [row] = await this.db
-      .update(dishes)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(eq(dishes.id, id))
-      .returning();
-    return row ?? null;
+    return this.run(async () => {
+      const [row] = await this.db
+        .update(dishes)
+        .set({ ...patch, updatedAt: new Date() })
+        .where(and(eq(dishes.id, id), isNull(dishes.deletedAt)))
+        .returning();
+      return row ?? null;
+    });
   }
 
-  async delete(id: string): Promise<boolean> {
-    const rows = await this.db
-      .delete(dishes)
-      .where(eq(dishes.id, id))
-      .returning({ id: dishes.id });
-    return rows.length > 0;
+  async softDelete(id: string): Promise<boolean> {
+    return this.run(async () => {
+      const rows = await this.db
+        .update(dishes)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(dishes.id, id), isNull(dishes.deletedAt)))
+        .returning({ id: dishes.id });
+      return rows.length > 0;
+    });
   }
 }
 
@@ -235,4 +258,3 @@ export class VariantRepository extends BaseRepository {
     });
   }
 }
-

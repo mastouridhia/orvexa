@@ -85,12 +85,28 @@ categoriesRouter.delete(
 registerTag('categories', 'Menu categories.');
 
 const okResponses = { '200': { description: 'OK' } };
-registerPath('get', '/categories', { summary: 'List categories (staff)', tags: ['categories'], responses: okResponses });
-registerPath('post', '/categories', { summary: 'Create category', tags: ['categories'], responses: { '201': { description: 'Created' } } });
+registerPath('get', '/categories', {
+  summary: 'List categories (staff)',
+  tags: ['categories'],
+  responses: okResponses,
+});
+registerPath('post', '/categories', {
+  summary: 'Create category',
+  tags: ['categories'],
+  responses: { '201': { description: 'Created' } },
+});
 registerPath('post', '/categories/reorder', {
   summary: 'Reorder categories — request body provides the new id sequence',
   tags: ['categories'],
   responses: okResponses,
 });
-registerPath('patch', '/categories/{id}', { summary: 'Update category', tags: ['categories'], responses: okResponses });
-registerPath('delete', '/categories/{id}', { summary: 'Delete category', tags: ['categories'], responses: okResponses });
+registerPath('patch', '/categories/{id}', {
+  summary: 'Update category',
+  tags: ['categories'],
+  responses: okResponses,
+});
+registerPath('delete', '/categories/{id}', {
+  summary: 'Delete category',
+  tags: ['categories'],
+  responses: okResponses,
+});

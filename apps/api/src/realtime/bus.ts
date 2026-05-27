@@ -3,6 +3,7 @@ import type {
   BillRequestedPayload,
   CartUpdatedPayload,
   ClientToServerEvents,
+  DayClosedPayload,
   MenuUpdatedPayload,
   Order,
   OrderCreatedPayload,
@@ -75,6 +76,11 @@ export class RealtimeBus {
 
   cartUpdated(payload: CartUpdatedPayload): void {
     this.io.to(tableRoom(payload.tableId)).emit('cart:updated', payload);
+  }
+
+  dayClosed(restaurantId: string, closedAt: string): void {
+    const payload: DayClosedPayload = { restaurantId, closedAt };
+    this.io.to(restaurantRoom(restaurantId)).emit('day:closed', payload);
   }
 
   staffRevoked(staffId: string): void {

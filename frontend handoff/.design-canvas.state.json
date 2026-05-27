@@ -1,1 +1,6 @@
-{"sections":{"moods":{"labels":{"a":"A · Editorial / warm-minimal"}},"next":{"labels":{"roadmap":"Roadmap"}}}}
+{
+  "sections": {
+    "moods": { "labels": { "a": "A · Editorial / warm-minimal" } },
+    "next": { "labels": { "roadmap": "Roadmap" } }
+  }
+}

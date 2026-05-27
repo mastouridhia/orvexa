@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  Category,
-  Dish,
-  LanguageCode,
-  LocalizedString,
-  VariantGroup,
-} from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import type { Category, Dish, LanguageCode, LocalizedString, VariantGroup } from '@orvexa/shared';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { Modal } from '@orvexa/ui';
@@ -45,7 +39,7 @@ export function MenuEditor() {
         setCategories(cats);
         setDishes(ds);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -58,7 +52,11 @@ export function MenuEditor() {
       <h1 className="page-title">{t('menu.title')}</h1>
       {error ? <div className="error-banner">{error}</div> : null}
       <div className="tabs" role="tablist">
-        <button type="button" aria-pressed={tab === 'categories'} onClick={() => setTab('categories')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'categories'}
+          onClick={() => setTab('categories')}
+        >
           {t('menu.tabs.categories')}
         </button>
         <button type="button" aria-pressed={tab === 'dishes'} onClick={() => setTab('dishes')}>
@@ -78,7 +76,7 @@ export function MenuEditor() {
               await authedFetch((tk) => api.deleteCategory(tk, c.id));
               await reload();
             } catch (err) {
-              setError(err instanceof ApiError ? err.message : (err as Error).message);
+              setError(getErrorMessage(err));
             }
           }}
         />
@@ -95,7 +93,7 @@ export function MenuEditor() {
               await authedFetch((tk) => api.deleteDish(tk, d.id));
               await reload();
             } catch (err) {
-              setError(err instanceof ApiError ? err.message : (err as Error).message);
+              setError(getErrorMessage(err));
             }
           }}
         />
@@ -163,7 +161,12 @@ function CategoriesPanel({
   const [savingOrder, setSavingOrder] = useState(false);
   const dragSrc = useRef<number | null>(null);
 
-  useEffect(() => { setOrdered(categories); }, [categories]);
+  // Resync local drag-order buffer when server data arrives (e.g. another session edits menu).
+  // The double-render cost is acceptable — this fires rarely and only when categories changes.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    setOrdered(categories);
+  }, [categories]);
 
   const onDragOver = (e: React.DragEvent, targetIdx: number) => {
     e.preventDefault();
@@ -183,7 +186,9 @@ function CategoriesPanel({
     setSavingOrder(true);
     try {
       await Promise.all(
-        ordered.map((c, i) => authedFetch((tk) => api.updateCategory(tk, c.id, { sortOrder: i + 1 }))),
+        ordered.map((c, i) =>
+          authedFetch((tk) => api.updateCategory(tk, c.id, { sortOrder: i + 1 })),
+        ),
       );
     } finally {
       setSavingOrder(false);
@@ -215,11 +220,22 @@ function CategoriesPanel({
               <tr
                 key={c.id}
                 draggable
-                onDragStart={() => { dragSrc.current = idx; }}
+                onDragStart={() => {
+                  dragSrc.current = idx;
+                }}
                 onDragOver={(e) => onDragOver(e, idx)}
                 onDrop={onDrop}
               >
-                <td style={{ cursor: 'grab', color: 'var(--fg-soft)', userSelect: 'none', textAlign: 'center' }}>⠿</td>
+                <td
+                  style={{
+                    cursor: 'grab',
+                    color: 'var(--fg-soft)',
+                    userSelect: 'none',
+                    textAlign: 'center',
+                  }}
+                >
+                  ⠿
+                </td>
                 <td>{pickLang(c.name, lang)}</td>
                 <td>{c.isActive ? '✓' : '—'}</td>
                 <td>
@@ -231,7 +247,11 @@ function CategoriesPanel({
                   <button type="button" className="btn btn-sm" onClick={() => onEdit(c)}>
                     {t('menu.edit')}
                   </button>{' '}
-                  <button type="button" className="btn btn-sm btn-danger" onClick={() => onDelete(c)}>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onDelete(c)}
+                  >
                     {t('menu.delete')}
                   </button>
                 </td>
@@ -240,7 +260,11 @@ function CategoriesPanel({
           </tbody>
         </table>
       )}
-      {savingOrder ? <div className="muted" style={{ fontSize: '0.8rem', textAlign: 'right' }}>Saving…</div> : null}
+      {savingOrder ? (
+        <div className="muted" style={{ fontSize: '0.8rem', textAlign: 'right' }}>
+          Saving…
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -260,7 +284,9 @@ function CategoryEditor({
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [name, setName] = useState<LocalizedString>(initial?.name ?? { ...EMPTY_L10N });
   const [isActive, setIsActive] = useState<boolean>(initial?.isActive ?? true);
-  const [kitchenSection, setKitchenSection] = useState<'kitchen' | 'bar'>(initial?.kitchenSection ?? 'kitchen');
+  const [kitchenSection, setKitchenSection] = useState<'kitchen' | 'bar'>(
+    initial?.kitchenSection ?? 'kitchen',
+  );
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
@@ -275,7 +301,7 @@ function CategoryEditor({
       }
       await onSaved();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -296,11 +322,7 @@ function CategoryEditor({
         </>
       }
     >
-      <TriLangInput
-        value={name}
-        onChange={setName}
-        label={t('menu.namePerLang', { lang: '' })}
-      />
+      <TriLangInput value={name} onChange={setName} label={t('menu.namePerLang', { lang: '' })} />
       <label>
         {t('menu.active')}
         <input
@@ -415,7 +437,11 @@ function CategoryDishGroup({
   const [savingOrder, setSavingOrder] = useState(false);
   const dragSrc = useRef<number | null>(null);
 
-  useEffect(() => { setOrdered(dishes); }, [dishes]);
+  // Same pattern as CategoriesPanel — resync drag-order buffer when server dishes change.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    setOrdered(dishes);
+  }, [dishes]);
 
   const onDragOver = (e: React.DragEvent, targetIdx: number) => {
     e.preventDefault();
@@ -443,10 +469,31 @@ function CategoryDishGroup({
   };
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-      <div style={{ padding: '0.45rem 0.75rem', background: 'var(--bg-soft, var(--surface-2))', fontWeight: 600, fontSize: '0.88rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)' }}>
+    <div
+      style={{
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-sm)',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          padding: '0.45rem 0.75rem',
+          background: 'var(--bg-soft, var(--surface-2))',
+          fontWeight: 600,
+          fontSize: '0.88rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid var(--border)',
+        }}
+      >
         <span>{label}</span>
-        {savingOrder && <span className="muted" style={{ fontSize: '0.75rem', fontWeight: 400 }}>Saving…</span>}
+        {savingOrder && (
+          <span className="muted" style={{ fontSize: '0.75rem', fontWeight: 400 }}>
+            Saving…
+          </span>
+        )}
       </div>
       <table className="dt" style={{ margin: 0 }}>
         <tbody>
@@ -454,14 +501,22 @@ function CategoryDishGroup({
             <tr
               key={d.id}
               draggable
-              onDragStart={() => { dragSrc.current = idx; }}
+              onDragStart={() => {
+                dragSrc.current = idx;
+              }}
               onDragOver={(e) => onDragOver(e, idx)}
               onDrop={onDrop}
               onClick={() => onEdit(d)}
               style={{ cursor: 'pointer' }}
             >
               <td
-                style={{ width: 24, cursor: 'grab', color: 'var(--fg-soft)', userSelect: 'none', textAlign: 'center' }}
+                style={{
+                  width: 24,
+                  cursor: 'grab',
+                  color: 'var(--fg-soft)',
+                  userSelect: 'none',
+                  textAlign: 'center',
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 ⠿
@@ -470,10 +525,24 @@ function CategoryDishGroup({
               <td className="right">{formatMillimes(d.priceMillimes)}</td>
               <td>{d.available ? '✓' : '—'}</td>
               <td className="right">
-                <button type="button" className="btn btn-sm" onClick={(e) => { e.stopPropagation(); onEdit(d); }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(d);
+                  }}
+                >
                   {t('menu.edit')}
                 </button>{' '}
-                <button type="button" className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); onDelete(d); }}>
+                <button
+                  type="button"
+                  className="btn btn-sm btn-danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(d);
+                  }}
+                >
                   {t('menu.delete')}
                 </button>
               </td>
@@ -555,7 +624,7 @@ function DishEditor({
       }
       await onSaved();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -645,7 +714,13 @@ function DishEditor({
               <img
                 src={url}
                 alt=""
-                style={{ width: 96, height: 72, objectFit: 'cover', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}
+                style={{
+                  width: 96,
+                  height: 72,
+                  objectFit: 'cover',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border)',
+                }}
               />
               <button
                 type="button"
@@ -656,7 +731,7 @@ function DishEditor({
                     await authedFetch((tk) => api.deleteDishImageAt(tk, initial.id, idx));
                     await onSaved();
                   } catch (err) {
-                    onError(err instanceof ApiError ? err.message : (err as Error).message);
+                    onError(getErrorMessage(err));
                   }
                 }}
               >
@@ -667,7 +742,9 @@ function DishEditor({
         </div>
       ) : null}
 
-      <hr style={{ margin: '1rem 0 0.5rem', border: 'none', borderTop: '1px solid var(--border)' }} />
+      <hr
+        style={{ margin: '1rem 0 0.5rem', border: 'none', borderTop: '1px solid var(--border)' }}
+      />
       <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>{t('menu.options')}</div>
       {initial ? (
         <VariantGroupsPanel
@@ -712,7 +789,7 @@ function VariantGroupsPanel({
         const list = await authedFetch((tk) => api.listVariantGroups(tk, dish.id));
         if (!cancelled) setGroups(list);
       } catch (err) {
-        if (!cancelled) onError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) onError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -735,14 +812,22 @@ function VariantGroupsPanel({
     <Wrapper className={wrapperClass}>
       {embedded ? (
         <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditing('new')}>
+          <button
+            type="button"
+            className="btn btn-sm btn-primary"
+            onClick={() => setEditing('new')}
+          >
             + {t('menu.newVariantGroup')}
           </button>
         </div>
       ) : (
         <div className="row-gap" style={{ justifyContent: 'space-between' }}>
           <strong>{pickLang(dish.name, lang)}</strong>
-          <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditing('new')}>
+          <button
+            type="button"
+            className="btn btn-sm btn-primary"
+            onClick={() => setEditing('new')}
+          >
             + {t('menu.newVariantGroup')}
           </button>
         </div>
@@ -762,7 +847,11 @@ function VariantGroupsPanel({
           }}
         >
           <div style={{ marginBottom: '0.5rem' }}>{t('menu.variantGroupEmpty')}</div>
-          <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditing('new')}>
+          <button
+            type="button"
+            className="btn btn-sm btn-primary"
+            onClick={() => setEditing('new')}
+          >
             + {t('menu.newVariantGroup')}
           </button>
         </div>
@@ -787,7 +876,7 @@ function VariantGroupsPanel({
                 </div>
                 <div className="row-gap">
                   <button type="button" className="btn btn-sm" onClick={() => setEditing(g)}>
-                    {t('menu.save')}
+                    {t('menu.edit')}
                   </button>
                   <button
                     type="button"
@@ -798,7 +887,7 @@ function VariantGroupsPanel({
                         await authedFetch((tk) => api.deleteVariantGroup(tk, g.id));
                         await onChanged();
                       } catch (err) {
-                        onError(err instanceof ApiError ? err.message : (err as Error).message);
+                        onError(getErrorMessage(err));
                       }
                     }}
                   >
@@ -807,7 +896,14 @@ function VariantGroupsPanel({
                 </div>
               </div>
               {g.variants && g.variants.length > 0 ? (
-                <ul style={{ margin: '0.35rem 0 0', paddingInlineStart: '1.25rem', fontSize: '0.88rem', color: 'var(--fg-soft)' }}>
+                <ul
+                  style={{
+                    margin: '0.35rem 0 0',
+                    paddingInlineStart: '1.25rem',
+                    fontSize: '0.88rem',
+                    color: 'var(--fg-soft)',
+                  }}
+                >
                   {g.variants.map((v) => (
                     <li key={v.id}>
                       {pickLang(v.name, lang)}{' '}
@@ -920,7 +1016,7 @@ function VariantGroupEditor({
       }
       await onSaved();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -973,11 +1069,21 @@ function VariantGroupEditor({
         </label>
         <label>
           {t('menu.min')}
-          <input type="number" min={0} value={min} onChange={(e) => setMin(Number(e.target.value))} />
+          <input
+            type="number"
+            min={0}
+            value={min}
+            onChange={(e) => setMin(Number(e.target.value))}
+          />
         </label>
         <label>
           {t('menu.max')}
-          <input type="number" min={1} value={max} onChange={(e) => setMax(Number(e.target.value))} />
+          <input
+            type="number"
+            min={1}
+            value={max}
+            onChange={(e) => setMax(Number(e.target.value))}
+          />
         </label>
       </div>
       <div>

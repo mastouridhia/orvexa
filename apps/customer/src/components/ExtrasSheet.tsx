@@ -5,7 +5,16 @@ import { handleApiError } from '../api/errorMessage.js';
 import { api } from '../api/queries.js';
 import { useSessionStore } from '../store/session.js';
 
-const PRESETS = ['fork', 'spoon', 'knife', 'napkin', 'straw', 'water', 'condiments', 'cleaning'] as const;
+const PRESETS = [
+  'fork',
+  'spoon',
+  'knife',
+  'napkin',
+  'straw',
+  'water',
+  'condiments',
+  'cleaning',
+] as const;
 
 export function ExtrasSheet({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();

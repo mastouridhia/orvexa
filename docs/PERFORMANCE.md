@@ -4,12 +4,12 @@
 
 Measured with `npm run build` against the production target. JS sizes are post-minification, gzip column is the size on the wire.
 
-| App      | JS (raw)  | JS (gzip)  | CSS (raw) | Modules |
-|----------|-----------|------------|-----------|---------|
-| admin    | 390.28 kB | 119.40 kB  | 9.45 kB   | ~120    |
-| customer | 361.78 kB | 114.33 kB  | 9.83 kB   | 117     |
-| kitchen  | 302.23 kB | 95.65 kB   | 5.59 kB   | 101     |
-| waiter   | 308.01 kB | 97.12 kB   | 7.95 kB   | 102     |
+| App      | JS (raw)  | JS (gzip) | CSS (raw) | Modules |
+| -------- | --------- | --------- | --------- | ------- |
+| admin    | 390.28 kB | 119.40 kB | 9.45 kB   | ~120    |
+| customer | 361.78 kB | 114.33 kB | 9.83 kB   | 117     |
+| kitchen  | 302.23 kB | 95.65 kB  | 5.59 kB   | 101     |
+| waiter   | 308.01 kB | 97.12 kB  | 7.95 kB   | 102     |
 
 All four apps come in under 120kB gzipped — well within the "comfortably below the 200kB initial-payload target for mobile-first restaurant ordering" envelope.
 
@@ -37,11 +37,11 @@ The `build:analyze` script runs `vite build` with `ANALYZE=true`, which activate
 
 Three composite/single-column indexes added to cover hot paths surfaced by reading the repository code:
 
-| Index | Table | Columns | Hot path |
-|-------|-------|---------|----------|
-| `order_items_dish_idx` | `order_items` | `(dish_id)` | `ReportsService.topItems` joins items → dishes by `dish_id`; without this it falls back to a seq scan of `order_items` for any aggregation that filters by dish. The pre-existing `order_items_order_idx` only covers reverse lookups by `order_id`. |
-| `payments_order_status_idx` | `payments` | `(order_id, status)` | Split-bill flows aggregate paid amounts per order in `PaymentService.record`. Existing `payments_order_idx` covers `(order_id)` but the per-order status filter ends up sequential. |
-| `customer_sessions_table_idx` | `customer_sessions` | `(table_id)` | `TableService.deriveForTable` and customer-session bootstrap both look up the most recent session for a given table. Pre-existing index was on `table_day_token_id`. |
+| Index                         | Table               | Columns              | Hot path                                                                                                                                                                                                                                             |
+| ----------------------------- | ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `order_items_dish_idx`        | `order_items`       | `(dish_id)`          | `ReportsService.topItems` joins items → dishes by `dish_id`; without this it falls back to a seq scan of `order_items` for any aggregation that filters by dish. The pre-existing `order_items_order_idx` only covers reverse lookups by `order_id`. |
+| `payments_order_status_idx`   | `payments`          | `(order_id, status)` | Split-bill flows aggregate paid amounts per order in `PaymentService.record`. Existing `payments_order_idx` covers `(order_id)` but the per-order status filter ends up sequential.                                                                  |
+| `customer_sessions_table_idx` | `customer_sessions` | `(table_id)`         | `TableService.deriveForTable` and customer-session bootstrap both look up the most recent session for a given table. Pre-existing index was on `table_day_token_id`.                                                                                 |
 
 ### Indexes already in place (from earlier migrations — no work needed)
 

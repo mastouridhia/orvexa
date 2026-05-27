@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Product Management — Orvexa</title>
+    <meta name="description" content="How Orvexa was planned, prioritized, and shipped." />
+    <meta name="color-scheme" content="light" />
+    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      .pm-hero {
+        padding: 5rem 0 4rem;
+        background:
+          radial-gradient(60% 60% at 30% 0%, var(--primary-soft) 0%, rgba(14, 124, 102, 0) 70%),
+          var(--bg);
+      }
+      .pm-hero h1 {
+        margin: 0.5rem 0 1rem;
+        font-size: clamp(2rem, 5vw, 3.25rem);
+        line-height: 1.1;
+        font-weight: 700;
+      }
+      .pm-desc {
+        font-size: 1.05rem;
+        color: var(--fg-soft);
+        line-height: 1.7;
+        margin: 1.25rem 0 0;
+        max-width: 68ch;
+      }
+
+      /* Users grid */
+      .user-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .user-card {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+      }
+      .user-card h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.02rem;
+        font-weight: 700;
+      }
+      .user-card ul {
+        margin: 0;
+        padding: 0 0 0 1.1rem;
+        color: var(--fg-soft);
+        font-size: 0.93rem;
+        line-height: 1.65;
+      }
+
+      /* Roadmap phases */
+      .phase-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+      }
+      .phase-item {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        box-shadow: var(--shadow);
+      }
+      .phase-item h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.02rem;
+        font-weight: 700;
+      }
+      .phase-item p {
+        margin: 0 0 0.75rem;
+        color: var(--fg-soft);
+        font-size: 0.94rem;
+        line-height: 1.6;
+      }
+      .phase-item p:last-child { margin-bottom: 0; }
+      .phase-label {
+        display: inline-block;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--primary);
+        background: var(--primary-soft);
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        margin-bottom: 0.6rem;
+        font-weight: 600;
+      }
+
+      /* Skip table */
+      .skip-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.93rem;
+        margin-top: 1.5rem;
+      }
+      .skip-table th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        font-weight: 700;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--fg-soft);
+      }
+      .skip-table td {
+        padding: 0.65rem 0.9rem;
+        border: 1px solid var(--border);
+        color: var(--fg-soft);
+        vertical-align: top;
+      }
+      .skip-table tr:nth-child(even) td { background: var(--bg); }
+      .skip-table td:first-child {
+        font-weight: 600;
+        color: var(--fg);
+        white-space: nowrap;
+      }
+
+      /* Key decisions */
+      .decisions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+      .decision-card {
+        background: var(--bg-elev);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.1rem 1.25rem;
+        box-shadow: var(--shadow);
+        border-left: 3px solid var(--primary);
+      }
+      .decision-card h3 {
+        margin: 0 0 0.4rem;
+        font-size: 1rem;
+        font-weight: 700;
+      }
+      .decision-card p {
+        margin: 0;
+        color: var(--fg-soft);
+        font-size: 0.94rem;
+        line-height: 1.6;
+      }
+
+      /* Key questions callout */
+      .pm-callout {
+        background: var(--primary-soft);
+        border: 1px solid rgba(14, 124, 102, 0.18);
+        border-radius: var(--radius);
+        padding: 1.5rem 1.75rem;
+        margin-top: 1.5rem;
+      }
+      .pm-callout dl {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+      }
+      .pm-callout dt {
+        font-weight: 700;
+        font-size: 0.97rem;
+        color: var(--fg);
+        margin: 0 0 0.2rem;
+      }
+      .pm-callout dd {
+        margin: 0;
+        color: var(--fg-soft);
+        font-size: 0.93rem;
+        line-height: 1.6;
+      }
+
+      @media (max-width: 700px) {
+        .pm-hero { padding: 3rem 0; }
+        .skip-table { font-size: 0.85rem; }
+        .skip-table td:first-child { white-space: normal; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site">
+      <div class="container site-row">
+        <a class="brand" href="/">Orvexa</a>
+        <nav>
+          <a href="index.html#features">Features</a>
+          <a href="index.html#how">How it works</a>
+          <a href="index.html#pricing">Pricing</a>
+          <a class="btn btn-ghost" href="mailto:hello@tableflow.tn">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="pm-hero">
+      <div class="container">
+        <span class="eyebrow">Orvexa</span>
+        <h1>Product Management</h1>
+        <p class="lede">How it was planned, prioritized, and shipped.</p>
+        <p class="pm-desc">
+          Orvexa is a real-time QR ordering stack for dine-in restaurants in Tunisia. Customers
+          scan a table QR code, browse a trilingual menu, and place orders directly from their
+          phone. The kitchen sees tickets instantly. The waiter sees which tables need attention.
+          The owner sees live revenue and table activity on a dashboard.
+        </p>
+      </div>
+    </section>
+
+    <!-- Users -->
+    <section class="section section-alt">
+      <div class="container">
+        <h2>Users and Their Jobs</h2>
+        <div class="user-grid">
+          <div class="user-card">
+            <h3>Customer</h3>
+            <ul>
+              <li>Browse menu in AR / FR / EN</li>
+              <li>Place an order without a waiter</li>
+              <li>Track order status live</li>
+              <li>Call the waiter when needed</li>
+              <li>Request the bill when done</li>
+            </ul>
+          </div>
+          <div class="user-card">
+            <h3>Kitchen Staff</h3>
+            <ul>
+              <li>See tickets the moment they land</li>
+              <li>Know how long each ticket has waited</li>
+              <li>Advance tickets in one tap</li>
+              <li>Glanceable from across the kitchen</li>
+            </ul>
+          </div>
+          <div class="user-card">
+            <h3>Waiter</h3>
+            <ul>
+              <li>Floor map — every table's state at a glance</li>
+              <li>Call-waiter and bill-request alerts</li>
+              <li>Take payment and close a table</li>
+              <li>Mark dishes as passed to table</li>
+            </ul>
+          </div>
+          <div class="user-card">
+            <h3>Owner / Admin</h3>
+            <ul>
+              <li>Edit trilingual menu with variant pricing</li>
+              <li>Live dashboard — revenue, top items, tables</li>
+              <li>Manage staff accounts and roles</li>
+              <li>Print QR codes for every table</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section">
+      <div class="container">
+        <h2>Roadmap — What We Built and in What Order</h2>
+        <div class="phase-list">
+          <div class="phase-item">
+            <span class="phase-label">Phases 0–3</span>
+            <h3>Foundation</h3>
+            <p>
+              Shared TypeScript package (<code>@orvexa/shared</code>) with all domain types and Zod
+              schemas, PostgreSQL schema with Drizzle migrations, a structured API layer
+              (routes → services → repositories), and a real-time bus over Socket.io.
+            </p>
+            <p>
+              Built first because every subsequent phase depended on it being typed, validated, and
+              consistent across all four apps. Skipped CI/CD, Husky, and conventional commits — personal
+              project, manual deploy.
+            </p>
+          </div>
+          <div class="phase-item">
+            <span class="phase-label">Phases 4–9</span>
+            <h3>API Layer</h3>
+            <p>
+              Auth (JWT + refresh rotation), restaurant config, tables, menu with variant groups,
+              orders with a state-machine status flow, payments (cash settled, card stubbed), and
+              WebSocket event emission for every state change.
+            </p>
+            <p>
+              Built and verified before any frontend touched it. The variant group model
+              (1 dish + price-delta variants) was validated against the Capitol menu before
+              committing — no flattening into hundreds of SKUs.
+            </p>
+          </div>
+          <div class="phase-item">
+            <span class="phase-label">Phases 10–13</span>
+            <h3>The Four Apps</h3>
+            <p>
+              Customer app first — no orders without it. Kitchen and waiter apps second — they close
+              the loop. Admin app last — configuration layer, needed before launch, not before the
+              system works.
+            </p>
+            <p>
+              All functional before the visual redesign pass. Data layer (API clients, sockets,
+              stores, i18n, variant selection) was preserved through the redesign entirely.
+            </p>
+          </div>
+          <div class="phase-item">
+            <span class="phase-label">Phase 18</span>
+            <h3>Saffron-Hospitality Redesign</h3>
+            <p>
+              Full visual port from the design handoff onto all four apps. Warm-paper base
+              (#FAF8F4), saffron accent (#D97A2C), Newsreader Italic for headlines, Geist Mono for
+              prices and reference codes. Each app tuned to its context: customer warm and inviting,
+              kitchen dark and high-contrast, waiter and admin cool-light and functional.
+            </p>
+          </div>
+          <div class="phase-item">
+            <span class="phase-label">Phases 19–22</span>
+            <h3>First Client + Stability</h3>
+            <p>
+              Cashier role and counter-payment flow for Capitol. Post-bill customer feedback
+              (1–5 stars + comment). Per-dish prep time with ETA on customer tracking and kitchen
+              tickets. Table floor-plan editor with drag-and-drop zone assignment. Mixed-section
+              order split (bar vs. kitchen). End-of-day close. Shared table cart synced over
+              WebSocket.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- What we skipped -->
+    <section class="section section-alt">
+      <div class="container">
+        <h2>What We Deliberately Did Not Build</h2>
+        <table class="skip-table">
+          <thead>
+            <tr>
+              <th>What</th>
+              <th>Why it was skipped</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Customer accounts</td>
+              <td>By design. QR → session is the model. Accounts add friction that kills the no-login pitch.</td>
+            </tr>
+            <tr>
+              <td>Multi-currency</td>
+              <td>Tunisia-only for now. TND hardcoded. Multi-currency is complexity for a problem that doesn't exist yet.</td>
+            </tr>
+            <tr>
+              <td>Per-item order status</td>
+              <td>Café-scale kitchens prepare orders whole. No station split needed yet.</td>
+            </tr>
+            <tr>
+              <td>Redis pub/sub adapter</td>
+              <td>Single-instance API. The RealtimeBus abstraction makes the swap local when horizontal scaling lands.</td>
+            </tr>
+            <tr>
+              <td>CI/CD pipeline</td>
+              <td>Personal project. Manual docker compose up until a team warrants it.</td>
+            </tr>
+            <tr>
+              <td>Server-side PDF receipts</td>
+              <td>Browser print covers the need. No puppeteer dependency for MVP.</td>
+            </tr>
+            <tr>
+              <td>Tailwind / CSS-in-JS</td>
+              <td>Plain CSS with custom properties was already the de-facto choice. Rewriting working UI for no functional gain.</td>
+            </tr>
+            <tr>
+              <td>Reservations</td>
+              <td>Net-new surface. Not designed, not needed for Capitol's go-live.</td>
+            </tr>
+            <tr>
+              <td>Audit log viewer</td>
+              <td>The audit_log table exists but nothing writes to it yet. A viewer over an empty table is misleading.</td>
+            </tr>
+            <tr>
+              <td>Multi-restaurant tenancy</td>
+              <td>Single-tenant until post-exam period. JWT already carries restaurantId — the scoping work is isolated when needed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- MVP -->
+    <section class="section">
+      <div class="container narrow">
+        <h2>MVP — First Client Go-Live</h2>
+        <p>
+          <strong>Client:</strong> Capitol — a Tunisian café/restaurant in Tunis.<br />
+          <strong>Deadline:</strong> 2026-05-16.<br />
+          <strong>Language priority:</strong> French-primary, Arabic for mains, English available.
+        </p>
+        <p>
+          The Capitol menu has variant-priced dishes (pizza sizes), bread × filling matrices, and
+          multi-select flavor choices. The variant group model — 1 dish + variant groups with price
+          deltas — was validated against the Capitol seed data before committing to it.
+        </p>
+        <p>
+          Live means: real QR codes on real tables, real staff trained on their apps, real
+          customers placing real orders, cash payment via waiter, and the owner watching the
+          dashboard. Deployed at <strong>orvexa.tn</strong> on an OVH VPS with Let's Encrypt
+          certificates for all five hostnames.
+        </p>
+      </div>
+    </section>
+
+    <!-- Key decisions -->
+    <section class="section section-alt">
+      <div class="container">
+        <h2>Key Product Decisions</h2>
+        <div class="decisions-list">
+          <div class="decision-card">
+            <h3>No customer accounts — ever</h3>
+            <p>
+              The customer experience is scan → order → pay → done. Accounts add a login screen,
+              password recovery, and session persistence — none of which makes the dining experience
+              better. Users don't want to create an account to order a coffee. This is a constraint,
+              not a limitation.
+            </p>
+          </div>
+          <div class="decision-card">
+            <h3>Variants, not SKUs</h3>
+            <p>
+              For a menu like Capitol's, we model 1 dish + variant groups with price deltas —
+              not 250 separate line items. Flatten only when items are named recipes with genuinely
+              different compositions. This keeps the menu editor usable and the order data meaningful.
+            </p>
+          </div>
+          <div class="decision-card">
+            <h3>Hold-to-bump on the kitchen board</h3>
+            <p>
+              Kitchen staff advance ticket status by holding a button for 600ms — not tapping.
+              Prevents accidental status advances on a greasy touchscreen in a hot kitchen.
+              Deliberate UX decision, not a missing tap handler.
+            </p>
+          </div>
+          <div class="decision-card">
+            <h3>Age-coded tickets</h3>
+            <p>
+              Tickets change color as they age: fresh (green) → cooking (neutral) → pushing
+              (saffron) → late (red, throbbing shadow). Derived from createdAt + now, no
+              configuration. The kitchen team reads the floor state at a glance from across the room.
+            </p>
+          </div>
+          <div class="decision-card">
+            <h3>Payments stub for non-cash</h3>
+            <p>
+              Card and mobile-pay methods create a <code>pending</code> payment record with a
+              <code>stub-&lt;timestamp&gt;</code> provider reference. The real gateway swap is a
+              one-line branch change in <code>PaymentService.record</code>. Cash-only for Capitol go-live.
+            </p>
+          </div>
+          <div class="decision-card">
+            <h3>Design handoff is the source of truth</h3>
+            <p>
+              The <code>frontend handoff/</code> folder (HANDOFF.md + JSX surface files) is the
+              canonical design reference. Where it conflicts with this document or TASKS.md, the
+              handoff wins. Phase 18 was a direct port from those files — not an interpretation.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key questions -->
+    <section class="section">
+      <div class="container narrow">
+        <h2>Key Questions We Had to Answer</h2>
+        <div class="pm-callout">
+          <dl>
+            <div>
+              <dt>Which features move the needle for Capitol specifically?</dt>
+              <dd>
+                Speed from order placement to kitchen ticket. Fewer missed orders. Faster waiter
+                response to calls. We built around these flows first — not analytics, not reporting,
+                not audit logs.
+              </dd>
+            </div>
+            <div>
+              <dt>What's the real problem — not what the owner says, but what they show?</dt>
+              <dd>
+                The stated problem was "waiters forget orders." The actual problem was a broken
+                information chain: kitchen doesn't know what was ordered until a waiter tells them,
+                waiters don't know when food is ready until the kitchen shouts. Orvexa replaces
+                verbal communication with a live data model that all three parties read simultaneously.
+              </dd>
+            </div>
+            <div>
+              <dt>What should we build vs. buy vs. ignore?</dt>
+              <dd>
+                <strong>Build:</strong> ordering flow, real-time bus, menu model, role-based auth.
+                <strong>Buy (stub for now):</strong> payment gateway.
+                <strong>Ignore:</strong> reservations, loyalty programs, inventory, fiscal integration —
+                all real needs, none required to open the doors on day one.
+              </dd>
+            </div>
+            <div>
+              <dt>Are we solving for today's user or tomorrow's?</dt>
+              <dd>
+                Today's user is Capitol. We deliberately haven't built multi-tenant abstractions,
+                multi-currency support, or internationalized fiscal requirements. The product
+                generalizes when a second client signs — not before.
+              </dd>
+            </div>
+            <div>
+              <dt>What's the cost of not shipping the variant group model?</dt>
+              <dd>
+                High. Without it, Capitol's menu requires 250+ individual dishes to represent 15
+                dishes with options. The menu editor becomes unusable, the ordering flow confusing,
+                and the order data meaningless for reports. Non-negotiable for MVP.
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site">
+      <div class="container site-row">
+        <div>© <span id="y"></span> Orvexa · Tunis</div>
+        <nav>
+          <a href="mailto:hello@tableflow.tn">hello@tableflow.tn</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById('y').textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

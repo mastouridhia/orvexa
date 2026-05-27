@@ -18,7 +18,14 @@ export type SeededIds = {
   staff: { admin: string; manager: string; kitchen: string; waiter: string };
   tableIds: string[];
   categoryIds: { starters: string; mains: string; drinks: string };
-  dishIds: { brik: string; salad: string; couscous: string; pasta: string; water: string; coffee: string };
+  dishIds: {
+    brik: string;
+    salad: string;
+    couscous: string;
+    pasta: string;
+    water: string;
+    coffee: string;
+  };
 };
 
 export async function seedDemoData(db: Db): Promise<SeededIds> {
@@ -60,10 +67,34 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
   const insertedUsers = await db
     .insert(users)
     .values([
-      { restaurantId: restaurant.id, email: 'admin@demo.tn', name: 'Owner', role: 'admin', passwordHash },
-      { restaurantId: restaurant.id, email: 'manager@demo.tn', name: 'Floor Manager', role: 'manager', passwordHash },
-      { restaurantId: restaurant.id, email: 'kitchen@demo.tn', name: 'Kitchen', role: 'kitchen', passwordHash },
-      { restaurantId: restaurant.id, email: 'waiter@demo.tn', name: 'Waiter', role: 'waiter', passwordHash },
+      {
+        restaurantId: restaurant.id,
+        email: 'admin@demo.tn',
+        name: 'Owner',
+        role: 'admin',
+        passwordHash,
+      },
+      {
+        restaurantId: restaurant.id,
+        email: 'manager@demo.tn',
+        name: 'Floor Manager',
+        role: 'manager',
+        passwordHash,
+      },
+      {
+        restaurantId: restaurant.id,
+        email: 'kitchen@demo.tn',
+        name: 'Kitchen',
+        role: 'kitchen',
+        passwordHash,
+      },
+      {
+        restaurantId: restaurant.id,
+        email: 'waiter@demo.tn',
+        name: 'Waiter',
+        role: 'waiter',
+        passwordHash,
+      },
     ])
     .returning();
 
@@ -76,9 +107,27 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
   const [starters, mains, drinks] = await db
     .insert(categories)
     .values([
-      { restaurantId: restaurant.id, nameAr: 'مقبلات', nameFr: 'Entrées', nameEn: 'Starters', sortOrder: 1 },
-      { restaurantId: restaurant.id, nameAr: 'أطباق رئيسية', nameFr: 'Plats', nameEn: 'Mains', sortOrder: 2 },
-      { restaurantId: restaurant.id, nameAr: 'مشروبات', nameFr: 'Boissons', nameEn: 'Drinks', sortOrder: 3 },
+      {
+        restaurantId: restaurant.id,
+        nameAr: 'مقبلات',
+        nameFr: 'Entrées',
+        nameEn: 'Starters',
+        sortOrder: 1,
+      },
+      {
+        restaurantId: restaurant.id,
+        nameAr: 'أطباق رئيسية',
+        nameFr: 'Plats',
+        nameEn: 'Mains',
+        sortOrder: 2,
+      },
+      {
+        restaurantId: restaurant.id,
+        nameAr: 'مشروبات',
+        nameFr: 'Boissons',
+        nameEn: 'Drinks',
+        sortOrder: 3,
+      },
     ])
     .returning();
   if (!starters || !mains || !drinks) throw new Error('failed to insert categories');
@@ -184,11 +233,46 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
     .returning();
   if (toppingsGroup) {
     await db.insert(variants).values([
-      { groupId: toppingsGroup.id, nameAr: 'هريسة', nameFr: 'Harissa', nameEn: 'Harissa', priceDeltaMillimes: 0, sortOrder: 1 },
-      { groupId: toppingsGroup.id, nameAr: 'مايونيز', nameFr: 'Mayonnaise', nameEn: 'Mayonnaise', priceDeltaMillimes: 0, sortOrder: 2 },
-      { groupId: toppingsGroup.id, nameAr: 'كاتشب', nameFr: 'Ketchup', nameEn: 'Ketchup', priceDeltaMillimes: 0, sortOrder: 3 },
-      { groupId: toppingsGroup.id, nameAr: 'كبر إضافي', nameFr: 'Câpres extra', nameEn: 'Extra capers', priceDeltaMillimes: 500, sortOrder: 4 },
-      { groupId: toppingsGroup.id, nameAr: 'بدون تونة', nameFr: 'Sans thon', nameEn: 'No tuna', priceDeltaMillimes: 0, sortOrder: 5 },
+      {
+        groupId: toppingsGroup.id,
+        nameAr: 'هريسة',
+        nameFr: 'Harissa',
+        nameEn: 'Harissa',
+        priceDeltaMillimes: 0,
+        sortOrder: 1,
+      },
+      {
+        groupId: toppingsGroup.id,
+        nameAr: 'مايونيز',
+        nameFr: 'Mayonnaise',
+        nameEn: 'Mayonnaise',
+        priceDeltaMillimes: 0,
+        sortOrder: 2,
+      },
+      {
+        groupId: toppingsGroup.id,
+        nameAr: 'كاتشب',
+        nameFr: 'Ketchup',
+        nameEn: 'Ketchup',
+        priceDeltaMillimes: 0,
+        sortOrder: 3,
+      },
+      {
+        groupId: toppingsGroup.id,
+        nameAr: 'كبر إضافي',
+        nameFr: 'Câpres extra',
+        nameEn: 'Extra capers',
+        priceDeltaMillimes: 500,
+        sortOrder: 4,
+      },
+      {
+        groupId: toppingsGroup.id,
+        nameAr: 'بدون تونة',
+        nameFr: 'Sans thon',
+        nameEn: 'No tuna',
+        priceDeltaMillimes: 0,
+        sortOrder: 5,
+      },
     ]);
   }
 
@@ -208,8 +292,22 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
     .returning();
   if (spiceGroup) {
     await db.insert(variants).values([
-      { groupId: spiceGroup.id, nameAr: 'خفيف', nameFr: 'Doux', nameEn: 'Mild', priceDeltaMillimes: 0, sortOrder: 1 },
-      { groupId: spiceGroup.id, nameAr: 'حار', nameFr: 'Piquant', nameEn: 'Spicy', priceDeltaMillimes: 0, sortOrder: 2 },
+      {
+        groupId: spiceGroup.id,
+        nameAr: 'خفيف',
+        nameFr: 'Doux',
+        nameEn: 'Mild',
+        priceDeltaMillimes: 0,
+        sortOrder: 1,
+      },
+      {
+        groupId: spiceGroup.id,
+        nameAr: 'حار',
+        nameFr: 'Piquant',
+        nameEn: 'Spicy',
+        priceDeltaMillimes: 0,
+        sortOrder: 2,
+      },
     ]);
   }
 
@@ -229,9 +327,30 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
     .returning();
   if (sugarGroup) {
     await db.insert(variants).values([
-      { groupId: sugarGroup.id, nameAr: 'بدون', nameFr: 'Sans', nameEn: 'None', priceDeltaMillimes: 0, sortOrder: 1 },
-      { groupId: sugarGroup.id, nameAr: 'متوسط', nameFr: 'Moyen', nameEn: 'Medium', priceDeltaMillimes: 0, sortOrder: 2 },
-      { groupId: sugarGroup.id, nameAr: 'زيادة', nameFr: 'Sucré', nameEn: 'Sweet', priceDeltaMillimes: 0, sortOrder: 3 },
+      {
+        groupId: sugarGroup.id,
+        nameAr: 'بدون',
+        nameFr: 'Sans',
+        nameEn: 'None',
+        priceDeltaMillimes: 0,
+        sortOrder: 1,
+      },
+      {
+        groupId: sugarGroup.id,
+        nameAr: 'متوسط',
+        nameFr: 'Moyen',
+        nameEn: 'Medium',
+        priceDeltaMillimes: 0,
+        sortOrder: 2,
+      },
+      {
+        groupId: sugarGroup.id,
+        nameAr: 'زيادة',
+        nameFr: 'Sucré',
+        nameEn: 'Sweet',
+        priceDeltaMillimes: 0,
+        sortOrder: 3,
+      },
     ]);
   }
 
@@ -251,8 +370,22 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
     .returning();
   if (sizeGroup) {
     await db.insert(variants).values([
-      { groupId: sizeGroup.id, nameAr: 'صغير', nameFr: 'Petite', nameEn: 'Small', priceDeltaMillimes: 0, sortOrder: 1 },
-      { groupId: sizeGroup.id, nameAr: 'كبير', nameFr: 'Grande', nameEn: 'Large', priceDeltaMillimes: 1500, sortOrder: 2 },
+      {
+        groupId: sizeGroup.id,
+        nameAr: 'صغير',
+        nameFr: 'Petite',
+        nameEn: 'Small',
+        priceDeltaMillimes: 0,
+        sortOrder: 1,
+      },
+      {
+        groupId: sizeGroup.id,
+        nameAr: 'كبير',
+        nameFr: 'Grande',
+        nameEn: 'Large',
+        priceDeltaMillimes: 1500,
+        sortOrder: 2,
+      },
     ]);
   }
 

@@ -39,9 +39,7 @@ export function SessionBoot() {
         navigate('/menu', { replace: true });
       } catch (err) {
         if (cancelled) return;
-        setError(
-          err instanceof ApiError ? err.message : t('errors.boot'),
-        );
+        setError(err instanceof ApiError ? err.message : t('errors.boot'));
       }
     })();
     return () => {

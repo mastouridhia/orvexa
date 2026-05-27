@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode, SalesReportRow } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatMillimes } from '../utils/format.js';
@@ -90,7 +90,7 @@ export function ServicePulse({
           setYesterday(t2);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -116,12 +116,12 @@ export function ServicePulse({
   const peak = useMemo(() => findPeak(todaySlots), [todaySlots]);
   const max = Math.max(...todaySlots.map((s) => s.orderCount), 1);
 
-  const avgTicketToday = todayTotals.orderCount > 0
-    ? Math.round(todayTotals.totalMillimes / todayTotals.orderCount)
-    : 0;
-  const avgTicketYesterday = yesterdayTotals.orderCount > 0
-    ? Math.round(yesterdayTotals.totalMillimes / yesterdayTotals.orderCount)
-    : 0;
+  const avgTicketToday =
+    todayTotals.orderCount > 0 ? Math.round(todayTotals.totalMillimes / todayTotals.orderCount) : 0;
+  const avgTicketYesterday =
+    yesterdayTotals.orderCount > 0
+      ? Math.round(yesterdayTotals.totalMillimes / yesterdayTotals.orderCount)
+      : 0;
 
   const nowFmt = new Date(now).toLocaleTimeString(lang, {
     hour: '2-digit',
@@ -131,7 +131,9 @@ export function ServicePulse({
   if (error) {
     return (
       <article className="tf-a-card tf-a-pulse">
-        <div className="error-banner" style={{ margin: 0 }}>{error}</div>
+        <div className="error-banner" style={{ margin: 0 }}>
+          {error}
+        </div>
       </article>
     );
   }
@@ -171,9 +173,7 @@ export function ServicePulse({
             )}
           </div>
           {peak ? (
-            <div className="tf-a-pulse__sub">
-              {t('pulse.peakSub', { count: peak.orderCount })}
-            </div>
+            <div className="tf-a-pulse__sub">{t('pulse.peakSub', { count: peak.orderCount })}</div>
           ) : null}
         </div>
       </header>
@@ -191,8 +191,15 @@ export function ServicePulse({
           {todaySlots.map((slot, i) => {
             const ratio = slot.orderCount / max;
             const isNow = i === todaySlots.length - 1 && slot.isFromData === false;
-            const isPeak = peak !== null && slot.bucketStart.getTime() === peak.bucketStart.getTime();
-            const variant = isNow ? 'now' : isPeak ? 'peak' : slot.orderCount === 0 ? 'idle' : 'normal';
+            const isPeak =
+              peak !== null && slot.bucketStart.getTime() === peak.bucketStart.getTime();
+            const variant = isNow
+              ? 'now'
+              : isPeak
+                ? 'peak'
+                : slot.orderCount === 0
+                  ? 'idle'
+                  : 'normal';
             return (
               <span
                 key={slot.bucketStart.getTime()}
@@ -206,9 +213,7 @@ export function ServicePulse({
             );
           })}
           <span className="tf-a-pulse__now-line" aria-hidden="true" />
-          <span className="tf-mono tf-a-pulse__now-tag">
-            {t('pulse.nowTag', { time: nowFmt })}
-          </span>
+          <span className="tf-mono tf-a-pulse__now-tag">{t('pulse.nowTag', { time: nowFmt })}</span>
         </div>
       </div>
 
@@ -275,7 +280,9 @@ function PulseKPI({
         ) : (
           <>
             {up ? <IconArrowUp size={11} /> : <IconArrowDown size={11} />}
-            <span>{Math.abs(delta).toLocaleString()} {deltaLabel}</span>
+            <span>
+              {Math.abs(delta).toLocaleString()} {deltaLabel}
+            </span>
           </>
         )}
       </div>

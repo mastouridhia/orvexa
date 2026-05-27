@@ -32,11 +32,7 @@ export class PaymentRepository extends BaseRepository {
   }
 
   async findById(id: string): Promise<PaymentRow | null> {
-    const [row] = await this.db
-      .select()
-      .from(payments)
-      .where(eq(payments.id, id))
-      .limit(1);
+    const [row] = await this.db.select().from(payments).where(eq(payments.id, id)).limit(1);
     return row ?? null;
   }
 
@@ -44,11 +40,7 @@ export class PaymentRepository extends BaseRepository {
     id: string,
     patch: Partial<Pick<PaymentInsert, 'status' | 'paidAt' | 'providerReference'>>,
   ): Promise<PaymentRow | null> {
-    const [row] = await this.db
-      .update(payments)
-      .set(patch)
-      .where(eq(payments.id, id))
-      .returning();
+    const [row] = await this.db.update(payments).set(patch).where(eq(payments.id, id)).returning();
     return row ?? null;
   }
 }

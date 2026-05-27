@@ -46,14 +46,21 @@ export const tables = pgTable(
       .default(sql`substr(md5(random()::text || clock_timestamp()::text), 1, 10)`),
     seats: integer('seats').notNull().default(4),
     status: text('status', {
-      enum: ['free', 'seated', 'ordering', 'waiting', 'call_waiter', 'needs_bill', 'needs_cleaning'],
+      enum: [
+        'free',
+        'seated',
+        'ordering',
+        'waiting',
+        'call_waiter',
+        'needs_bill',
+        'needs_cleaning',
+      ],
     })
       .notNull()
       .default('free'),
-    mergedIntoTableId: uuid('merged_into_table_id').references(
-      (): AnyPgColumn => tables.id,
-      { onDelete: 'set null' },
-    ),
+    mergedIntoTableId: uuid('merged_into_table_id').references((): AnyPgColumn => tables.id, {
+      onDelete: 'set null',
+    }),
     zoneId: uuid('zone_id').references(() => tableZones.id, { onDelete: 'set null' }),
     // Normalized 0..1 canvas coordinates; null until admin places the table.
     x: doublePrecision('x'),

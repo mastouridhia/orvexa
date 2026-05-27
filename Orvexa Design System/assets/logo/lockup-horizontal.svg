@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 100" width="380" height="100">
+  
+  <g transform="translate(0,0)">
+    <circle cx="50" cy="50" r="50" fill="#19140E"></circle>
+    <circle cx="50" cy="50" r="31" fill="#FBEED9"></circle>
+    <circle cx="50" cy="50" r="19" fill="#D97A2C"></circle>
+  </g>
+  
+  <text x="120" y="68" font-family="Geist, Inter, -apple-system, system-ui, sans-serif" font-weight="600" font-size="60" letter-spacing="-2.4" fill="#19140E">Orvexa</text>
+  <text x="328" y="68" font-family="Newsreader, &#39;Times New Roman&#39;, serif" font-style="italic" font-weight="400" font-size="60" fill="#D97A2C">.</text>
+</svg>

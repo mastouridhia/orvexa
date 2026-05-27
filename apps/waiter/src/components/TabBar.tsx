@@ -35,9 +35,7 @@ export function TabBar({
               {tb.icon === 'map' ? <IconMap /> : tb.icon === 'bell' ? <IconBell /> : <IconTable />}
             </span>
             <span className="tf-w-tab__label">{t(tb.key)}</span>
-            {badge > 0 ? (
-              <span className="tf-w-tab__badge tf-tabular">{badge}</span>
-            ) : null}
+            {badge > 0 ? <span className="tf-w-tab__badge tf-tabular">{badge}</span> : null}
           </button>
         );
       })}

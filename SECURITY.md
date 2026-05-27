@@ -17,7 +17,7 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done · `[-]` skipped (with rea
 - [x] **S-02 — Role changes don't take effect for up to 1 hour**
   - File: `apps/api/src/middleware/auth.ts:17-18`
   - `role` is read from the JWT payload, not the database. Demoting or disabling a
-    staff member's *role* (not the account) leaves the old role active until token expiry.
+    staff member's _role_ (not the account) leaves the old role active until token expiry.
   - Fix (short-term): set `JWT_ACCESS_EXPIRES_IN=15m` in production `.env`.
   - Fix (long-term): add `tokenVersion` column on staff table; embed in access token;
     reject tokens whose version doesn't match the DB row on every request.
@@ -100,6 +100,7 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done · `[-]` skipped (with rea
 ## Activity Log
 
 <!-- append: YYYY-MM-DD — S-XX — short note -->
+
 2026-05-23 — S-01 — refresh_tokens table + repo; login persists hash, refresh rotates it, logout revokes it; all 3 frontends fire-and-forget the revoke call before clearing state
 2026-05-23 — S-02 — tokenVersion column on users; embedded as ver in access token; requireAuth checks ver+disabledAt against DB on every request; staff routes bump on role change/disable/enable; .env.example documents JWT_ACCESS_EXPIRES_IN=15m
 2026-05-23 — S-03 — skipped; ops-level: port 4000 firewalled, only Nginx reaches it

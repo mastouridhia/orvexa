@@ -18,9 +18,11 @@ describe('Orders end-to-end (HTTP)', () => {
       .set('Authorization', `Bearer ${customer.token}`)
       .send({ items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 2 }] });
     expect(place.status).toBe(201);
-    expect(place.body.data.status).toBe('received');
-    expect(place.body.data.subtotalMillimes).toBe(9000); // 2 × 4500
-    const orderId = place.body.data.id as string;
+    // placeMulti returns Order[] — take the first order
+    const order = place.body.data[0];
+    expect(order.status).toBe('received');
+    expect(order.subtotalMillimes).toBe(9000); // 2 × 4500
+    const orderId = order.id as string;
 
     const kitchen = await loginStaff('kitchen@demo.tn');
 
@@ -55,7 +57,7 @@ describe('Orders end-to-end (HTTP)', () => {
       .post('/orders')
       .set('Authorization', `Bearer ${customer.token}`)
       .send({ items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] });
-    const orderId = place.body.data.id as string;
+    const orderId = place.body.data[0].id as string;
 
     const kitchen = await loginStaff('kitchen@demo.tn');
     await request(app())
@@ -78,7 +80,7 @@ describe('Orders end-to-end (HTTP)', () => {
       .post('/orders')
       .set('Authorization', `Bearer ${customer.token}`)
       .send({ items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] });
-    const orderId = place.body.data.id as string;
+    const orderId = place.body.data[0].id as string;
 
     const kitchen = await loginStaff('kitchen@demo.tn');
     const skip = await request(app())
@@ -100,7 +102,7 @@ describe('Orders end-to-end (HTTP)', () => {
       .post('/orders')
       .set('Authorization', `Bearer ${customerA.token}`)
       .send({ items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] });
-    const orderId = place.body.data.id as string;
+    const orderId = place.body.data[0].id as string;
 
     const own = await request(app())
       .get(`/orders/${orderId}`)

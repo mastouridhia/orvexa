@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal } from '@orvexa/ui';
 import type { LanguageCode, Receipt } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatDateTime, formatMillimes, pickLang } from '../utils/format.js';
@@ -28,7 +28,7 @@ export function ReceiptModal({
         const data = await authedFetch((tk) => api.getReceipt(tk, orderId));
         if (!cancelled) setReceipt(data);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -59,12 +59,7 @@ export function ReceiptModal({
           <button type="button" className="btn btn-ghost" onClick={onClose}>
             {t('common.close')}
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={print}
-            disabled={!receipt}
-          >
+          <button type="button" className="btn btn-primary" onClick={print} disabled={!receipt}>
             {t('orders.receipt.print')}
           </button>
         </div>
@@ -103,10 +98,7 @@ export function ReceiptModal({
             </thead>
             <tbody>
               {receipt.order.items.map((it) => {
-                const variantDelta = it.variants.reduce(
-                  (s, v) => s + v.priceDeltaMillimes,
-                  0,
-                );
+                const variantDelta = it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0);
                 const lineTotal = (it.unitPriceMillimes + variantDelta) * it.quantity;
                 return (
                   <tr key={it.id}>
@@ -115,9 +107,7 @@ export function ReceiptModal({
                       <div>{pickLang(it.nameSnapshot, lang)}</div>
                       {it.variants.length ? (
                         <div className="muted" style={{ fontSize: '0.78rem' }}>
-                          {it.variants
-                            .map((v) => pickLang(v.nameSnapshot, lang))
-                            .join(' · ')}
+                          {it.variants.map((v) => pickLang(v.nameSnapshot, lang)).join(' · ')}
                         </div>
                       ) : null}
                       {it.notes ? (
@@ -134,7 +124,10 @@ export function ReceiptModal({
           </table>
 
           <div className="tf-a-receipt__totals">
-            <Row k={t('orders.receipt.subtotal')} v={formatMillimes(receipt.order.subtotalMillimes)} />
+            <Row
+              k={t('orders.receipt.subtotal')}
+              v={formatMillimes(receipt.order.subtotalMillimes)}
+            />
             <Row
               k={t('orders.receipt.tax', { percent: receipt.restaurant.taxPercent })}
               v={formatMillimes(receipt.order.taxMillimes)}

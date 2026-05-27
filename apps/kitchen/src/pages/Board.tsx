@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { KitchenSection, LanguageCode, Order, OrderStatus } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { connectStaffSocket } from '../socket/client.js';
@@ -70,15 +70,19 @@ export function Board() {
   const [now, setNow] = useState(() => Date.now());
   const [recentIds, setRecentIds] = useState<Set<string>>(() => new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [socketDisconnected, setSocketDisconnected] = useState(false);
   const seenOrderIds = useRef<Set<string>>(new Set());
   const ordersRef = useRef<Order[]>([]);
   const authedFetchRef = useRef(authedFetch);
   const connectedOnce = useRef(false);
   const tableLabels = useMemo(() => new Map<string, string>(), []);
 
-  // Keep refs in sync so socket callbacks always see fresh values.
-  ordersRef.current = orders;
-  authedFetchRef.current = authedFetch;
+  // Keep refs in sync so socket callbacks always see fresh values without stale closures.
+  // useLayoutEffect fires synchronously after every render, satisfying the refs rule.
+  useLayoutEffect(() => {
+    ordersRef.current = orders;
+    authedFetchRef.current = authedFetch;
+  });
 
   // Tick every second so age + MM:SS counters update live.
   useEffect(() => {
@@ -98,7 +102,7 @@ export function Board() {
         setOrders(list);
         for (const o of list) seenOrderIds.current.add(o.id);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -113,68 +117,85 @@ export function Board() {
     if (!accessToken) return;
     const socket = connectStaffSocket(accessToken);
     const onCreated = (payload: { order: Order }) => {
-      setOrders((prev) => {
-        if (prev.some((o) => o.id === payload.order.id)) return prev;
-        return [payload.order, ...prev];
-      });
-      if (!seenOrderIds.current.has(payload.order.id)) {
-        seenOrderIds.current.add(payload.order.id);
-        playDing();
-        setRecentIds((prev) => {
-          const next = new Set(prev);
-          next.add(payload.order.id);
-          return next;
+      try {
+        setOrders((prev) => {
+          if (prev.some((o) => o.id === payload.order.id)) return prev;
+          return [payload.order, ...prev];
         });
-        // Drop "just-arrived" badge after the sweep animation finishes.
-        window.setTimeout(() => {
+        if (!seenOrderIds.current.has(payload.order.id)) {
+          seenOrderIds.current.add(payload.order.id);
+          playDing();
           setRecentIds((prev) => {
-            if (!prev.has(payload.order.id)) return prev;
             const next = new Set(prev);
-            next.delete(payload.order.id);
+            next.add(payload.order.id);
             return next;
           });
-        }, 2400);
+          window.setTimeout(() => {
+            setRecentIds((prev) => {
+              if (!prev.has(payload.order.id)) return prev;
+              const next = new Set(prev);
+              next.delete(payload.order.id);
+              return next;
+            });
+          }, 2400);
+        }
+      } catch {
+        // socket handler errors must not crash the component
       }
     };
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
-      if (payload.status === 'served' || payload.status === 'cancelled') {
-        // Keep the card visible for 10 s so kitchen can see what happened to a late order.
-        const order = ordersRef.current.find((o) => o.id === payload.orderId);
-        if (order) {
-          const done: Order = { ...order, status: payload.status };
-          setDoneOrders((m) => new Map(m).set(payload.orderId, done));
-          window.setTimeout(() => {
-            setDoneOrders((m) => { const n = new Map(m); n.delete(payload.orderId); return n; });
-          }, 10_000);
+      try {
+        if (payload.status === 'served' || payload.status === 'cancelled') {
+          const order = ordersRef.current.find((o) => o.id === payload.orderId);
+          if (order) {
+            const done: Order = { ...order, status: payload.status };
+            setDoneOrders((m) => new Map(m).set(payload.orderId, done));
+            window.setTimeout(() => {
+              setDoneOrders((m) => {
+                const n = new Map(m);
+                n.delete(payload.orderId);
+                return n;
+              });
+            }, 10_000);
+          }
+          setOrders((prev) => prev.filter((o) => o.id !== payload.orderId));
+        } else {
+          setOrders((prev) =>
+            prev.map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o)),
+          );
         }
-        setOrders((prev) => prev.filter((o) => o.id !== payload.orderId));
-      } else {
-        setOrders((prev) =>
-          prev.map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o)),
-        );
+      } catch {
+        // socket handler errors must not crash the component
       }
     };
     // Re-fetch on reconnect to recover any events missed during the disconnect window.
     // Skip the first connect — the initial fetch effect already covers that.
     const onConnect = () => {
       setError(null);
+      setSocketDisconnected(false);
       if (!connectedOnce.current) {
         connectedOnce.current = true;
         return;
       }
-      void authedFetchRef.current((tk) => api.listActive(tk)).then((list) => {
-        setOrders(list);
-        setDoneOrders(new Map());
-        for (const o of list) seenOrderIds.current.add(o.id);
-      }).catch(() => {});
+      void authedFetchRef
+        .current((tk) => api.listActive(tk))
+        .then((list) => {
+          setOrders(list);
+          setDoneOrders(new Map());
+          for (const o of list) seenOrderIds.current.add(o.id);
+        })
+        .catch(() => {});
     };
+    const onDisconnect = () => setSocketDisconnected(true);
     socket.on('order:created', onCreated);
     socket.on('order:status', onStatus);
     socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     return () => {
       socket.off('order:created', onCreated);
       socket.off('order:status', onStatus);
       socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
     };
   }, [accessToken]);
 
@@ -188,7 +209,7 @@ export function Board() {
         return prev.map((o) => (o.id === updated.id ? updated : o));
       });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -196,7 +217,7 @@ export function Board() {
     try {
       await authedFetch((tk) => api.setDishAvailability(tk, dishId, false));
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     }
   };
 
@@ -292,7 +313,7 @@ export function Board() {
               const list = await authedFetch((tk) => api.listActive(tk));
               setOrders(list);
             } catch (err) {
-              setError(err instanceof ApiError ? err.message : (err as Error).message);
+              setError(getErrorMessage(err));
             } finally {
               setLoading(false);
             }
@@ -312,17 +333,35 @@ export function Board() {
         </div>
         <span className="tf-kds__sep" aria-hidden="true" />
         <div className="tf-kds__live" aria-live="polite">
-          <span className={`tf-kds__live-dot ${paused ? 'is-paused' : ''}`} />
+          <span
+            className={`tf-kds__live-dot ${paused ? 'is-paused' : ''} ${socketDisconnected ? 'is-offline' : ''}`}
+          />
           <span className="tf-mono tf-kds__live-label">
-            {paused ? t('board.paused') : t('board.live')}
+            {socketDisconnected
+              ? t('board.offline', { defaultValue: 'Offline' })
+              : paused
+                ? t('board.paused')
+                : t('board.live')}
           </span>
         </div>
 
         <div className="tf-kds__stats">
           <Stat label={t('stat.open')} value={counts.open} />
-          <Stat label={t('stat.pushing')} value={counts.pushing} accent={counts.pushing > 0 ? 'saffron' : undefined} />
-          <Stat label={t('stat.late')} value={counts.late} accent={counts.late > 0 ? 'late' : undefined} />
-          <Stat label={t('stat.ready')} value={counts.ready} accent={counts.ready > 0 ? 'lime' : undefined} />
+          <Stat
+            label={t('stat.pushing')}
+            value={counts.pushing}
+            accent={counts.pushing > 0 ? 'saffron' : undefined}
+          />
+          <Stat
+            label={t('stat.late')}
+            value={counts.late}
+            accent={counts.late > 0 ? 'late' : undefined}
+          />
+          <Stat
+            label={t('stat.ready')}
+            value={counts.ready}
+            accent={counts.ready > 0 ? 'lime' : undefined}
+          />
         </div>
 
         <div className="tf-kds__topbar-actions">
@@ -346,7 +385,7 @@ export function Board() {
           <button
             type="button"
             className="tf-kds__icon-btn"
-            onClick={() => navigate('/wall')}
+            onClick={() => navigate(section === 'bar' ? '/wall/bar' : '/wall')}
             title={t('header.openWall')}
             aria-label={t('header.openWall')}
           >
@@ -378,7 +417,14 @@ export function Board() {
           <div className="stack">
             <div>
               <div style={{ fontWeight: 600 }}>{t('settings.language')}</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--fg-soft)', marginTop: '0.2rem', marginBottom: '0.5rem' }}>
+              <div
+                style={{
+                  fontSize: '0.82rem',
+                  color: 'var(--fg-soft)',
+                  marginTop: '0.2rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 {t('settings.languageHint')}
               </div>
               <LanguageSelector />
@@ -398,7 +444,10 @@ export function Board() {
               type="button"
               className={`tf-kds__section-tab ${active ? 'is-on' : ''}`}
               aria-pressed={active}
-              onClick={() => { setSection(sec); setFilter('all'); }}
+              onClick={() => {
+                setSection(sec);
+                setFilter('all');
+              }}
             >
               <span>{t(`section.${sec}`)}</span>
               {count > 0 && !active ? (
@@ -429,9 +478,7 @@ export function Board() {
           );
         })}
         <span className="tf-kds__filter-spacer" aria-hidden="true" />
-        {user?.email ? (
-          <span className="tf-mono tf-kds__user">{user.email}</span>
-        ) : null}
+        {user?.email ? <span className="tf-mono tf-kds__user">{user.email}</span> : null}
       </nav>
 
       {/* Soft (recoverable) error banner — only when we still have orders to show */}

@@ -21,9 +21,7 @@ export function Welcome() {
 
       <h1 className="tf-welcome__title">
         <span>{t('welcome.title')}</span>
-        <span className="tf-display tf-welcome__brand">
-          {restaurant?.name ?? 'Orvexa'}
-        </span>
+        <span className="tf-display tf-welcome__brand">{restaurant?.name ?? 'Orvexa'}</span>
       </h1>
 
       {!session ? (

@@ -32,9 +32,7 @@ describe('AuthService', () => {
 
   it('rejects an unknown email with UnauthorizedError', async () => {
     const auth = new AuthService();
-    await expect(auth.login('nobody@demo.tn', 'orvexa')).rejects.toBeInstanceOf(
-      UnauthorizedError,
-    );
+    await expect(auth.login('nobody@demo.tn', 'orvexa')).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
   it('refresh issues new tokens for a valid refresh token', async () => {

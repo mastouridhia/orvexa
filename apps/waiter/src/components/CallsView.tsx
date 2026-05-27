@@ -32,8 +32,7 @@ export function CallsView({
         <h1 className="tf-w-calls__title">
           {ordered.length === 0 ? (
             <>
-              {t('calls.empty.lead')}{' '}
-              <span className="tf-display">{t('calls.empty.tail')}</span>
+              {t('calls.empty.lead')} <span className="tf-display">{t('calls.empty.tail')}</span>
             </>
           ) : (
             t('calls.summary', { count: ordered.length })
@@ -52,7 +51,10 @@ export function CallsView({
               key={c.id}
               className={`tf-w-call tf-w-call--${urg}${i === 0 && age < 30 ? ' just-arrived' : ''}`}
             >
-              <span className={`tf-w-call__age-strip tf-w-call__age-strip--${urg}`} aria-hidden="true" />
+              <span
+                className={`tf-w-call__age-strip tf-w-call__age-strip--${urg}`}
+                aria-hidden="true"
+              />
               <div className="tf-w-call__top">
                 <div className={`tf-w-call__icon tf-w-call__icon--${urg}`}>
                   {c.kind === 'request_bill' ? <IconReceipt /> : <IconLeaf />}
@@ -73,12 +75,10 @@ export function CallsView({
                     {c.kind === 'request_bill'
                       ? t('calls.kind.bill')
                       : c.kind === 'request_extras'
-                      ? t('calls.kind.extras')
-                      : t('calls.kind.help')}
+                        ? t('calls.kind.extras')
+                        : t('calls.kind.help')}
                   </div>
-                  {c.note ? (
-                    <div className="tf-w-call__note">{c.note}</div>
-                  ) : null}
+                  {c.note ? <div className="tf-w-call__note">{c.note}</div> : null}
                   <div className={`tf-mono tf-w-call__age tf-w-call__age--${urg}`}>
                     {fmtAgeShort(age)} · {t(`calls.urgency.${urg}`)}
                   </div>
@@ -158,4 +158,3 @@ export function WaiterEmptyCalls() {
     </div>
   );
 }
-

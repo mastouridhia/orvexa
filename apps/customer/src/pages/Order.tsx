@@ -48,7 +48,9 @@ export function OrderPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [siblings, setSiblings] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [connected, setConnected] = useState(true);
 
   useEffect(() => {
     if (!token) {
@@ -56,6 +58,7 @@ export function OrderPage() {
       return;
     }
     if (!id) return;
+    setError(null);
     let cancelled = false;
     void (async () => {
       try {
@@ -70,12 +73,13 @@ export function OrderPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, token, navigate, t]);
+  }, [id, token, navigate, t, reloadKey]);
 
-  // Live status updates
+  // Live status updates + connection state tracking
   useEffect(() => {
     if (!token || !id) return;
     const socket = connectCustomerSocket(token);
+    setConnected(socket.connected);
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
       if (payload.orderId === id) {
         setOrder((cur) => (cur ? { ...cur, status: payload.status } : cur));
@@ -84,9 +88,15 @@ export function OrderPage() {
         prev.map((s) => (s.id === payload.orderId ? { ...s, status: payload.status } : s)),
       );
     };
+    const onConnect = () => setConnected(true);
+    const onDisconnect = () => setConnected(false);
     socket.on('order:status', onStatus);
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     return () => {
       socket.off('order:status', onStatus);
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
     };
   }, [token, id]);
 
@@ -158,6 +168,9 @@ export function OrderPage() {
       <div className="empty-state">
         <h2>{t('errors.title')}</h2>
         <p>{error}</p>
+        <button type="button" className="btn" onClick={() => setReloadKey((k) => k + 1)}>
+          {t('errors.retry', { defaultValue: 'Retry' })}
+        </button>
         <Link to="/menu" className="btn">
           {t('order.back')}
         </Link>
@@ -185,9 +198,7 @@ export function OrderPage() {
   const itemCount = order.items.reduce((s, i) => s + i.quantity, 0);
   const editable = order.status === 'received';
   const canOrderMore =
-    order.status === 'preparing' ||
-    order.status === 'ready' ||
-    order.status === 'served';
+    order.status === 'preparing' || order.status === 'ready' || order.status === 'served';
   const billAvailable = order.status === 'served';
   const tableShort = session?.tableLabel ?? '—';
   const orderShort = order.id.slice(0, 8).toUpperCase();
@@ -197,12 +208,13 @@ export function OrderPage() {
 
   return (
     <div className="tf-tracking">
+      {!connected ? (
+        <div className="offline-banner" role="status">
+          {t('errors.reconnecting', { defaultValue: 'Reconnecting…' })}
+        </div>
+      ) : null}
       <div className="tf-tracking__header">
-        <button
-          type="button"
-          className="tf-back"
-          onClick={() => navigate('/menu')}
-        >
+        <button type="button" className="tf-back" onClick={() => navigate('/menu')}>
           <IconChevronLeft size={14} />
           {t('order.back')}
         </button>
@@ -227,8 +239,7 @@ export function OrderPage() {
                 t('tracking.readyTitle')
               ) : (
                 <>
-                  {t('tracking.cookingTitle')}{' '}
-                  <em>{t('tracking.cookingTitleEm')}</em>
+                  {t('tracking.cookingTitle')} <em>{t('tracking.cookingTitleEm')}</em>
                 </>
               )}
             </h1>
@@ -277,9 +288,7 @@ export function OrderPage() {
                     <div className="tf-timeline__sub">
                       {active ? t(`tracking.${s}.sub`) : done ? t('tracking.done') : ''}
                       {active ? (
-                        <span className="tf-timeline__sub-live">
-                          · {t('tracking.live')}
-                        </span>
+                        <span className="tf-timeline__sub-live">· {t('tracking.live')}</span>
                       ) : null}
                     </div>
                   </div>
@@ -290,13 +299,10 @@ export function OrderPage() {
         ) : null}
 
         <div className="tf-card">
-          <div className="tf-summary__head">
-            {t('tracking.summaryHead', { count: itemCount })}
-          </div>
+          <div className="tf-summary__head">{t('tracking.summaryHead', { count: itemCount })}</div>
           {order.items.map((it) => {
             const lineTotal =
-              (it.unitPriceMillimes +
-                it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0)) *
+              (it.unitPriceMillimes + it.variants.reduce((s, v) => s + v.priceDeltaMillimes, 0)) *
               it.quantity;
             const canRemove = editable && order.items.length > 1;
             return (
@@ -342,19 +348,13 @@ export function OrderPage() {
             </span>
           </div>
           {order.taxMillimes > 0 ? (
-            <div
-              className="tf-summary__total"
-              style={{ color: 'var(--fg-soft)', fontSize: 13 }}
-            >
+            <div className="tf-summary__total" style={{ color: 'var(--fg-soft)', fontSize: 13 }}>
               <span>{t('cart.tax', { percent: '' })}</span>
               <span className="value">{formatMillimes(order.taxMillimes)}</span>
             </div>
           ) : null}
           {order.serviceMillimes > 0 ? (
-            <div
-              className="tf-summary__total"
-              style={{ color: 'var(--fg-soft)', fontSize: 13 }}
-            >
+            <div className="tf-summary__total" style={{ color: 'var(--fg-soft)', fontSize: 13 }}>
               <span>{t('cart.service', { percent: '' })}</span>
               <span className="value">{formatMillimes(order.serviceMillimes)}</span>
             </div>
@@ -419,11 +419,7 @@ export function OrderPage() {
 
         {!isCancelled ? (
           <div className="tf-quick">
-            <button
-              type="button"
-              className="tf-quick__card"
-              onClick={() => navigate('/waiter')}
-            >
+            <button type="button" className="tf-quick__card" onClick={() => navigate('/waiter')}>
               <span className="tf-quick__icon tf-quick__icon--saffron">
                 <IconBell size={18} />
               </span>
@@ -463,12 +459,7 @@ export function OrderPage() {
             <button type="button" className="btn" onClick={handleEdit}>
               {t('order.editAddItems')}
             </button>
-            <button
-              type="button"
-              className="btn btn-danger"
-              disabled={busy}
-              onClick={cancel}
-            >
+            <button type="button" className="btn btn-danger" disabled={busy} onClick={cancel}>
               {t('order.cancel')}
             </button>
           </div>

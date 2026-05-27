@@ -5,11 +5,7 @@ import { api } from '../api/queries.js';
 import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
 import { useWaiterCallStore } from '../store/waiterCall.js';
-import {
-  IconBell,
-  IconBellRing,
-  IconChevronLeft,
-} from '../components/tf-icons.js';
+import { IconBell, IconBellRing, IconChevronLeft } from '../components/tf-icons.js';
 
 type State = 'idle' | 'pending' | 'ack';
 
@@ -78,11 +74,7 @@ export function WaiterPage() {
             </div>
             <h1 className="tf-waiter__title">{t('waiter.idleTitle')}</h1>
             <p className="tf-waiter__body">{t('waiter.idleBody')}</p>
-            <button
-              type="button"
-              className="tf-waiter__cta"
-              onClick={callWaiter}
-            >
+            <button type="button" className="tf-waiter__cta" onClick={callWaiter}>
               {t('actions.callWaiter')}
             </button>
             {error ? <div className="error-banner">{error}</div> : null}
@@ -129,11 +121,7 @@ export function WaiterPage() {
             </div>
             <h1 className="tf-waiter__title">{t('waiter.ackTitle')}</h1>
             <p className="tf-waiter__body">{t('waiter.ackBody')}</p>
-            <button
-              type="button"
-              className="tf-waiter__done"
-              onClick={close}
-            >
+            <button type="button" className="tf-waiter__done" onClick={close}>
               {t('waiter.done')}
             </button>
           </>

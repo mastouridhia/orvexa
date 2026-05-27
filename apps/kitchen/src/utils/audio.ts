@@ -9,7 +9,11 @@ let enabled = true;
 
 export function enableAudio(): void {
   enabled = true;
-  if (!ctx) ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+  if (!ctx)
+    ctx = new (
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    )();
 }
 
 export function disableAudio(): void {

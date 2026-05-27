@@ -81,9 +81,7 @@ export function AppShell() {
                 to={n.to}
                 end={n.to === '/'}
                 onClick={closeNav}
-                className={({ isActive }) =>
-                  `tf-a-side__link${isActive ? ' is-active' : ''}`
-                }
+                className={({ isActive }) => `tf-a-side__link${isActive ? ' is-active' : ''}`}
               >
                 <Icon size={15} />
                 <span>{t(`nav.${n.key}`)}</span>

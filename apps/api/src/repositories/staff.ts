@@ -81,16 +81,11 @@ export class StaffShiftRepository extends BaseRepository {
     return row ?? null;
   }
 
-  async listForRestaurantDate(
-    restaurantId: string,
-    shiftDate: string,
-  ): Promise<StaffShiftRow[]> {
+  async listForRestaurantDate(restaurantId: string, shiftDate: string): Promise<StaffShiftRow[]> {
     return this.db
       .select()
       .from(staffShifts)
-      .where(
-        and(eq(staffShifts.restaurantId, restaurantId), eq(staffShifts.shiftDate, shiftDate)),
-      );
+      .where(and(eq(staffShifts.restaurantId, restaurantId), eq(staffShifts.shiftDate, shiftDate)));
   }
 
   async listForRestaurantRange(
@@ -102,10 +97,7 @@ export class StaffShiftRepository extends BaseRepository {
       .select()
       .from(staffShifts)
       .where(
-        and(
-          eq(staffShifts.restaurantId, restaurantId),
-          between(staffShifts.shiftDate, from, to),
-        ),
+        and(eq(staffShifts.restaurantId, restaurantId), between(staffShifts.shiftDate, from, to)),
       );
   }
 
@@ -122,8 +114,7 @@ export class StaffShiftRepository extends BaseRepository {
         .update(staffShifts)
         .set({
           present: input.present,
-          checkedInAt:
-            input.present && !existing.checkedInAt ? now : existing.checkedInAt,
+          checkedInAt: input.present && !existing.checkedInAt ? now : existing.checkedInAt,
           checkedOutAt: !input.present ? now : existing.checkedOutAt,
           updatedAt: now,
         })

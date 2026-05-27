@@ -11,6 +11,8 @@ import {
   type RestaurantRow,
 } from '../repositories/restaurant.js';
 import { NotFoundError } from '../utils/errors.js';
+import { cacheGet, cacheSet, cacheDel } from '../cache/helpers.js';
+import { CacheKey, TTL } from '../cache/keys.js';
 
 export function toRestaurant(row: RestaurantRow): Restaurant {
   return {
@@ -38,9 +40,15 @@ export class RestaurantService {
   }
 
   async get(id: string): Promise<Restaurant> {
+    const key = CacheKey.restaurant(id);
+    const cached = await cacheGet<Restaurant>(key);
+    if (cached) return cached;
+
     const row = await this.repo.findById(id);
     if (!row) throw new NotFoundError('Restaurant not found');
-    return toRestaurant(row);
+    const restaurant = toRestaurant(row);
+    void cacheSet(key, restaurant, TTL.restaurant);
+    return restaurant;
   }
 
   async patch(id: string, input: PatchRestaurantRequest): Promise<Restaurant> {
@@ -55,13 +63,12 @@ export class RestaurantService {
     if (input.paymentPoint !== undefined) patch.paymentPoint = input.paymentPoint;
 
     if (Object.keys(patch).length === 0) {
-      const row = await this.repo.findById(id);
-      if (!row) throw new NotFoundError('Restaurant not found');
-      return toRestaurant(row);
+      return this.get(id);
     }
 
     const row = await this.repo.update(id, patch);
     if (!row) throw new NotFoundError('Restaurant not found');
+    void cacheDel(CacheKey.restaurant(id));
     return toRestaurant(row);
   }
 }

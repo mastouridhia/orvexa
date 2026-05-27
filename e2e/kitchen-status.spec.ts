@@ -8,7 +8,10 @@ test.describe('Kitchen status flow', () => {
 
     // Login screen shows email + password fields
     const email = page.getByLabel(/email/i).or(page.getByPlaceholder(/email/i)).first();
-    const password = page.getByLabel(/password|mot de passe/i).or(page.getByPlaceholder(/password|mot de passe/i)).first();
+    const password = page
+      .getByLabel(/password|mot de passe/i)
+      .or(page.getByPlaceholder(/password|mot de passe/i))
+      .first();
     await email.fill('kitchen@demo.tn');
     await password.fill('orvexa');
 

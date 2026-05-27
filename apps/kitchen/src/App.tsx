@@ -1,12 +1,29 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode } from '@orvexa/shared';
-import { setDocumentLocale } from '@orvexa/ui';
+import { setDocumentLocale, ErrorBoundary } from '@orvexa/ui';
 import { Login } from './pages/Login.js';
-import { Board } from './pages/Board.js';
-import { Wall } from './pages/Wall.js';
 import { useAuthStore } from './store/auth.js';
+const Board = lazy(() => import('./pages/Board.js').then((m) => ({ default: m.Board })));
+const Wall = lazy(() => import('./pages/Wall.js').then((m) => ({ default: m.Wall })));
 import './App.css';
+
+function PageLoader() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '60vh',
+        opacity: 0.4,
+        fontSize: 14,
+      }}
+    >
+      Loading…
+    </div>
+  );
+}
 
 function usePathname(): string {
   const [path, setPath] = useState(() => window.location.pathname);
@@ -36,6 +53,11 @@ export default function App() {
   }, [i18n]);
 
   if (!accessToken) return <Login />;
-  if (pathname.startsWith('/wall')) return <Wall />;
-  return <Board />;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        {pathname.startsWith('/wall') ? <Wall /> : <Board />}
+      </Suspense>
+    </ErrorBoundary>
+  );
 }

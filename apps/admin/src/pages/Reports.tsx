@@ -7,7 +7,7 @@ import type {
   SalesReportRow,
   TopItemRow,
 } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatDate, formatMillimes, pickLang } from '../utils/format.js';
@@ -55,7 +55,7 @@ export function Reports() {
           if (!cancelled) setCatRows(rows);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -77,7 +77,11 @@ export function Reports() {
         <button type="button" aria-pressed={tab === 'top'} onClick={() => setTab('top')}>
           {t('reports.tabs.top')}
         </button>
-        <button type="button" aria-pressed={tab === 'byCategory'} onClick={() => setTab('byCategory')}>
+        <button
+          type="button"
+          aria-pressed={tab === 'byCategory'}
+          onClick={() => setTab('byCategory')}
+        >
           {t('reports.tabs.byCategory')}
         </button>
       </div>

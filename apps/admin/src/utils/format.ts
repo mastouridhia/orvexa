@@ -1,7 +1,1 @@
-export {
-  formatDate,
-  formatDateTime,
-  formatMillimes,
-  parseMillimes,
-  pickLang,
-} from '@orvexa/ui';
+export { formatDate, formatDateTime, formatMillimes, parseMillimes, pickLang } from '@orvexa/ui';

@@ -33,3 +33,13 @@ export type ApiResponse<T> = {
     [k: string]: unknown;
   };
 };
+
+export type CloseDayPreview = {
+  activeOrdersToCancel: number;
+  unpaidServedOrders: number;
+  tablesToReset: number;
+  cartsToDelete: number;
+  callsToClear: number;
+};
+
+export type CloseDayResult = CloseDayPreview & { closedAt: string };

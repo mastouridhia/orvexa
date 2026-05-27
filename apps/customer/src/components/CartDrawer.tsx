@@ -18,13 +18,7 @@ import { useOrderRefsStore } from '../store/orders.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
 import { IconArrowRight, IconBag, IconMinus, IconPlus } from './tf-icons.js';
 
-export function CartDrawer({
-  lang,
-  onClose,
-}: {
-  lang: LanguageCode;
-  onClose: () => void;
-}) {
+export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const lines = useCartStore((s) => s.lines);
@@ -53,15 +47,25 @@ export function CartDrawer({
     setBusy(true);
     setError(null);
     try {
-      const order = editingOrderId
-        ? await api.addItemsToOrder(token, editingOrderId, {
-            items: buildPlaceOrderItems(lines),
-          })
-        : await api.placeOrder(token, { items: buildPlaceOrderItems(lines) });
-      rememberOrder(order.id);
-      clearCart();
-      onClose();
-      navigate(`/orders/${order.id}`);
+      if (editingOrderId) {
+        const order = await api.addItemsToOrder(token, editingOrderId, {
+          items: buildPlaceOrderItems(lines),
+        });
+        rememberOrder(order.id);
+        clearCart();
+        onClose();
+        navigate(`/orders/${order.id}`);
+      } else {
+        const orders = await api.placeOrder(token, { items: buildPlaceOrderItems(lines) });
+        rememberOrder(orders.map((o) => o.id));
+        clearCart();
+        onClose();
+        if (orders.length === 1) {
+          navigate(`/orders/${orders[0]!.id}`);
+        } else {
+          navigate(`/orders/round?ids=${orders.map((o) => o.id).join(',')}`);
+        }
+      }
     } catch (err) {
       setError(handleApiError(err, t));
     } finally {
@@ -74,11 +78,7 @@ export function CartDrawer({
 
   return (
     <>
-      <div
-        className="tf-sheet-backdrop"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="tf-sheet-backdrop" onClick={onClose} aria-hidden="true" />
       <div
         ref={sheetRef}
         className="tf-cartsheet"
@@ -129,12 +129,7 @@ export function CartDrawer({
               {lines.map((line) => (
                 <div className="tf-cartline" key={line.uid}>
                   {line.imageUrl ? (
-                    <img
-                      className="tf-cartline__hero"
-                      src={line.imageUrl}
-                      alt=""
-                      loading="lazy"
-                    />
+                    <img className="tf-cartline__hero" src={line.imageUrl} alt="" loading="lazy" />
                   ) : (
                     <div className="tf-cartline__hero" aria-hidden="true" />
                   )}
@@ -143,9 +138,7 @@ export function CartDrawer({
                     {line.variants.length ? (
                       <p className="tf-cartline__variants">{variantSummary(line, lang)}</p>
                     ) : null}
-                    {line.notes ? (
-                      <p className="tf-cartline__notes">{line.notes}</p>
-                    ) : null}
+                    {line.notes ? <p className="tf-cartline__notes">{line.notes}</p> : null}
                     <span className="tf-cartline__price tf-tabular">
                       {formatMillimes(lineSubtotal(line))}
                     </span>
@@ -166,9 +159,7 @@ export function CartDrawer({
                     <button
                       type="button"
                       className="tf-stepper__btn"
-                      onClick={() =>
-                        setQuantity(line.uid, Math.min(99, line.quantity + 1))
-                      }
+                      onClick={() => setQuantity(line.uid, Math.min(99, line.quantity + 1))}
                       aria-label="+"
                     >
                       <IconPlus size={14} />
@@ -196,9 +187,7 @@ export function CartDrawer({
                 ) : null}
                 <div className="tf-totals__grand">
                   <span className="tf-totals__grand-label">{t('cart.total')}</span>
-                  <span className="tf-totals__grand-value">
-                    {formatMillimes(total)}
-                  </span>
+                  <span className="tf-totals__grand-value">{formatMillimes(total)}</span>
                 </div>
               </div>
             </div>
@@ -208,12 +197,7 @@ export function CartDrawer({
 
         {lines.length > 0 ? (
           <div className="tf-cartsheet__bar">
-            <button
-              type="button"
-              className="tf-cartsheet__cta"
-              disabled={busy}
-              onClick={checkout}
-            >
+            <button type="button" className="tf-cartsheet__cta" disabled={busy} onClick={checkout}>
               <span>{busy ? t('actions.calling') : t('cart.confirmOrder')}</span>
               <IconArrowRight size={16} />
             </button>

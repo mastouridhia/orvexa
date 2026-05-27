@@ -7,7 +7,12 @@
     "scanAgain": "Scanner à nouveau",
     "browseMenu": "Voir la carte"
   },
-  "header": { "table": "Table {{label}}", "tableShort": "Table", "open": "Ouverte", "settings": "Paramètres" },
+  "header": {
+    "table": "Table {{label}}",
+    "tableShort": "Table",
+    "open": "Ouverte",
+    "settings": "Paramètres"
+  },
   "settings": {
     "title": "Paramètres",
     "language": "Langue",
@@ -136,7 +141,15 @@
     "billTitle": "Addition",
     "billSub": "Régler à table",
     "eta": "~{{minutes}} min",
-    "orderMore": "Commander d'autres plats"
+    "orderMore": "Commander d'autres plats",
+    "round": {
+      "barSection": "Bar",
+      "kitchenSection": "Cuisine",
+      "grandTotal": "Total global",
+      "partialReadyTitle": "Prêt en partie.",
+      "partialReadySub": "Le bar a envoyé — la cuisine arrive.",
+      "cookingSub": "Vos commandes sont en cours de préparation."
+    }
   },
   "waiter": {
     "idleTitle": "Besoin d'un coup de main ?",
@@ -179,7 +192,8 @@
     "retry": "Réessayer",
     "offline": "Vous êtes hors-ligne.",
     "sessionExpired": "Votre session a expiré. Scannez à nouveau le QR code.",
-    "boot": "Impossible d'initialiser la session. Vérifiez votre connexion."
+    "boot": "Impossible d'initialiser la session. Vérifiez votre connexion.",
+    "reconnecting": "Reconnexion en cours…"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
 }

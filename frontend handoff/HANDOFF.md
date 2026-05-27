@@ -6,20 +6,20 @@ For Claude Code (or any frontend engineer). The backend exists; this package is 
 
 ## What's in this folder
 
-| File | Purpose |
-|---|---|
-| `TableFlow DMOS.html` | The canvas — open this to browse every surface |
-| `tokens.jsx` | Design tokens, primitives, theme hook (`useTheme`), icon set |
-| `design-canvas.jsx` | Canvas chrome (not part of the product — handoff viewer only) |
-| `ios-frame.jsx`, `tweaks-panel.jsx` | Canvas chrome only |
-| `customer-data.jsx` | Sample menu data — replace with API |
-| `customer-app.jsx` | **Product** — customer iOS app |
-| `kitchen-data.jsx` | Sample tickets — replace with API |
-| `kitchen-screens.jsx` | **Product** — Tablet KDS + Wall display |
-| `waiter-app.jsx` | **Product** — Waiter phone app |
-| `admin-dashboard.jsx` | **Product** — Owner desktop dashboard |
-| `states.jsx` | Empty / loading / error variants for every surface |
-| `system-screens.jsx`, `moodboards.jsx` | Documentation only — design system reference |
+| File                                   | Purpose                                                       |
+| -------------------------------------- | ------------------------------------------------------------- |
+| `TableFlow DMOS.html`                  | The canvas — open this to browse every surface                |
+| `tokens.jsx`                           | Design tokens, primitives, theme hook (`useTheme`), icon set  |
+| `design-canvas.jsx`                    | Canvas chrome (not part of the product — handoff viewer only) |
+| `ios-frame.jsx`, `tweaks-panel.jsx`    | Canvas chrome only                                            |
+| `customer-data.jsx`                    | Sample menu data — replace with API                           |
+| `customer-app.jsx`                     | **Product** — customer iOS app                                |
+| `kitchen-data.jsx`                     | Sample tickets — replace with API                             |
+| `kitchen-screens.jsx`                  | **Product** — Tablet KDS + Wall display                       |
+| `waiter-app.jsx`                       | **Product** — Waiter phone app                                |
+| `admin-dashboard.jsx`                  | **Product** — Owner desktop dashboard                         |
+| `states.jsx`                           | Empty / loading / error variants for every surface            |
+| `system-screens.jsx`, `moodboards.jsx` | Documentation only — design system reference                  |
 
 The four files marked **Product** are what you're rebuilding against the real backend.
 
@@ -42,10 +42,10 @@ All tokens live in `tokens.jsx` → `TF_TOKENS`. Two themes (`light` / `dark`). 
 The saffron accent is also exposed as CSS custom properties on `:root`:
 
 ```css
---tf-accent: #D97A2C;
---tf-accent-ink: #7C3F12;
---tf-accent-bg: #FBEED9;
---tf-accent-glow: rgba(217,122,44,0.32);
+--tf-accent: #d97a2c;
+--tf-accent-ink: #7c3f12;
+--tf-accent-bg: #fbeed9;
+--tf-accent-glow: rgba(217, 122, 44, 0.32);
 ```
 
 Any new code should reference these, not hard-code the hex. The dashboard's hue tweak in the prototype rewrites these vars live — replicate that pattern if you support theming.
@@ -67,18 +67,21 @@ The diner's phone, accessed by QR at the table.
 **Flow:** Menu → Item detail → Cart → Place order → Live tracking → Call waiter / Request bill
 
 **Key components:**
+
 - `CustomerApp` — root, owns cart + order state
 - `MenuScreen`, `ItemSheet`, `CartSheet`, `TrackingScreen`, `WaiterScreen`, `BillScreen`
 - `CartFab` — sticky add-to-cart button
 - `OrderTimeline` — the live "received → preparing → ready" rail (in `customer-app.jsx`)
 
 **Signature interactions (preserve these):**
+
 - Item sheet has a parallax hero — image translates 0.6× scroll speed
 - Cart slides up with a spring (`tf-sheet-up` keyframe)
 - Order timeline animates each step as it advances
 - Waiter call has a 3-state machine: idle → calling (pulse ring) → ack (check-mark draw-on)
 
 **Backend hooks needed:**
+
 - `GET /menu` → array of `{ id, cat, name, ar, fr, desc, price, image, tags, allergens }`
 - `POST /orders` → returns `{ orderId }`
 - `GET /orders/:id` → returns `{ state: 'received'|'preparing'|'ready'|'served', items, eta }`
@@ -90,17 +93,20 @@ The diner's phone, accessed by QR at the table.
 `TabletKDS` (1366×1024 landscape) and `WallDisplay` (1920×1080).
 
 **Key components:**
+
 - `TabletKDS` — interactive ticket rail; press-and-hold a card to bump
 - `WallDisplay` — read-only, glanceable from across the line
 - Ticket data shape in `kitchen-data.jsx` — `{ id, table, items: [{name, ar, qty, station, course}], placedAt, course }`
 
 **Signature interactions:**
+
 - Cards age: green (<5m) → saffron (5-12m) → red pulse (>12m)
 - Press-and-hold (800ms) bumps a course to ready; releases a soft chime
 - Course chips show pacing — starters firing while mains queue
 - Station load (Hot / Cold / Bar) shown as bar chart in header
 
 **Backend hooks needed:**
+
 - WebSocket: subscribe to `tickets` channel — receive `{ created, updated, bumped }` events
 - `POST /tickets/:id/bump` body `{ course: 'starter'|'main'|'dessert' }`
 - `GET /stations/load` → real-time station counts for header
@@ -110,6 +116,7 @@ The diner's phone, accessed by QR at the table.
 The server's phone. Three tabs: Floor / Calls / Tables.
 
 **Key components:**
+
 - `WaiterApp` — root, owns table sim
 - `FloorView` — pannable map, breathing dots per table
 - `CallsView` — oldest-first urgency stack
@@ -122,11 +129,13 @@ The server's phone. Three tabs: Floor / Calls / Tables.
 Plus `call` as a transient overlay on any state that ages with a timer.
 
 **Signature interactions:**
+
 - Tables on the map have a state-colored ring; calling tables throb red (`tf-late-throb`)
 - Call cards age with color — green (<60s) → saffron (60-120s) → red (>120s, "OVERDUE")
 - Course-level fire-to-kitchen and pass-to-table buttons in the table detail
 
 **Backend hooks needed:**
+
 - `GET /tables` → array with current state, server, mins-in-state
 - WebSocket: `table-state-changed` events
 - `POST /calls/:id/ack` — mark a call as on-the-way
@@ -137,6 +146,7 @@ Plus `call` as a transient overlay on any state that ages with a timer.
 Owner's desktop. One screen, four zones: KPI strip, service pulse chart, menu performance, staff leaderboard, right-now feed.
 
 **Key components:**
+
 - `AdminDashboard` — root with sidebar nav
 - `ServicePulse` — minute-by-minute bar chart with peak callout
 - `MenuPerf` — items ranked by margin × velocity
@@ -144,6 +154,7 @@ Owner's desktop. One screen, four zones: KPI strip, service pulse chart, menu pe
 - `RightNow` — dark sidebar with live feed
 
 **Backend hooks needed:**
+
 - `GET /metrics/today` → `{ revenue, covers, avgTicket, avgDwell, deltas }`
 - `GET /metrics/pulse` → array of `{ minute, covers }` for the day
 - `GET /menu/performance?range=today` → items with sold, revenue, margin, trend, score
@@ -158,12 +169,13 @@ Every product surface has at least one of these. Hook them in by gating on your 
 
 ```jsx
 if (isLoading) return <CustomerMenuLoading />;
-if (error)     return <CustomerNetworkError />;
+if (error) return <CustomerNetworkError />;
 if (!items.length) return <CustomerEmptyCart />;
 return <MenuScreen items={items} />;
 ```
 
 Inventory:
+
 - **Customer:** menu loading skeleton, empty cart, network error, payment failed, order confirmed
 - **Kitchen:** all caught up (empty queue), offline (network down)
 - **Waiter:** empty calls (caught up), shift start (clock in)
@@ -187,6 +199,7 @@ Don't copy these patterns 1:1; replace with real data layer:
 ## Localization (RTL + Arabic)
 
 Not yet built. When you add it:
+
 - Use **logical CSS properties** everywhere (`margin-inline-start`, `padding-block`, `inset-inline-end`)
 - The components currently mix `left/right` with `flex` — audit and replace
 - Arabic copy is already in the data files (`ar` field on every menu item) — wire it to a language toggle
@@ -197,6 +210,7 @@ Not yet built. When you add it:
 ## Component inventory (what's reusable vs. one-off)
 
 **Reusable primitives** (in `tokens.jsx`):
+
 - `TFButton` — primary / secondary / ghost / danger × sm/md/lg
 - `TFInput` — labeled text input
 - `TFCard` — sunken-shadow surface

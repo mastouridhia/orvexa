@@ -61,7 +61,10 @@ export function History() {
 
   if (orders.length === 0) {
     return (
-      <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+      <div
+        className="empty-state"
+        style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}
+      >
         <p>{t('cart.empty')}</p>
         <Link to="/menu" className="btn btn-primary btn-pill">
           {t('order.back')}
@@ -101,7 +104,15 @@ export function History() {
             }}
           >
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="tf-mono" style={{ fontSize: 11, letterSpacing: 1.4, color: 'var(--fg-faint)', textTransform: 'uppercase' }}>
+              <div
+                className="tf-mono"
+                style={{
+                  fontSize: 11,
+                  letterSpacing: 1.4,
+                  color: 'var(--fg-faint)',
+                  textTransform: 'uppercase',
+                }}
+              >
                 #{o.id.slice(0, 8).toUpperCase()}
               </div>
               <div style={{ fontSize: 14, color: 'var(--fg-soft)', marginTop: 2 }}>
@@ -114,7 +125,9 @@ export function History() {
                 {t(`order.status.${o.status}`)}
               </span>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}
+            >
               <span style={{ fontSize: 16, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
                 {formatMillimes(o.totalMillimes)}
               </span>

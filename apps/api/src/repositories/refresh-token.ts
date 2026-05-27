@@ -17,9 +17,7 @@ export class RefreshTokenRepository extends BaseRepository {
   }
 
   async revoke(token: string): Promise<void> {
-    await this.db
-      .delete(refreshTokens)
-      .where(eq(refreshTokens.tokenHash, this.hash(token)));
+    await this.db.delete(refreshTokens).where(eq(refreshTokens.tokenHash, this.hash(token)));
   }
 
   async exists(token: string): Promise<boolean> {
@@ -27,10 +25,7 @@ export class RefreshTokenRepository extends BaseRepository {
       .select({ id: refreshTokens.id })
       .from(refreshTokens)
       .where(
-        and(
-          eq(refreshTokens.tokenHash, this.hash(token)),
-          gt(refreshTokens.expiresAt, new Date()),
-        ),
+        and(eq(refreshTokens.tokenHash, this.hash(token)), gt(refreshTokens.expiresAt, new Date())),
       )
       .limit(1);
     return !!row;

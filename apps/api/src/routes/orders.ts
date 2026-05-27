@@ -48,16 +48,16 @@ ordersRouter.post(
   validate({ body: PlaceOrderRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
-    const order = await service.place({
+    const orders = await service.placeMulti({
       restaurantId: req.customerSession.restaurantId,
       tableId: req.customerSession.tableId,
       tableDayTokenId: null,
       sessionId: req.customerSession.id,
       body: req.body,
     });
-    getBus().orderCreated(order);
-    await emitTableStatus(order.restaurantId, order.tableId);
-    sendSuccess(res, order, 201);
+    for (const o of orders) getBus().orderCreated(o);
+    await emitTableStatus(orders[0]!.restaurantId, orders[0]!.tableId);
+    sendSuccess(res, orders, 201);
   }),
 );
 
@@ -70,16 +70,16 @@ ordersRouter.post(
   validate({ params: TableParams, body: PlaceOrderRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
-    const order = await service.place({
+    const orders = await service.placeMulti({
       restaurantId: req.user.restaurantId,
       tableId: req.params.tableId,
       tableDayTokenId: null,
       sessionId: null,
       body: req.body,
     });
-    getBus().orderCreated(order);
-    await emitTableStatus(order.restaurantId, order.tableId);
-    sendSuccess(res, order, 201);
+    for (const o of orders) getBus().orderCreated(o);
+    await emitTableStatus(orders[0]!.restaurantId, orders[0]!.tableId);
+    sendSuccess(res, orders, 201);
   }),
 );
 
@@ -211,7 +211,12 @@ ordersRouter.patch(
   validate({ params: IdParams, body: UpdateOrderStatusRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
-    const order = await service.updateStatus(req.user.restaurantId, req.params.id, req.body);
+    const order = await service.updateStatus(
+      req.user.restaurantId,
+      req.params.id,
+      req.body,
+      req.user.role,
+    );
     getBus().orderStatusChanged(order);
     await emitTableStatus(order.restaurantId, order.tableId);
     sendSuccess(res, order);
@@ -290,7 +295,8 @@ registerPath('get', '/orders/active', {
   responses: okResponses,
 });
 registerPath('get', '/orders/open-bills', {
-  summary: 'Cross-table list of unpaid (non-cancelled) orders — used by cashier and waiter to settle bills',
+  summary:
+    'Cross-table list of unpaid (non-cancelled) orders — used by cashier and waiter to settle bills',
   tags: ['orders'],
   responses: okResponses,
 });
@@ -315,7 +321,8 @@ registerPath('patch', '/orders/{id}/status', {
   responses: okResponses,
 });
 registerPath('post', '/orders/{id}/cancel', {
-  summary: 'Cancel an order (customer can cancel while `received`; staff while `received` or `preparing`)',
+  summary:
+    'Cancel an order (customer can cancel while `received`; staff while `received` or `preparing`)',
   tags: ['orders'],
   responses: okResponses,
 });

@@ -16,14 +16,30 @@ import { IconBellRing } from './tf-icons.js';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 const STATE_ORDER: WaiterVisualState[] = [
-  'call', 'ready', 'cooking', 'ordered', 'eating', 'seated', 'paying', 'clean', 'open',
+  'call',
+  'ready',
+  'cooking',
+  'ordered',
+  'eating',
+  'seated',
+  'paying',
+  'clean',
+  'open',
 ];
 
 const ALL_ZONE_KEY = '__all__';
 const UNASSIGNED_KEY = '__unassigned__';
 const DECOR_STORAGE_KEY = 'tf:floor-decor-v1';
 
-type DecorType = 'wall-h' | 'wall-v' | 'divider-h' | 'divider-v' | 'garden' | 'pillar' | 'stairs' | 'bar';
+type DecorType =
+  | 'wall-h'
+  | 'wall-v'
+  | 'divider-h'
+  | 'divider-v'
+  | 'garden'
+  | 'pillar'
+  | 'stairs'
+  | 'bar';
 
 interface DecorItem {
   id: string;
@@ -196,7 +212,6 @@ export function FloorView({
           <div className="tf-w-floor__map-empty">{t('floor.zones.noTables')}</div>
         ) : (
           <div className="tf-w-floor__map">
-
             {/* Decor layer (walls, garden, etc. set up in admin) */}
             {decor.map((item) => (
               <div
@@ -209,15 +224,9 @@ export function FloorView({
                   height: `${item.h * 100}%`,
                 }}
               >
-                {item.type === 'garden' && (
-                  <span className="tf-w-floor__decor-icon">🌿</span>
-                )}
-                {item.type === 'stairs' && (
-                  <span className="tf-w-floor__decor-icon">🪜</span>
-                )}
-                {item.type === 'bar' && (
-                  <span className="tf-w-floor__decor-text">BAR</span>
-                )}
+                {item.type === 'garden' && <span className="tf-w-floor__decor-icon">🌿</span>}
+                {item.type === 'stairs' && <span className="tf-w-floor__decor-icon">🪜</span>}
+                {item.type === 'bar' && <span className="tf-w-floor__decor-text">BAR</span>}
               </div>
             ))}
 
@@ -227,7 +236,8 @@ export function FloorView({
               const ready = state === 'ready';
               const overdue = calling && callUrgency(callAge) === 'overdue';
               const dim = isDimmed(table.zoneId);
-              const size = table.seats >= 6 ? 56 : table.seats >= 4 ? 48 : table.seats >= 2 ? 40 : 32;
+              const size =
+                table.seats >= 6 ? 56 : table.seats >= 4 ? 48 : table.seats >= 2 ? 40 : 32;
               const showMins = ['ordered', 'cooking', 'paying'].includes(state) && minsInOrder > 0;
               const radius = table.seats === 1 ? size / 2 : 10;
               return (
@@ -242,7 +252,9 @@ export function FloorView({
                     overdue ? 'is-overdue' : '',
                     secondary ? 'is-reorder' : '',
                     dim ? 'is-dim' : '',
-                  ].filter(Boolean).join(' ')}
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   onClick={() => !dim && onOpen(table.id)}
                   style={{
                     left: `${pos.x * 100}%`,
@@ -264,9 +276,7 @@ export function FloorView({
                     />
                   )}
                   <span className="tf-w-floor__dot-num">{shortLabel(table.label)}</span>
-                  {showMins && (
-                    <span className="tf-mono tf-w-floor__dot-mins">{minsInOrder}m</span>
-                  )}
+                  {showMins && <span className="tf-mono tf-w-floor__dot-mins">{minsInOrder}m</span>}
                   {calling && (
                     <span className="tf-w-floor__dot-bell">
                       <IconBellRing />

@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 type OrderRefsState = {
   ids: string[];
-  remember: (id: string) => void;
+  remember: (ids: string | string[]) => void;
   clear: () => void;
 };
 
@@ -11,8 +11,13 @@ export const useOrderRefsStore = create<OrderRefsState>()(
   persist(
     (set) => ({
       ids: [],
-      remember: (id) =>
-        set((s) => (s.ids.includes(id) ? s : { ids: [id, ...s.ids] })),
+      remember: (ids) => {
+        const toAdd = typeof ids === 'string' ? [ids] : ids;
+        set((s) => {
+          const fresh = toAdd.filter((id) => !s.ids.includes(id));
+          return fresh.length === 0 ? s : { ids: [...fresh, ...s.ids] };
+        });
+      },
       clear: () => set({ ids: [] }),
     }),
     { name: 'orvexa.customer.orderRefs' },

@@ -50,6 +50,21 @@
       "todayOrders": "اليوم",
       "hint": "محدّث مباشرة عبر Socket.io. تتجدد اللوحة عند تغير طلب أو شغور طاولة."
     },
+    "feed": {
+      "empty": "في انتظار النشاط…",
+      "justNow": "الآن",
+      "minAgo": "منذ {{n}} دق",
+      "hrAgo": "منذ {{n}} س",
+      "dish": "طبق",
+      "dishes": "أطباق",
+      "preparing": "قيد التحضير",
+      "ready": "جاهز",
+      "served": "تم التقديم",
+      "cancelled": "ملغى",
+      "seated": "مستقر",
+      "waiterCalled": "استدعاء النادل",
+      "billRequested": "طلب الحساب"
+    },
     "closed": {
       "caption": "اليوم · بدون خدمة",
       "title": "المطبخ مطفأ اليوم.",
@@ -60,7 +75,21 @@
     "activeOrders": "طلبات نشطة",
     "activeTables": "طاولات نشطة",
     "topItems": "أشهر الأطباق اليوم",
-    "noData": "لا توجد مبيعات اليوم."
+    "noData": "لا توجد مبيعات اليوم.",
+    "closeDay": {
+      "button": "إغلاق اليوم",
+      "title": "إغلاق الخدمة؟",
+      "loading": "جارٍ التحميل…",
+      "confirm": "تأكيد الإغلاق",
+      "cancel": "إلغاء",
+      "success": "تم إغلاق اليوم. الطاولات والطلبات أُعيدت.",
+      "preview": {
+        "activeOrders": "{{count}} طلب(ات) نشطة ستُلغى",
+        "unpaidServed": "⚠ {{count}} طلب(ات) مقدَّمة غير مدفوعة تبقى مفتوحة",
+        "tables": "{{count}} طاولة ستعود إلى «فارغة»",
+        "calls": "{{count}} نداء(ات) نادل ستُمسح"
+      }
+    }
   },
   "shell": {
     "brandSub": "الإدارة · المالك",
@@ -206,7 +235,14 @@
   },
   "orders": {
     "title": "الطلبات",
-    "filter": { "all": "الكل", "received": "مستلمة", "preparing": "قيد التحضير", "ready": "جاهزة", "served": "مقدمة", "cancelled": "ملغاة" },
+    "filter": {
+      "all": "الكل",
+      "received": "مستلمة",
+      "preparing": "قيد التحضير",
+      "ready": "جاهزة",
+      "served": "مقدمة",
+      "cancelled": "ملغاة"
+    },
     "page": "صفحة {{page}} / {{pages}}",
     "prev": "السابق",
     "next": "التالي",

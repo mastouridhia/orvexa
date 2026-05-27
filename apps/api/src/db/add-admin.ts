@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'dotenv/config';
 import { hash } from '@node-rs/argon2';
 import { and, eq } from 'drizzle-orm';

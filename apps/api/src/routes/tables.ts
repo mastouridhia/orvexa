@@ -226,7 +226,11 @@ const jsonOk = {
   '200': { description: 'OK', content: { 'application/json': { schema: { type: 'object' } } } },
 };
 
-registerPath('get', '/tables', { summary: 'List tables (staff)', tags: ['tables'], responses: jsonOk });
+registerPath('get', '/tables', {
+  summary: 'List tables (staff)',
+  tags: ['tables'],
+  responses: jsonOk,
+});
 registerPath('post', '/tables', {
   summary: 'Create table (admin/manager)',
   tags: ['tables'],
@@ -256,7 +260,9 @@ registerPath('post', '/tables/{id}/clean', {
 registerPath('get', '/tables/{id}/qr', {
   summary: 'QR image (PNG default, or ?format=svg). Issues today’s session token if missing.',
   tags: ['tables'],
-  responses: { '200': { description: 'QR image', content: { 'image/png': {}, 'image/svg+xml': {} } } },
+  responses: {
+    '200': { description: 'QR image', content: { 'image/png': {}, 'image/svg+xml': {} } },
+  },
 });
 registerPath('post', '/tables/{id}/call-waiter', {
   summary: 'Customer calls a waiter to their table',

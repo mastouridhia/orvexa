@@ -4,11 +4,7 @@ import { RecordPaymentRequestSchema, UuidSchema } from '@orvexa/shared';
 import { PaymentService } from '../services/payment.js';
 import { TableService } from '../services/table.js';
 import { renderReceiptHtml } from '../services/receipt-html.js';
-import {
-  requireAnyAuth,
-  requireAuth,
-  requireRole,
-} from '../middleware/auth.js';
+import { requireAnyAuth, requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
@@ -37,10 +33,7 @@ paymentsRouter.post(
       body: req.body,
     });
     if (result.fullyPaid) {
-      await tableService.markNeedsCleaning(
-        result.order.restaurantId,
-        result.order.tableId,
-      );
+      await tableService.markNeedsCleaning(result.order.restaurantId, result.order.tableId);
       const status = await tableService.deriveForTable(
         result.order.restaurantId,
         result.order.tableId,
@@ -56,7 +49,7 @@ paymentsRouter.post(
 paymentsRouter.post(
   '/payments/:id/confirm',
   requireAuth,
-  requireRole('admin', 'manager', 'waiter', 'cashier'),
+  requireRole('admin', 'manager', 'cashier'),
   validate({ params: IdParams }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -65,10 +58,7 @@ paymentsRouter.post(
       paymentId: req.params.id,
     });
     if (result.fullyPaid) {
-      await tableService.markNeedsCleaning(
-        result.order.restaurantId,
-        result.order.tableId,
-      );
+      await tableService.markNeedsCleaning(result.order.restaurantId, result.order.tableId);
       const status = await tableService.deriveForTable(
         result.order.restaurantId,
         result.order.tableId,
@@ -108,8 +98,8 @@ paymentsRouter.get(
     const receipt = req.user
       ? await service.getReceipt(req.user.restaurantId, req.params.id)
       : req.customerSession
-      ? await service.getReceiptForCustomer(req.customerSession.id, req.params.id)
-      : null;
+        ? await service.getReceiptForCustomer(req.customerSession.id, req.params.id)
+        : null;
     if (!receipt) throw new ForbiddenError('No auth context');
     res.setHeader('content-type', 'text/html; charset=utf-8');
     res.status(200).send(renderReceiptHtml(receipt));

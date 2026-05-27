@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, lte, ne } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, lte, max, ne } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
 import { orderItems, orderItemVariants, orders } from '../db/schema/orders.js';
 import { BaseRepository } from './base.js';
@@ -53,10 +53,7 @@ export class OrderRepository extends BaseRepository {
       .select()
       .from(orders)
       .where(
-        and(
-          inArray(orders.tableId, tableIds),
-          inArray(orders.status, [...ACTIVE_ORDER_STATUSES]),
-        ),
+        and(inArray(orders.tableId, tableIds), inArray(orders.status, [...ACTIVE_ORDER_STATUSES])),
       );
   }
 
@@ -64,9 +61,7 @@ export class OrderRepository extends BaseRepository {
     const [row] = await this.db
       .select({ id: orders.id })
       .from(orders)
-      .where(
-        and(eq(orders.tableId, tableId), ne(orders.status, TERMINAL_ORDER_STATUSES[0])),
-      )
+      .where(and(eq(orders.tableId, tableId), ne(orders.status, TERMINAL_ORDER_STATUSES[0])))
       .limit(1);
     return row !== undefined;
   }
@@ -182,7 +177,12 @@ export class OrderRepository extends BaseRepository {
   async appendItems(input: {
     orderId: string;
     items: { item: OrderItemInsert; variants: Omit<OrderItemVariantInsert, 'orderItemId'>[] }[];
-    totals: { subtotalMillimes: number; taxMillimes: number; serviceMillimes: number; totalMillimes: number };
+    totals: {
+      subtotalMillimes: number;
+      taxMillimes: number;
+      serviceMillimes: number;
+      totalMillimes: number;
+    };
   }): Promise<FullOrder> {
     return this.db.transaction(async (tx) => {
       for (const it of input.items) {
@@ -201,11 +201,7 @@ export class OrderRepository extends BaseRepository {
         .update(orders)
         .set({ ...input.totals, updatedAt: new Date() })
         .where(eq(orders.id, input.orderId));
-      const [updated] = await tx
-        .select()
-        .from(orders)
-        .where(eq(orders.id, input.orderId))
-        .limit(1);
+      const [updated] = await tx.select().from(orders).where(eq(orders.id, input.orderId)).limit(1);
       if (!updated) throw new Error('Order vanished mid-update');
       const [full] = await loadFullOrders(tx as unknown as Db, [updated]);
       if (!full) throw new Error('Failed to load full order');
@@ -216,7 +212,12 @@ export class OrderRepository extends BaseRepository {
   async removeItem(input: {
     orderId: string;
     itemId: string;
-    totals: { subtotalMillimes: number; taxMillimes: number; serviceMillimes: number; totalMillimes: number };
+    totals: {
+      subtotalMillimes: number;
+      taxMillimes: number;
+      serviceMillimes: number;
+      totalMillimes: number;
+    };
   }): Promise<FullOrder | null> {
     return this.db.transaction(async (tx) => {
       const deleted = await tx
@@ -228,11 +229,7 @@ export class OrderRepository extends BaseRepository {
         .update(orders)
         .set({ ...input.totals, updatedAt: new Date() })
         .where(eq(orders.id, input.orderId));
-      const [updated] = await tx
-        .select()
-        .from(orders)
-        .where(eq(orders.id, input.orderId))
-        .limit(1);
+      const [updated] = await tx.select().from(orders).where(eq(orders.id, input.orderId)).limit(1);
       if (!updated) return null;
       const [full] = await loadFullOrders(tx as unknown as Db, [updated]);
       return full ?? null;
@@ -248,6 +245,14 @@ export class OrderRepository extends BaseRepository {
     if (!row) return null;
     const [full] = await loadFullOrders(this.db, [row]);
     return full ?? null;
+  }
+
+  async maxRoundForTable(tableId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ value: max(orders.round) })
+      .from(orders)
+      .where(and(eq(orders.tableId, tableId), ne(orders.status, 'cancelled')));
+    return Number(row?.value ?? 0);
   }
 
   async countActiveOrders(restaurantId: string): Promise<number> {
@@ -280,10 +285,7 @@ export class OrderRepository extends BaseRepository {
         .update(orderItems)
         .set({ itemStatus: input.itemStatus })
         .where(
-          and(
-            eq(orderItems.orderId, input.orderId),
-            eq(orderItems.kitchenSection, input.section),
-          ),
+          and(eq(orderItems.orderId, input.orderId), eq(orderItems.kitchenSection, input.section)),
         );
 
       const allItems = await tx

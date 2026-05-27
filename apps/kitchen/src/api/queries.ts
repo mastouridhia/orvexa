@@ -37,7 +37,12 @@ export const api = {
       body: { status },
     });
   },
-  advanceSection(token: string, orderId: string, section: KitchenSection, status: 'preparing' | 'ready') {
+  advanceSection(
+    token: string,
+    orderId: string,
+    section: KitchenSection,
+    status: 'preparing' | 'ready',
+  ) {
     return apiRequest<Order>(`/orders/${orderId}/advance-section`, {
       method: 'PATCH',
       token,

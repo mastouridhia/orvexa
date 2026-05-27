@@ -11,16 +11,16 @@ const paymentService = new PaymentService();
 
 async function placeReadyOrder(): Promise<{ ids: SeededIds; order: Order }> {
   const ids = await loadSeededIds();
-  const placed = await orderService.place({
+  const [placed] = await orderService.placeMulti({
     restaurantId: ids.restaurantId,
     tableId: ids.tableIds[0]!,
     tableDayTokenId: null,
     sessionId: null,
     body: { items: [{ dishId: ids.dishIds.brik, variantIds: [], quantity: 1 }] },
   });
-  await orderService.updateStatus(ids.restaurantId, placed.id, { status: 'preparing' });
-  await orderService.updateStatus(ids.restaurantId, placed.id, { status: 'ready' });
-  const order = await orderService.get(ids.restaurantId, placed.id);
+  await orderService.updateStatus(ids.restaurantId, placed!.id, { status: 'preparing' });
+  await orderService.updateStatus(ids.restaurantId, placed!.id, { status: 'ready' });
+  const order = await orderService.get(ids.restaurantId, placed!.id);
   return { ids, order };
 }
 
@@ -47,7 +47,7 @@ describe('PaymentService.record', () => {
 
   it('rejects payment when order is in received (not yet ready)', async () => {
     const ids = await loadSeededIds();
-    const order = await orderService.place({
+    const [order] = await orderService.placeMulti({
       restaurantId: ids.restaurantId,
       tableId: ids.tableIds[0]!,
       tableDayTokenId: null,
@@ -57,7 +57,7 @@ describe('PaymentService.record', () => {
     await expect(
       paymentService.record({
         restaurantId: ids.restaurantId,
-        orderId: order.id,
+        orderId: order!.id,
         collectedByUserId: ids.staff.waiter,
         body: { method: 'cash', tipMillimes: 0 },
       }),

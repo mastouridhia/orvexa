@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -17,4 +17,5 @@ export default defineConfig({
   ].filter(Boolean),
   envDir: '../..',
   server: { host: true, port: 5174, strictPort: true },
-})
+  test: { environment: 'node' },
+});

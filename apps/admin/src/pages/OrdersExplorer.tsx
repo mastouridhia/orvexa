@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode, Order, OrderStatus } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { ReceiptModal } from '../components/ReceiptModal.js';
 import { useAuthStore } from '../store/auth.js';
@@ -37,7 +37,7 @@ export function OrdersExplorer() {
         setRows(data.orders);
         setTotal(data.total);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -81,11 +81,13 @@ export function OrdersExplorer() {
               setPage(1);
             }}
           >
-            {(['all', 'received', 'preparing', 'ready', 'served', 'cancelled'] as const).map((s) => (
-              <option key={s} value={s}>
-                {t(`orders.filter.${s}`)}
-              </option>
-            ))}
+            {(['all', 'received', 'preparing', 'ready', 'served', 'cancelled'] as const).map(
+              (s) => (
+                <option key={s} value={s}>
+                  {t(`orders.filter.${s}`)}
+                </option>
+              ),
+            )}
           </select>
         </label>
         <div style={{ flex: 1 }} />

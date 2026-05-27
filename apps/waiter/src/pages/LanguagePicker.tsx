@@ -11,9 +11,9 @@ const LANG_OPTIONS: {
   dir: 'ltr' | 'rtl';
   cta: string;
 }[] = [
-  { code: 'fr', label: 'Français',  sub: 'French',  flag: '🇫🇷', dir: 'ltr', cta: 'Continuer' },
-  { code: 'ar', label: 'العربية',   sub: 'Arabic',  flag: '🇸🇦', dir: 'rtl', cta: 'متابعة'   },
-  { code: 'en', label: 'English',   sub: 'English', flag: '🇬🇧', dir: 'ltr', cta: 'Continue'  },
+  { code: 'fr', label: 'Français', sub: 'French', flag: '🇫🇷', dir: 'ltr', cta: 'Continuer' },
+  { code: 'ar', label: 'العربية', sub: 'Arabic', flag: '🇸🇦', dir: 'rtl', cta: 'متابعة' },
+  { code: 'en', label: 'English', sub: 'English', flag: '🇬🇧', dir: 'ltr', cta: 'Continue' },
 ];
 
 export function LanguagePicker({ onConfirm }: { onConfirm: () => void }) {
@@ -68,7 +68,9 @@ export function LanguagePicker({ onConfirm }: { onConfirm: () => void }) {
             <h2 className="tf-w-langpick__name">{lang.label}</h2>
             <p className="tf-w-langpick__sub">{lang.sub}</p>
             {activeIdx === i && (
-              <div className="tf-w-langpick__check" aria-hidden="true">✓</div>
+              <div className="tf-w-langpick__check" aria-hidden="true">
+                ✓
+              </div>
             )}
           </div>
         ))}
@@ -88,12 +90,7 @@ export function LanguagePicker({ onConfirm }: { onConfirm: () => void }) {
           ))}
         </div>
 
-        <button
-          type="button"
-          className="tf-w-langpick__cta"
-          dir={active.dir}
-          onClick={confirm}
-        >
+        <button type="button" className="tf-w-langpick__cta" dir={active.dir} onClick={confirm}>
           {active.cta}
           <span className="tf-w-langpick__cta-arrow" aria-hidden="true">
             {active.dir === 'rtl' ? '←' : '→'}

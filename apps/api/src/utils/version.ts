@@ -4,10 +4,7 @@ import { dirname, resolve } from 'node:path';
 
 function readPackageJson(): { name?: string; version?: string } {
   const here = dirname(fileURLToPath(import.meta.url));
-  const candidates = [
-    resolve(here, '../../package.json'),
-    resolve(here, '../../../package.json'),
-  ];
+  const candidates = [resolve(here, '../../package.json'), resolve(here, '../../../package.json')];
   for (const p of candidates) {
     try {
       const raw = readFileSync(p, 'utf8');

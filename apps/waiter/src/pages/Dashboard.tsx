@@ -9,7 +9,7 @@ import type {
   TableZone,
   WaiterCall,
 } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { connectStaffSocket } from '../socket/client.js';
@@ -62,6 +62,7 @@ export function Dashboard() {
   const [tab, setTab] = useState<WaiterTab>('floor');
   const [now, setNow] = useState(() => Date.now());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [socketDisconnected, setSocketDisconnected] = useState(false);
 
   // 1-second tick — keeps call ages + table-mins counters live.
   useEffect(() => {
@@ -88,7 +89,7 @@ export function Dashboard() {
         setActiveOrders(mergeOrders(ords, bills));
         setCalls(cls);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -104,40 +105,60 @@ export function Dashboard() {
     const socket = connectStaffSocket(accessToken);
 
     const onOrderCreated = (payload: { order: Order }) => {
-      setActiveOrders((prev) => {
-        if (prev.some((o) => o.id === payload.order.id)) return prev;
-        return [payload.order, ...prev];
-      });
+      try {
+        setActiveOrders((prev) => {
+          if (prev.some((o) => o.id === payload.order.id)) return prev;
+          return [payload.order, ...prev];
+        });
+      } catch {
+        // socket handler errors must not crash the component
+      }
     };
     const onOrderStatus = (payload: { orderId: string; status: OrderStatus }) => {
-      setActiveOrders((prev) =>
-        prev
-          .map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o))
-          .filter(isRelevant),
-      );
+      try {
+        setActiveOrders((prev) =>
+          prev
+            .map((o) => (o.id === payload.orderId ? { ...o, status: payload.status } : o))
+            .filter(isRelevant),
+        );
+      } catch {
+        // socket handler errors must not crash the component
+      }
     };
     const onTableStatus = (payload: { tableId: string; status: TableStatus }) => {
-      setTables((prev) =>
-        prev.map((tbl) => (tbl.id === payload.tableId ? { ...tbl, derivedStatus: payload.status } : tbl)),
-      );
+      try {
+        setTables((prev) =>
+          prev.map((tbl) =>
+            tbl.id === payload.tableId ? { ...tbl, derivedStatus: payload.status } : tbl,
+          ),
+        );
+      } catch {
+        // socket handler errors must not crash the component
+      }
     };
     const onWaiterCalled = () => {
       void authedFetch((tk) => api.listOpenWaiterCalls(tk))
         .then((list) => setCalls(list))
         .catch(() => undefined);
     };
+    const onConnect = () => setSocketDisconnected(false);
+    const onDisconnect = () => setSocketDisconnected(true);
 
     socket.on('order:created', onOrderCreated);
     socket.on('order:status', onOrderStatus);
     socket.on('table:status', onTableStatus);
     socket.on('waiter:called', onWaiterCalled);
     socket.on('bill:requested', onWaiterCalled);
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
     return () => {
       socket.off('order:created', onOrderCreated);
       socket.off('order:status', onOrderStatus);
       socket.off('table:status', onTableStatus);
       socket.off('waiter:called', onWaiterCalled);
       socket.off('bill:requested', onWaiterCalled);
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
     };
   }, [accessToken, authedFetch]);
 
@@ -148,7 +169,7 @@ export function Dashboard() {
         await authedFetch((tk) => api.clearWaiterCall(tk, id));
         setCalls((prev) => prev.filter((c) => c.id !== id));
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : (err as Error).message);
+        setError(getErrorMessage(err));
       } finally {
         setBusyCallId(null);
       }
@@ -191,7 +212,7 @@ export function Dashboard() {
   const callsByTable = useMemo(() => indexCallsByTable(calls), [calls]);
 
   const openTable = useMemo(
-    () => (openTableId ? tables.find((tt) => tt.id === openTableId) ?? null : null),
+    () => (openTableId ? (tables.find((tt) => tt.id === openTableId) ?? null) : null),
     [openTableId, tables],
   );
   const openTableOrders = useMemo(
@@ -199,7 +220,7 @@ export function Dashboard() {
     [openTableId, activeOrders],
   );
   const openTableCall = useMemo(
-    () => (openTableId ? callsByTable.get(openTableId) ?? null : null),
+    () => (openTableId ? (callsByTable.get(openTableId) ?? null) : null),
     [openTableId, callsByTable],
   );
 
@@ -223,10 +244,7 @@ export function Dashboard() {
 
       {settingsOpen && (
         <>
-          <div
-            className="tf-w-settings-backdrop"
-            onClick={() => setSettingsOpen(false)}
-          />
+          <div className="tf-w-settings-backdrop" onClick={() => setSettingsOpen(false)} />
           <div className="tf-w-settings" role="dialog" aria-label={t('settings.title')}>
             <div className="tf-w-settings__handle" />
             <div className="tf-w-settings__head">
@@ -245,11 +263,11 @@ export function Dashboard() {
               <span className="tf-caption">{t('settings.language')}</span>
               <p className="tf-w-settings__hint">{t('settings.languageHint')}</p>
               <div className="tf-w-settings__langs">
-                {([
-                  { code: 'fr' as LanguageCode, flag: '🇫🇷', label: 'Français',  sub: 'French'  },
-                  { code: 'ar' as LanguageCode, flag: '🇸🇦', label: 'العربية',   sub: 'Arabic'  },
-                  { code: 'en' as LanguageCode, flag: '🇬🇧', label: 'English',   sub: 'English' },
-                ]).map(({ code, flag, label, sub }) => {
+                {[
+                  { code: 'fr' as LanguageCode, flag: '🇫🇷', label: 'Français', sub: 'French' },
+                  { code: 'ar' as LanguageCode, flag: '🇸🇦', label: 'العربية', sub: 'Arabic' },
+                  { code: 'en' as LanguageCode, flag: '🇬🇧', label: 'English', sub: 'English' },
+                ].map(({ code, flag, label, sub }) => {
                   const active = lang === code;
                   return (
                     <button
@@ -274,11 +292,7 @@ export function Dashboard() {
 
             <div className="tf-w-settings__footer">
               <span className="tf-w-settings__email">{user?.email}</span>
-              <button
-                type="button"
-                className="tf-w-settings__logout"
-                onClick={logout}
-              >
+              <button type="button" className="tf-w-settings__logout" onClick={logout}>
                 <IconLogout />
                 <span>{t('header.logout')}</span>
               </button>
@@ -286,6 +300,14 @@ export function Dashboard() {
           </div>
         </>
       )}
+
+      {socketDisconnected ? (
+        <div style={{ padding: '0 1rem' }}>
+          <div className="error-banner">
+            {t('common.offline', { defaultValue: 'Connection lost — reconnecting…' })}
+          </div>
+        </div>
+      ) : null}
 
       {error ? (
         <div style={{ padding: '0 1rem' }}>

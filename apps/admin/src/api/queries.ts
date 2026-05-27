@@ -2,6 +2,8 @@ import type {
   AuthTokens,
   Category,
   CategoryRevenueRow,
+  CloseDayPreview,
+  CloseDayResult,
   CreateCategoryRequest,
   CreateDishRequest,
   CreateStaffRequest,
@@ -75,6 +77,12 @@ export const api = {
   // Dashboard + Reports
   getDashboardSummary(token: string) {
     return apiRequest<DashboardSummary>('/dashboard/summary', { token });
+  },
+  previewCloseDay(token: string) {
+    return apiRequest<CloseDayPreview>('/admin/close-day/preview', { token });
+  },
+  closeDay(token: string) {
+    return apiRequest<CloseDayResult>('/admin/close-day', { method: 'POST', token });
   },
   getSales(token: string, q: SalesReportQuery) {
     return apiRequest<SalesReportRow[]>(

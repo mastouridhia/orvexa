@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" width="240" height="180">
+  
+  <g transform="translate(90,8)">
+    <circle cx="30" cy="30" r="30" fill="#19140E"></circle>
+    <circle cx="30" cy="30" r="18.6" fill="#FBEED9"></circle>
+    <circle cx="30" cy="30" r="11.4" fill="#D97A2C"></circle>
+  </g>
+  
+  <text x="120" y="115" text-anchor="middle" font-family="Geist, Inter, -apple-system, system-ui, sans-serif" font-weight="600" font-size="44" letter-spacing="-1.8" fill="#19140E">Orvexa</text>
+  <text x="218" y="115" text-anchor="end" font-family="Newsreader, &#39;Times New Roman&#39;, serif" font-style="italic" font-weight="400" font-size="44" fill="#D97A2C">.</text>
+  
+  <text x="120" y="150" text-anchor="middle" font-family="Newsreader, &#39;Times New Roman&#39;, serif" font-style="italic" font-weight="400" font-size="14" fill="#D97A2C">The good kind of quick.</text>
+</svg>

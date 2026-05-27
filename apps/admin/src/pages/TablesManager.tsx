@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TableWithDerived, TableZone } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { apiBaseUrl } from '../api/client.js';
 import { useAuthStore } from '../store/auth.js';
@@ -32,7 +32,7 @@ export function TablesManager() {
         const list = await authedFetch((tk) => api.listTables(tk));
         if (!cancelled) setTables(list);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -47,7 +47,7 @@ export function TablesManager() {
         const list = await authedFetch((tk) => api.listTableZones(tk));
         if (!cancelled) setZones(list);
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -55,7 +55,8 @@ export function TablesManager() {
     };
   }, [authedFetch, zonesReloadKey]);
 
-  if (printing) return <PrintSheet tables={tables} token={accessToken} onDone={() => setPrinting(false)} />;
+  if (printing)
+    return <PrintSheet tables={tables} token={accessToken} onDone={() => setPrinting(false)} />;
 
   return (
     <>
@@ -132,9 +133,13 @@ export function TablesManager() {
                   <td>{tb.derivedStatus}</td>
                   <td>
                     {isLeader ? (
-                      <span className="faint">{t('tables.mergedLeader', { count: mergedCount })}</span>
+                      <span className="faint">
+                        {t('tables.mergedLeader', { count: mergedCount })}
+                      </span>
                     ) : isMember ? (
-                      <span className="faint">{t('tables.mergedMember', { label: leaderLabel ?? '' })}</span>
+                      <span className="faint">
+                        {t('tables.mergedMember', { label: leaderLabel ?? '' })}
+                      </span>
                     ) : (
                       <span className="muted">—</span>
                     )}
@@ -149,7 +154,7 @@ export function TablesManager() {
                             await authedFetch((tk) => api.unmergeTable(tk, tb.id));
                             await reload();
                           } catch (err) {
-                            setError(err instanceof ApiError ? err.message : (err as Error).message);
+                            setError(getErrorMessage(err));
                           }
                         }}
                       >
@@ -165,11 +170,15 @@ export function TablesManager() {
                             await authedFetch((tk) => api.mergeTables(tk, tb.id, [memberId]));
                             await reload();
                           } catch (err) {
-                            setError(err instanceof ApiError ? err.message : (err as Error).message);
+                            setError(getErrorMessage(err));
                           }
                           e.target.value = '';
                         }}
-                        style={{ width: 'auto', display: 'inline-block', marginInlineEnd: '0.35rem' }}
+                        style={{
+                          width: 'auto',
+                          display: 'inline-block',
+                          marginInlineEnd: '0.35rem',
+                        }}
                       >
                         <option value="">{t('tables.merge')}…</option>
                         {tables
@@ -185,8 +194,7 @@ export function TablesManager() {
                             </option>
                           ))}
                       </select>
-                    )}
-                    {' '}
+                    )}{' '}
                     <button type="button" className="btn btn-sm" onClick={() => setEditing(tb)}>
                       {t('tables.save')}
                     </button>{' '}
@@ -199,7 +207,7 @@ export function TablesManager() {
                           await authedFetch((tk) => api.deleteTable(tk, tb.id));
                           await reload();
                         } catch (err) {
-                          setError(err instanceof ApiError ? err.message : (err as Error).message);
+                          setError(getErrorMessage(err));
                         }
                       }}
                     >
@@ -255,7 +263,7 @@ function TableEditor({
       }
       await onSaved();
     } catch (err) {
-      onError(err instanceof ApiError ? err.message : (err as Error).message);
+      onError(getErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -335,7 +343,10 @@ function PrintSheet({
 
   return (
     <div>
-      <div className="row-gap no-print" style={{ justifyContent: 'flex-end', marginBottom: '1rem' }}>
+      <div
+        className="row-gap no-print"
+        style={{ justifyContent: 'flex-end', marginBottom: '1rem' }}
+      >
         <button type="button" className="btn" onClick={onDone}>
           {t('tables.cancel')}
         </button>
@@ -350,7 +361,13 @@ function PrintSheet({
             {urls[tb.id] ? (
               <img src={urls[tb.id]} alt={`QR for ${tb.label}`} />
             ) : (
-              <div style={{ height: '200px', background: 'var(--bg-soft)', borderRadius: 'var(--radius-sm)' }} />
+              <div
+                style={{
+                  height: '200px',
+                  background: 'var(--bg-soft)',
+                  borderRadius: 'var(--radius-sm)',
+                }}
+              />
             )}
             <figcaption>{tb.label}</figcaption>
           </figure>

@@ -5,4 +5,4 @@ const client = createApiClient(baseUrl);
 
 export const apiRequest = client.apiRequest;
 export const apiBaseUrl = client.apiBaseUrl;
-export { ApiError, type RequestOptions } from '@orvexa/api-client';
+export { ApiError, getErrorMessage, type RequestOptions } from '@orvexa/api-client';

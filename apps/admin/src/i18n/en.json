@@ -50,6 +50,21 @@
       "todayOrders": "Today",
       "hint": "Live-updated via Socket.io. The board refreshes when an order changes or a table opens up."
     },
+    "feed": {
+      "empty": "Waiting for activity…",
+      "justNow": "just now",
+      "minAgo": "{{n}} min ago",
+      "hrAgo": "{{n}} hr ago",
+      "dish": "dish",
+      "dishes": "dishes",
+      "preparing": "preparing",
+      "ready": "ready",
+      "served": "served",
+      "cancelled": "cancelled",
+      "seated": "seated",
+      "waiterCalled": "called waiter",
+      "billRequested": "bill requested"
+    },
     "closed": {
       "caption": "Today · no service",
       "title": "The kitchen is dark today.",
@@ -60,7 +75,21 @@
     "activeOrders": "Active orders",
     "activeTables": "Active tables",
     "topItems": "Top items today",
-    "noData": "No sales recorded today."
+    "noData": "No sales recorded today.",
+    "closeDay": {
+      "button": "Close day",
+      "title": "Close service?",
+      "loading": "Loading…",
+      "confirm": "Confirm close",
+      "cancel": "Cancel",
+      "success": "Day closed. Tables and orders have been reset.",
+      "preview": {
+        "activeOrders": "{{count}} active order(s) will be cancelled",
+        "unpaidServed": "⚠ {{count}} served but unpaid order(s) will remain open",
+        "tables": "{{count}} table(s) reset to free",
+        "calls": "{{count}} pending waiter call(s) cleared"
+      }
+    }
   },
   "shell": {
     "brandSub": "Admin · owner",
@@ -206,7 +235,14 @@
   },
   "orders": {
     "title": "Orders",
-    "filter": { "all": "All", "received": "Received", "preparing": "Preparing", "ready": "Ready", "served": "Served", "cancelled": "Cancelled" },
+    "filter": {
+      "all": "All",
+      "received": "Received",
+      "preparing": "Preparing",
+      "ready": "Ready",
+      "served": "Served",
+      "cancelled": "Cancelled"
+    },
     "page": "Page {{page}} / {{pages}}",
     "prev": "Prev",
     "next": "Next",

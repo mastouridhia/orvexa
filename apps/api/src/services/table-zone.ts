@@ -61,10 +61,7 @@ export class TableZoneService {
     await this.repo.delete(id);
   }
 
-  async reorder(
-    restaurantId: string,
-    input: ReorderTableZonesRequest,
-  ): Promise<TableZone[]> {
+  async reorder(restaurantId: string, input: ReorderTableZonesRequest): Promise<TableZone[]> {
     const rows = await this.repo.reorder(restaurantId, input.zoneIds);
     return rows.map(toTableZone);
   }

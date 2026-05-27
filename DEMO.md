@@ -18,6 +18,7 @@ Then hand them a phone and say: **"Scan that."**
 Run this checklist 30 minutes before. If any item fails, fix it or skip that part of the demo — never demo something that might break.
 
 ### Infrastructure
+
 - [ ] `docker compose up -d` — Postgres is up
 - [ ] `npm run dev` — API + 4 frontends all started without errors
 - [ ] All four apps load in the browser:
@@ -28,6 +29,7 @@ Run this checklist 30 minutes before. If any item fails, fix it or skip that par
 - [ ] WebSocket connection is alive on each app (no red "offline" banner)
 
 ### Seed data the demo depends on
+
 - [ ] At least **one restaurant** with a real name and logo
 - [ ] At least **8–10 menu items** across **3 categories** (Starters / Mains / Drinks), each with:
   - A real photo (not placeholder)
@@ -41,6 +43,7 @@ Run this checklist 30 minutes before. If any item fails, fix it or skip that par
 - [ ] Today's `right-now` feed has 2–3 historical events so the admin screen isn't empty
 
 ### Devices
+
 - [ ] **Laptop** open on Admin dashboard (this is what the CEO watches the whole time)
 - [ ] **Tablet** on the Kitchen Display
 - [ ] **Phone A** = waiter app, signed in
@@ -48,6 +51,7 @@ Run this checklist 30 minutes before. If any item fails, fix it or skip that par
 - [ ] All devices on the **same wifi**, charged, screens at full brightness
 
 ### Pre-flight smoke test (do this at T-15 minutes)
+
 1. Scan QR on Phone B → menu loads
 2. Add 2 items → place order
 3. Order appears on KDS within 1 second
@@ -68,28 +72,30 @@ If all 8 pass, you're green. If anything fails, fix before he arrives.
 **Hand him the phone.** Say nothing. Let him scan.
 
 What he should see and feel:
+
 1. **Welcome screen** — restaurant name, table label ("Table 4"), saffron QR halo, language picker
-2. He picks **Arabic** → entire UI flips to RTL instantly. *This is your "wow" moment for a Tunisian operator.*
+2. He picks **Arabic** → entire UI flips to RTL instantly. _This is your "wow" moment for a Tunisian operator._
 3. He browses categories. Photos are sharp. Prices are in **TND**.
 4. He taps an item → detail sheet slides up with parallax hero, allergens, "Add to cart"
 5. He adds 2–3 items, opens cart, places order
 
 **While he does this, do not narrate. Let him drive.** When he hands the phone back, then explain.
 
-Killer line: *"He just ordered, in his language, in under 60 seconds, with no app, no signup, no waiter."*
+Killer line: _"He just ordered, in his language, in under 60 seconds, with no app, no signup, no waiter."_
 
 ### Act 2 — The kitchen (3 min)
 
 Walk him to the KDS tablet. His order is already there.
 
 Point to:
-- **Ticket aging color** — currently green. *"In 5 minutes it turns saffron. After 12 it turns red and pulses. The chef never has to ask 'how long has this been here?'"*
-- **Station load bar** in the header. *"The chef sees pressure on Hot vs Cold without counting tickets."*
+
+- **Ticket aging color** — currently green. _"In 5 minutes it turns saffron. After 12 it turns red and pulses. The chef never has to ask 'how long has this been here?'"_
+- **Station load bar** in the header. _"The chef sees pressure on Hot vs Cold without counting tickets."_
 - **Press-and-hold to bump.** Demo it: hold a ticket → soft chime → it disappears.
 
 Now switch to **Phone B** (the customer phone). The order timeline has advanced from "Received" to "Preparing" automatically.
 
-Killer line: *"No printer. No paper. No 'lost ticket'. And the customer sees the kitchen's progress without asking."*
+Killer line: _"No printer. No paper. No 'lost ticket'. And the customer sees the kitchen's progress without asking."_
 
 ### Act 3 — The waiter (3 min)
 
@@ -99,11 +105,11 @@ Pick up Phone A (waiter).
 2. Phone A buzzes. The Calls tab shows a fresh card, green ring.
 3. Show the **Floor view** — the table that called is **throbbing red** on the map.
 4. Tap **Acknowledge** on the call card → on Phone B, the customer instantly sees the green checkmark.
-5. Show the **age coloring** on calls: *"After 60 seconds it turns saffron, after 120 it goes red and tagged OVERDUE. No call ever falls through the cracks."*
+5. Show the **age coloring** on calls: _"After 60 seconds it turns saffron, after 120 it goes red and tagged OVERDUE. No call ever falls through the cracks."_
 
 Then quickly show **Tables view**: state machine (open → seated → ordered → cooking → ready → paying → clean), per-table detail, who's serving.
 
-Killer line: *"Your floor manager sees, on one screen, every table that needs attention and how long they've been waiting. That's the difference between a 4-star and a 5-star review."*
+Killer line: _"Your floor manager sees, on one screen, every table that needs attention and how long they've been waiting. That's the difference between a 4-star and a 5-star review."_
 
 ### Act 4 — The owner's view (4 min)
 
@@ -111,23 +117,24 @@ This is the part the CEO actually buys. **Sit him in front of the laptop on the 
 
 Walk him through, top to bottom:
 
-1. **KPI strip** — today's revenue, covers, average ticket, average dwell time, with **day-over-day deltas**. *"You know by 11am if today is going to beat yesterday."*
-2. **Service pulse** — the minute-by-minute covers chart. Point at the peak. *"That's your real lunch rush. Now you can staff for it."*
-3. **Menu performance** — items ranked by **margin × velocity**. *"This isn't 'best seller' — it's 'best earner'. The dish that sells a lot but costs you margin shows up here."*
-4. **Staff leaderboard** — covers, sales, tips, ratings per server, gold ribbon on the top earner. *"Your servers will compete for this."*
-5. **Right-now feed** — point at the live stream of seatings, calls, kitchen events, payments. *"Everything that happened in the last 2 minutes is here. You can run the floor from your office."*
-6. Scroll down: **Menu management, table management, staff management with roles** (admin / manager / kitchen / waiter). *"You change a price here, every customer's phone updates instantly."*
+1. **KPI strip** — today's revenue, covers, average ticket, average dwell time, with **day-over-day deltas**. _"You know by 11am if today is going to beat yesterday."_
+2. **Service pulse** — the minute-by-minute covers chart. Point at the peak. _"That's your real lunch rush. Now you can staff for it."_
+3. **Menu performance** — items ranked by **margin × velocity**. _"This isn't 'best seller' — it's 'best earner'. The dish that sells a lot but costs you margin shows up here."_
+4. **Staff leaderboard** — covers, sales, tips, ratings per server, gold ribbon on the top earner. _"Your servers will compete for this."_
+5. **Right-now feed** — point at the live stream of seatings, calls, kitchen events, payments. _"Everything that happened in the last 2 minutes is here. You can run the floor from your office."_
+6. Scroll down: **Menu management, table management, staff management with roles** (admin / manager / kitchen / waiter). _"You change a price here, every customer's phone updates instantly."_
 
 Demo this last one live: change a menu item price in admin → refresh customer phone → new price.
 
-Killer line: *"You stop running the restaurant on memory and start running it on numbers."*
+Killer line: _"You stop running the restaurant on memory and start running it on numbers."_
 
 ### Act 5 — The close (1 min)
 
 Three sentences:
-1. *"Everything you just saw is one platform, one database, real-time across four screens."*
-2. *"It runs on one server, with HTTPS, automatic backups, and works on any phone or tablet you already own."*
-3. *"What would it take to pilot this in your restaurant for two weeks?"*
+
+1. _"Everything you just saw is one platform, one database, real-time across four screens."_
+2. _"It runs on one server, with HTTPS, automatic backups, and works on any phone or tablet you already own."_
+3. _"What would it take to pilot this in your restaurant for two weeks?"_
 
 Then **stop talking**. Let him answer.
 
@@ -137,18 +144,18 @@ Then **stop talking**. Let him answer.
 
 If any of these break mid-demo, the demo is over. Test each one twice before he arrives.
 
-| # | Feature | Why it must work |
-|---|---|---|
-| 1 | QR scan → menu loads in <2 seconds | First impression |
-| 2 | Arabic RTL flip | Local credibility |
-| 3 | Order placed → appears on KDS in <1 second | Proves "real-time" isn't marketing |
-| 4 | KDS bump → customer timeline updates | Proves the loop closes both ways |
-| 5 | Waiter call → waiter phone buzzes, table throbs on floor map | The "wow" of the waiter app |
-| 6 | Acknowledge call → customer sees checkmark | Proves staff-customer feedback loop |
-| 7 | Admin "Right-now" feed shows the events you just generated | Proves the owner sees everything |
-| 8 | Admin price change → reflects on customer phone after refresh | Proves operator control |
-| 9 | TND currency everywhere | No "demo dollars" |
-| 10 | At least one printable receipt / bill | Proves payment side exists |
+| #   | Feature                                                       | Why it must work                    |
+| --- | ------------------------------------------------------------- | ----------------------------------- |
+| 1   | QR scan → menu loads in <2 seconds                            | First impression                    |
+| 2   | Arabic RTL flip                                               | Local credibility                   |
+| 3   | Order placed → appears on KDS in <1 second                    | Proves "real-time" isn't marketing  |
+| 4   | KDS bump → customer timeline updates                          | Proves the loop closes both ways    |
+| 5   | Waiter call → waiter phone buzzes, table throbs on floor map  | The "wow" of the waiter app         |
+| 6   | Acknowledge call → customer sees checkmark                    | Proves staff-customer feedback loop |
+| 7   | Admin "Right-now" feed shows the events you just generated    | Proves the owner sees everything    |
+| 8   | Admin price change → reflects on customer phone after refresh | Proves operator control             |
+| 9   | TND currency everywhere                                       | No "demo dollars"                   |
+| 10  | At least one printable receipt / bill                         | Proves payment side exists          |
 
 ---
 
@@ -169,32 +176,38 @@ Don't volunteer these — they invite questions you may not want yet. If he asks
 
 These exist in the codebase but are not bulletproof enough for a live demo. Have a confident answer ready instead of demoing.
 
-- **Payment processing** — *"We integrate with the local payment provider you already use. The customer flow and the receipt are done; the gateway is a 1-week integration once we know your provider."*
-- **Multi-restaurant / multi-branch** — *"Single-restaurant today. Multi-branch is on the roadmap."*
-- **Reservations / table booking** — *"Out of scope today. Orvexa is for in-restaurant ordering and operations."*
-- **Loyalty / customer accounts** — *"Intentional. The customer is anonymous — they scan, eat, pay, leave. No data collection, no GDPR risk."*
-- **Inventory / stock counts** — *"Roadmap."*
+- **Payment processing** — _"We integrate with the local payment provider you already use. The customer flow and the receipt are done; the gateway is a 1-week integration once we know your provider."_
+- **Multi-restaurant / multi-branch** — _"Single-restaurant today. Multi-branch is on the roadmap."_
+- **Reservations / table booking** — _"Out of scope today. Orvexa is for in-restaurant ordering and operations."_
+- **Loyalty / customer accounts** — _"Intentional. The customer is anonymous — they scan, eat, pay, leave. No data collection, no GDPR risk."_
+- **Inventory / stock counts** — _"Roadmap."_
 
 ---
 
 ## Objections you'll hear, and the answer
 
 **"My waiters won't use it."**
+
 > "They will — because their tips go up. The leaderboard ranks them on the metrics they're already paid on. And calls don't get missed anymore, so customer ratings rise."
 
 **"My kitchen guys aren't tech people."**
+
 > "The KDS is one screen. Tickets come in, you press and hold to mark ready. That's it. Most cooks learn it in 5 minutes."
 
 **"What about wifi failures?"**
+
 > "Every screen shows an offline banner the second the network drops. Orders queued on the customer phone resync when wifi comes back. The kitchen and waiter apps work on local network even if internet is down."
 
 **"How long to install?"**
+
 > "One day on-site to print QRs, set up the menu, and train the team. We bring the hardware list."
 
 **"How much?"**
-> *Have your pricing answer ready. Don't improvise.*
+
+> _Have your pricing answer ready. Don't improvise._
 
 **"What if you go out of business?"**
+
 > "Your data is yours. The whole stack runs on Docker on a server you own — you can take it with you."
 
 ---

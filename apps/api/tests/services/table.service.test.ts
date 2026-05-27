@@ -10,8 +10,7 @@ const orderService = new OrderService();
 
 const callStub = (kind: 'call_waiter' | 'request_bill'): WaiterCallRow =>
   ({ kind, tableId: 'x' }) as unknown as WaiterCallRow;
-const orderStub = (status: string): OrderRow =>
-  ({ tableId: 'x', status }) as unknown as OrderRow;
+const orderStub = (status: string): OrderRow => ({ tableId: 'x', status }) as unknown as OrderRow;
 
 describe('TableService.deriveStatus (pure)', () => {
   it('request_bill wins over call_waiter and active orders', () => {
@@ -65,7 +64,7 @@ describe('TableService — DB-backed', () => {
 
     expect(await tableService.deriveForTable(ids.restaurantId, tableId)).toBe('free');
 
-    await orderService.place({
+    await orderService.placeMulti({
       restaurantId: ids.restaurantId,
       tableId,
       tableDayTokenId: null,

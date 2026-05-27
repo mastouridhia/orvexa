@@ -200,11 +200,7 @@ staffRouter.get(
     if (!req.user) throw new UnauthorizedError('Authentication required');
     const q = req.query as { shiftDate?: string; from?: string; to?: string };
     if (q.from && q.to) {
-      const rows = await shiftRepo.listForRestaurantRange(
-        req.user.restaurantId,
-        q.from,
-        q.to,
-      );
+      const rows = await shiftRepo.listForRestaurantRange(req.user.restaurantId, q.from, q.to);
       sendSuccess(res, rows.map(rowToShift));
       return;
     }
@@ -271,7 +267,7 @@ registerPath('get', '/staff/shifts', {
   responses: okResponses,
 });
 registerPath('post', '/staff/{id}/shifts', {
-  summary: 'Set a staff member\'s shift presence (admin/manager)',
+  summary: "Set a staff member's shift presence (admin/manager)",
   tags: ['staff'],
   responses: okResponses,
 });

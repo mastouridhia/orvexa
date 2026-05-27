@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import jwt, { type SignOptions } from 'jsonwebtoken';
 import type { StaffRole } from '@orvexa/shared';
 import { config } from '../config.js';
@@ -17,6 +18,7 @@ export type StaffRefreshPayload = {
   typ: 'refresh';
   sub: string;
   rid: string;
+  jti?: string;
 };
 
 export type CustomerSessionPayload = {
@@ -65,7 +67,13 @@ export function signStaffRefreshToken(
   payload: Omit<StaffRefreshPayload, 'typ'>,
   ttl: SignExpires = config.auth.refreshTokenTtl as SignExpires,
 ): string {
-  return sign<StaffRefreshPayload>({ ...payload, typ: 'refresh' }, config.auth.jwtSecret, ttl);
+  // jti ensures each issued token is unique even when iat resolves to the same second,
+  // which is required for rotation to reliably invalidate the previous token.
+  return sign<StaffRefreshPayload>(
+    { ...payload, typ: 'refresh', jti: randomUUID() },
+    config.auth.jwtSecret,
+    ttl,
+  );
 }
 
 export function verifyStaffAccessToken(token: string): StaffAccessPayload {

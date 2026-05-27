@@ -1,12 +1,33 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode } from '@orvexa/shared';
-import { setDocumentLocale } from '@orvexa/ui';
+import { setDocumentLocale, ErrorBoundary } from '@orvexa/ui';
 import { Login } from './pages/Login.js';
-import { Dashboard } from './pages/Dashboard.js';
-import { LanguagePicker } from './pages/LanguagePicker.js';
 import { useAuthStore } from './store/auth.js';
+const Dashboard = lazy(() =>
+  import('./pages/Dashboard.js').then((m) => ({ default: m.Dashboard })),
+);
+const LanguagePicker = lazy(() =>
+  import('./pages/LanguagePicker.js').then((m) => ({ default: m.LanguagePicker })),
+);
 import './App.css';
+
+function PageLoader() {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '60vh',
+        opacity: 0.4,
+        fontSize: 14,
+      }}
+    >
+      Loading…
+    </div>
+  );
+}
 
 const LANG_KEY = 'orvexa.waiter.lang';
 
@@ -29,7 +50,17 @@ export default function App() {
     };
   }, [i18n]);
 
-  if (!langPicked) return <LanguagePicker onConfirm={() => setLangPicked(true)} />;
-  if (!accessToken) return <Login />;
-  return <Dashboard />;
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoader />}>
+        {!langPicked ? (
+          <LanguagePicker onConfirm={() => setLangPicked(true)} />
+        ) : !accessToken ? (
+          <Login />
+        ) : (
+          <Dashboard />
+        )}
+      </Suspense>
+    </ErrorBoundary>
+  );
 }

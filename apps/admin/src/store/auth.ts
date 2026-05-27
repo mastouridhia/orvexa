@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { StaffUser } from '@orvexa/shared';
 import { api } from '../api/queries.js';
-import { ApiError } from '../api/client.js';
+import { ApiError, getErrorMessage } from '../api/client.js';
 
 type AuthState = {
   accessToken: string | null;
@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState>()(
           });
           return true;
         } catch (err) {
-          set({ loginError: err instanceof ApiError ? err.message : (err as Error).message });
+          set({ loginError: getErrorMessage(err) });
           return false;
         }
       },

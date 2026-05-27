@@ -13,22 +13,27 @@ export function Login() {
   const [restaurantSlug, setRestaurantSlug] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const canSubmit = email.trim().length > 0 && password.length > 0;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
     setBusy(true);
     unlockAudio(); // user gesture → audio context can play later
-    await login(email, password, restaurantSlug.trim() || undefined);
+    await login(email.trim(), password, restaurantSlug.trim() || undefined);
     setBusy(false);
   };
 
   return (
     <div className="login-shell">
       <div className="login-card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}
+        >
           <h2 style={{ margin: 0, flex: 1 }}>{t('login.title')}</h2>
           <LanguageSelector />
         </div>
-        <form onSubmit={submit}>
+        <form onSubmit={submit} noValidate>
           <label>
             {t('login.email')}
             <input
@@ -45,6 +50,7 @@ export function Login() {
               type="password"
               autoComplete="current-password"
               required
+              minLength={1}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -60,7 +66,7 @@ export function Login() {
             />
           </label>
           {error ? <div className="error-banner">{error}</div> : null}
-          <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
+          <button type="submit" className="btn btn-primary btn-block" disabled={busy || !canSubmit}>
             {busy ? t('login.submitting') : t('login.submit')}
           </button>
         </form>

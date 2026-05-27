@@ -8,12 +8,7 @@ import type {
   Receipt,
   RecordPaymentRequest,
 } from '@orvexa/shared';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../utils/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
 import { OrderRepository } from '../repositories/order.js';
 import { PaymentRepository, type PaymentRow } from '../repositories/payment.js';
 import { RestaurantRepository, type RestaurantRow } from '../repositories/restaurant.js';
@@ -117,10 +112,7 @@ export class PaymentService {
     };
   }
 
-  async confirm(input: {
-    restaurantId: string;
-    paymentId: string;
-  }): Promise<RecordPaymentResult> {
+  async confirm(input: { restaurantId: string; paymentId: string }): Promise<RecordPaymentResult> {
     const payment = await this.paymentRepo.findById(input.paymentId);
     if (!payment) throw new NotFoundError('Payment not found');
     if (payment.restaurantId !== input.restaurantId) {
@@ -174,7 +166,8 @@ export class PaymentService {
   async getReceiptForCustomer(sessionId: string, orderId: string): Promise<Receipt> {
     const order = await this.orderRepo.findFullById(orderId);
     if (!order) throw new NotFoundError('Order not found');
-    if (order.sessionId !== sessionId) throw new ForbiddenError('Order belongs to a different session');
+    if (order.sessionId !== sessionId)
+      throw new ForbiddenError('Order belongs to a different session');
     const restaurant = await this.restaurantRepo.findById(order.restaurantId);
     if (!restaurant) throw new NotFoundError('Restaurant not found');
     const paymentRows = await this.paymentRepo.listForOrder(orderId);

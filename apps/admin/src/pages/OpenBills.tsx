@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Order, TableWithDerived } from '@orvexa/shared';
-import { ApiError } from '../api/client.js';
+import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
 import { formatDateTime, formatMillimes, parseMillimes } from '../utils/format.js';
@@ -35,7 +35,7 @@ export function OpenBills() {
           setTables(tbls);
         }
       } catch (err) {
-        if (!cancelled) setError(err instanceof ApiError ? err.message : (err as Error).message);
+        if (!cancelled) setError(getErrorMessage(err));
       }
     })();
     return () => {
@@ -75,7 +75,9 @@ export function OpenBills() {
     setError(null);
     try {
       const tip = parseMillimes(tipById[orderId] ?? '') ?? 0;
-      await authedFetch((tk) => api.recordPayment(tk, orderId, { method: 'cash', tipMillimes: tip }));
+      await authedFetch((tk) =>
+        api.recordPayment(tk, orderId, { method: 'cash', tipMillimes: tip }),
+      );
       setTipById((prev) => {
         const next = { ...prev };
         delete next[orderId];
@@ -83,7 +85,7 @@ export function OpenBills() {
       });
       setReloadKey((k) => k + 1);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : (err as Error).message);
+      setError(getErrorMessage(err));
     } finally {
       setBusyId(null);
     }
@@ -91,9 +93,7 @@ export function OpenBills() {
 
   return (
     <>
-      <h1 className="page-title">
-        {t('openBills.title', { defaultValue: 'Open bills' })}
-      </h1>
+      <h1 className="page-title">{t('openBills.title', { defaultValue: 'Open bills' })}</h1>
       <p className="muted" style={{ marginTop: '-0.5rem', marginBottom: '1rem' }}>
         {t('openBills.subtitle', {
           defaultValue:
@@ -142,9 +142,7 @@ export function OpenBills() {
                     <th>{t('openBills.placedAt', { defaultValue: 'Placed' })}</th>
                     <th>{t('openBills.status', { defaultValue: 'Status' })}</th>
                     <th>{t('openBills.payment', { defaultValue: 'Payment' })}</th>
-                    <th className="right">
-                      {t('openBills.amount', { defaultValue: 'Amount' })}
-                    </th>
+                    <th className="right">{t('openBills.amount', { defaultValue: 'Amount' })}</th>
                     {canCollect ? (
                       <>
                         <th>{t('openBills.tip', { defaultValue: 'Tip (TND)' })}</th>

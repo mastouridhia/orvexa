@@ -17,6 +17,7 @@ import { waiterCallsRouter } from './waiter-calls.js';
 import { feedbackRouter } from './feedback.js';
 import { staffRouter } from './staff.js';
 import { reportsRouter } from './reports.js';
+import { closeDayRouter } from './close-day.js';
 
 export const apiRouter = Router();
 
@@ -38,3 +39,4 @@ apiRouter.use(waiterCallsRouter);
 apiRouter.use(feedbackRouter);
 apiRouter.use(staffRouter);
 apiRouter.use(reportsRouter);
+apiRouter.use(closeDayRouter);

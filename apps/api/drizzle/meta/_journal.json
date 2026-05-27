@@ -120,6 +120,20 @@
       "when": 1748000200000,
       "tag": "0016_session_absolute_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1748000300000,
+      "tag": "0017_refresh_token_expiry_idx",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1748000400000,
+      "tag": "0018_dishes_soft_delete",
+      "breakpoints": true
     }
   ]
 }

@@ -23,6 +23,8 @@ import {
   type VariantGroupRow,
   type VariantRow,
 } from '../repositories/menu.js';
+import { cacheGet, cacheSet, cacheDel } from '../cache/helpers.js';
+import { CacheKey, TTL } from '../cache/keys.js';
 
 export function rowToCategory(row: CategoryRow): Category {
   return {
@@ -108,7 +110,15 @@ export class MenuService {
     this.variantRepo = variantRepo;
   }
 
+  private async bustMenu(restaurantId: string): Promise<void> {
+    await cacheDel(CacheKey.menu(restaurantId));
+  }
+
   async getPublicMenu(restaurantId: string): Promise<MenuTreeCategory[]> {
+    const key = CacheKey.menu(restaurantId);
+    const cached = await cacheGet<MenuTreeCategory[]>(key);
+    if (cached) return cached;
+
     const [allCategories, availableDishes] = await Promise.all([
       this.categoryRepo.list(restaurantId),
       this.dishRepo.listAvailable(restaurantId),
@@ -139,12 +149,15 @@ export class MenuService {
       dishesByCategory.set(d.categoryId, list);
     }
 
-    return allCategories
+    const tree = allCategories
       .filter((c) => c.isActive)
       .map((c) => ({
         ...rowToCategory(c),
         dishes: dishesByCategory.get(c.id) ?? [],
       }));
+
+    void cacheSet(key, tree, TTL.menu);
+    return tree;
   }
 
   // ───────── Categories ─────────
@@ -164,6 +177,7 @@ export class MenuService {
       sortOrder: input.sortOrder ?? 0,
       isActive: input.isActive ?? true,
     });
+    void this.bustMenu(restaurantId);
     return rowToCategory(row);
   }
 
@@ -186,6 +200,7 @@ export class MenuService {
     if (input.isActive !== undefined) patch.isActive = input.isActive;
     const row = await this.categoryRepo.update(id, patch);
     if (!row) throw new NotFoundError('Category not found');
+    void this.bustMenu(restaurantId);
     return rowToCategory(row);
   }
 
@@ -194,6 +209,7 @@ export class MenuService {
     if (!existing) throw new NotFoundError('Category not found');
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     await this.categoryRepo.delete(id);
+    void this.bustMenu(restaurantId);
   }
 
   async reorderCategories(
@@ -207,6 +223,7 @@ export class MenuService {
       throw new ValidationError('Unknown category ids', { ids: unknown });
     }
     const rows = await this.categoryRepo.reorder(restaurantId, input.ids);
+    void this.bustMenu(restaurantId);
     return rows.map(rowToCategory);
   }
 
@@ -272,6 +289,7 @@ export class MenuService {
       available: input.available ?? true,
       sortOrder: input.sortOrder ?? 0,
     });
+    void this.bustMenu(restaurantId);
     return rowToDish(row, []);
   }
 
@@ -304,6 +322,7 @@ export class MenuService {
     if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     const row = await this.dishRepo.update(id, patch);
     if (!row) throw new NotFoundError('Dish not found');
+    void this.bustMenu(restaurantId);
     return this.getDish(restaurantId, row.id);
   }
 
@@ -317,6 +336,7 @@ export class MenuService {
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     const row = await this.dishRepo.update(id, { available: input.available });
     if (!row) throw new NotFoundError('Dish not found');
+    void this.bustMenu(restaurantId);
     return rowToDish(row, []);
   }
 
@@ -324,7 +344,8 @@ export class MenuService {
     const existing = await this.dishRepo.findById(id);
     if (!existing) throw new NotFoundError('Dish not found');
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
-    await this.dishRepo.delete(id);
+    await this.dishRepo.softDelete(id);
+    void this.bustMenu(restaurantId);
   }
 
   async setDishImage(restaurantId: string, id: string, imageUrl: string | null): Promise<Dish> {
@@ -334,6 +355,7 @@ export class MenuService {
     const urls = imageUrl ? [imageUrl] : [];
     const row = await this.dishRepo.update(id, { imageUrl, imageUrls: urls });
     if (!row) throw new NotFoundError('Dish not found');
+    void this.bustMenu(restaurantId);
     return rowToDish(row, []);
   }
 
@@ -347,10 +369,15 @@ export class MenuService {
       imageUrl: existing.imageUrl ?? nextUrls[0] ?? null,
     });
     if (!row) throw new NotFoundError('Dish not found');
+    void this.bustMenu(restaurantId);
     return rowToDish(row, []);
   }
 
-  async removeDishImageAt(restaurantId: string, id: string, idx: number): Promise<{ dish: Dish; removedUrl: string | null }> {
+  async removeDishImageAt(
+    restaurantId: string,
+    id: string,
+    idx: number,
+  ): Promise<{ dish: Dish; removedUrl: string | null }> {
     const existing = await this.dishRepo.findById(id);
     if (!existing) throw new NotFoundError('Dish not found');
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
@@ -361,6 +388,7 @@ export class MenuService {
       imageUrl: urls[0] ?? null,
     });
     if (!row) throw new NotFoundError('Dish not found');
+    void this.bustMenu(restaurantId);
     return { dish: rowToDish(row, []), removedUrl: removed };
   }
 
@@ -391,8 +419,7 @@ export class MenuService {
     if (dish.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     const required = input.required ?? false;
     const minChoices = input.min ?? (required ? 1 : 0);
-    const maxChoices =
-      input.max ?? (input.selectionType === 'multi' ? 99 : 1);
+    const maxChoices = input.max ?? (input.selectionType === 'multi' ? 99 : 1);
     this.assertChoiceConstraints(input.selectionType, minChoices, maxChoices);
     const row = await this.variantGroupRepo.create({
       dishId,
@@ -419,6 +446,7 @@ export class MenuService {
         })),
       );
     }
+    void this.bustMenu(restaurantId);
     return rowToVariantGroup(row, variants);
   }
 
@@ -469,6 +497,7 @@ export class MenuService {
     const refreshed = await this.variantGroupRepo.findById(id);
     if (!refreshed) throw new NotFoundError('Variant group not found');
     const variants = await this.variantRepo.listForGroup(id);
+    void this.bustMenu(restaurantId);
     return rowToVariantGroup(refreshed, variants);
   }
 
@@ -478,6 +507,7 @@ export class MenuService {
     const dish = await this.dishRepo.findById(existing.dishId);
     if (!dish || dish.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     await this.variantGroupRepo.delete(id);
+    void this.bustMenu(restaurantId);
   }
 
   private assertChoiceConstraints(

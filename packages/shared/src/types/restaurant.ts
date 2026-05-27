@@ -1,10 +1,5 @@
 import { z } from 'zod';
-import {
-  CurrencySchema,
-  IsoDateTimeSchema,
-  LanguageCodeSchema,
-  UuidSchema,
-} from './common.js';
+import { CurrencySchema, IsoDateTimeSchema, LanguageCodeSchema, UuidSchema } from './common.js';
 
 export const PaymentPointSchema = z.enum(['table', 'counter']);
 export type PaymentPoint = z.infer<typeof PaymentPointSchema>;

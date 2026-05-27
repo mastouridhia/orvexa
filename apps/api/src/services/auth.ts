@@ -56,8 +56,17 @@ export class AuthService {
   }
 
   async logout(refreshToken: string): Promise<void> {
-    // Best-effort — silently ignore if token is already expired or unknown
-    await this.tokenRepo.revoke(refreshToken);
+    let userId: string | undefined;
+    try {
+      userId = verifyStaffRefreshToken(refreshToken).sub;
+    } catch {
+      // Expired or malformed token — still revoke the hash if it's in the DB
+    }
+    await Promise.all([
+      this.tokenRepo.revoke(refreshToken),
+      // Bump tokenVersion so the outstanding access token is rejected immediately
+      userId ? this.staffRepo.bumpTokenVersion(userId) : Promise.resolve(),
+    ]);
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
