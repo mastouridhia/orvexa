@@ -10,14 +10,35 @@ import { formatDateTime } from '../utils/format.js';
 const ROLES: StaffRole[] = ['admin', 'manager', 'kitchen', 'waiter', 'cashier'];
 
 function todayDateIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
 }
+
+function offsetDate(base: string, days: number): string {
+  const d = new Date(base);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDateLabel(iso: string, lang: string): string {
+  return new Date(iso).toLocaleDateString(lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-FR' : 'en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+type Tab = 'list' | 'attendance';
 
 export function StaffManager() {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage as 'ar' | 'fr' | 'en') ?? 'fr';
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const me = useAuthStore((s) => s.user);
+  const [tab, setTab] = useState<Tab>('list');
   const [list, setList] = useState<StaffUser[]>([]);
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +47,12 @@ export function StaffManager() {
   const reload = () => setReloadKey((k) => k + 1);
   const today = useMemo(() => todayDateIso(), []);
 
+  // Attendance tab state
+  const [attendanceDate, setAttendanceDate] = useState(today);
+  const [attendanceShifts, setAttendanceShifts] = useState<StaffShift[]>([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+
+  // Load staff list + today's shifts
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -47,22 +74,72 @@ export function StaffManager() {
     };
   }, [authedFetch, reloadKey, today]);
 
+  // Load shifts for attendance date when on attendance tab
+  useEffect(() => {
+    if (tab !== 'attendance') return;
+    let cancelled = false;
+    setAttendanceShifts([]);
+    setAttendanceLoading(true);
+    setError(null);
+    (async () => {
+      try {
+        const rows = await authedFetch((tk) => api.listStaffShifts(tk, attendanceDate));
+        if (!cancelled) setAttendanceShifts(rows);
+      } catch (err) {
+        if (!cancelled) setError(getErrorMessage(err));
+      } finally {
+        if (!cancelled) setAttendanceLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authedFetch, tab, attendanceDate]);
+
   const presenceByUser = useMemo(() => {
     const map = new Map<string, boolean>();
     for (const s of shifts) map.set(s.userId, s.present);
     return map;
   }, [shifts]);
 
+  const attendancePresenceByUser = useMemo(() => {
+    const map = new Map<string, boolean>();
+    for (const s of attendanceShifts) map.set(s.userId, s.present);
+    return map;
+  }, [attendanceShifts]);
+
+  const activeStaff = useMemo(() => list.filter((u) => !u.disabledAt), [list]);
+
+  function applyShiftUpdate(updated: import('@orvexa/shared').StaffShift) {
+    const splice = (prev: import('@orvexa/shared').StaffShift[]) => [
+      ...prev.filter((s) => s.userId !== updated.userId),
+      updated,
+    ];
+    setShifts((prev) =>
+      updated.shiftDate === today ? splice(prev) : prev,
+    );
+    setAttendanceShifts((prev) =>
+      updated.shiftDate === attendanceDate ? splice(prev) : prev,
+    );
+  }
+
   const togglePresence = async (userId: string, current: boolean) => {
     try {
       const updated = await authedFetch((tk) =>
         api.setStaffShiftPresence(tk, userId, { shiftDate: today, present: !current }),
       );
-      setShifts((prev) => {
-        const next = prev.filter((s) => s.userId !== userId);
-        next.push(updated);
-        return next;
-      });
+      applyShiftUpdate(updated);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
+
+  const toggleAttendance = async (userId: string, current: boolean) => {
+    try {
+      const updated = await authedFetch((tk) =>
+        api.setStaffShiftPresence(tk, userId, { shiftDate: attendanceDate, present: !current }),
+      );
+      applyShiftUpdate(updated);
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -79,79 +156,182 @@ export function StaffManager() {
   };
 
   const canManage = me?.role === 'admin';
+  const isToday = attendanceDate === today;
 
   return (
     <>
       <h1 className="page-title">{t('staff.title')}</h1>
       {error ? <div className="error-banner">{error}</div> : null}
-      {canManage ? (
-        <div className="row-gap" style={{ justifyContent: 'flex-end', marginBottom: '1rem' }}>
+
+      <div className="row-gap" style={{ justifyContent: 'space-between', marginBottom: '1rem' }}>
+        <div className="tf-a-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'list'}
+            className={tab === 'list' ? 'is-active' : ''}
+            onClick={() => setTab('list')}
+          >
+            {t('staff.tabs.list')}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'attendance'}
+            className={tab === 'attendance' ? 'is-active' : ''}
+            onClick={() => setTab('attendance')}
+          >
+            {t('staff.tabs.attendance')}
+          </button>
+        </div>
+
+        {tab === 'list' && canManage ? (
           <button type="button" className="btn btn-primary" onClick={() => setEditing('new')}>
             + {t('staff.new')}
           </button>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
-      <table className="dt">
-        <thead>
-          <tr>
-            <th>{t('staff.name')}</th>
-            <th>{t('staff.email')}</th>
-            <th>{t('staff.role')}</th>
-            <th>{t('staff.status')}</th>
-            <th>{t('staff.presentToday')}</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {list.map((u) => {
-            const present = presenceByUser.get(u.id) ?? false;
-            return (
-              <tr key={u.id} className={u.disabledAt ? 'row-disabled' : ''}>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>{u.role}</td>
-                <td>
-                  {u.disabledAt
-                    ? `${t('staff.disabled')} · ${formatDateTime(u.disabledAt, lang)}`
-                    : t('staff.active')}
-                </td>
-                <td>
-                  {!u.disabledAt ? (
-                    <label style={{ cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={present}
-                        onChange={() => togglePresence(u.id, present)}
-                        style={{ width: 'auto', marginInlineEnd: '0.4rem' }}
-                      />
-                      {present ? t('staff.present') : t('staff.absent')}
-                    </label>
-                  ) : (
-                    <span className="muted">—</span>
-                  )}
-                </td>
-                <td className="right">
-                  {canManage && u.id !== me?.id ? (
-                    <>
-                      <button type="button" className="btn btn-sm" onClick={() => setEditing(u)}>
-                        {t('staff.save')}
-                      </button>{' '}
-                      <button
-                        type="button"
-                        className={`btn btn-sm ${u.disabledAt ? '' : 'btn-danger'}`}
-                        onClick={() => toggle(u)}
-                      >
-                        {u.disabledAt ? t('staff.enable') : t('staff.disable')}
-                      </button>
-                    </>
-                  ) : null}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      {tab === 'list' ? (
+        <table className="dt">
+          <thead>
+            <tr>
+              <th>{t('staff.name')}</th>
+              <th>{t('staff.email')}</th>
+              <th>{t('staff.role')}</th>
+              <th>{t('staff.status')}</th>
+              <th>{t('staff.presentToday')}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((u) => {
+              const present = presenceByUser.get(u.id) ?? false;
+              return (
+                <tr key={u.id} className={u.disabledAt ? 'row-disabled' : ''}>
+                  <td>{u.name}</td>
+                  <td>{u.email}</td>
+                  <td>{u.role}</td>
+                  <td>
+                    {u.disabledAt
+                      ? `${t('staff.disabled')} · ${formatDateTime(u.disabledAt, lang)}`
+                      : t('staff.active')}
+                  </td>
+                  <td>
+                    {!u.disabledAt ? (
+                      <label style={{ cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={present}
+                          onChange={() => togglePresence(u.id, present)}
+                          style={{ width: 'auto', marginInlineEnd: '0.4rem' }}
+                        />
+                        {present ? t('staff.present') : t('staff.absent')}
+                      </label>
+                    ) : (
+                      <span className="muted">—</span>
+                    )}
+                  </td>
+                  <td className="right">
+                    {canManage && u.id !== me?.id ? (
+                      <>
+                        <button type="button" className="btn btn-sm" onClick={() => setEditing(u)}>
+                          {t('staff.edit')}
+                        </button>{' '}
+                        <button
+                          type="button"
+                          className={`btn btn-sm ${u.disabledAt ? '' : 'btn-danger'}`}
+                          onClick={() => toggle(u)}
+                        >
+                          {u.disabledAt ? t('staff.enable') : t('staff.disable')}
+                        </button>
+                      </>
+                    ) : null}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : (
+        <div>
+          {/* Date navigation */}
+          <div className="row-gap" style={{ marginBottom: '1rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setAttendanceDate((d) => offsetDate(d, -1))}
+            >
+              ←
+            </button>
+            <input
+              type="date"
+              value={attendanceDate}
+              max={today}
+              onChange={(e) => e.target.value && setAttendanceDate(e.target.value)}
+              style={{ width: 'auto' }}
+            />
+            <span className="muted" style={{ fontSize: '0.875rem' }}>
+              {formatDateLabel(attendanceDate, lang)}
+            </span>
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={() => setAttendanceDate((d) => offsetDate(d, 1))}
+              disabled={isToday}
+            >
+              →
+            </button>
+            {!isToday ? (
+              <button
+                type="button"
+                className="btn btn-sm"
+                onClick={() => setAttendanceDate(today)}
+              >
+                {t('staff.attendance.today')}
+              </button>
+            ) : null}
+          </div>
+
+          {attendanceLoading ? (
+            <p className="muted">{t('common.loading')}</p>
+          ) : activeStaff.length === 0 ? (
+            <p className="muted">{t('staff.attendance.noStaff')}</p>
+          ) : (
+            <table className="dt">
+              <thead>
+                <tr>
+                  <th>{t('staff.name')}</th>
+                  <th>{t('staff.role')}</th>
+                  <th>{t('staff.attendance.present')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeStaff.map((u) => {
+                  const present = attendancePresenceByUser.get(u.id) ?? false;
+                  return (
+                    <tr key={u.id}>
+                      <td>{u.name}</td>
+                      <td>{u.role}</td>
+                      <td>
+                        <label style={{ cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={present}
+                            onChange={() => toggleAttendance(u.id, present)}
+                            style={{ width: 'auto', marginInlineEnd: '0.4rem' }}
+                          />
+                          {present ? t('staff.present') : t('staff.absent')}
+                        </label>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       {editing ? (
         <StaffEditor

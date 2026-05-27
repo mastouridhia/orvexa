@@ -195,6 +195,8 @@
     "mergedMember": "← {{label}}",
     "tabList": "قائمة",
     "tabFloorPlan": "مخطط القاعة",
+    "floorPlanWip": "مخطط القاعة قيد التطوير",
+    "floorPlanWipSub": "هذه الميزة ستكون متاحة قريباً.",
     "floorPlan": {
       "zonesTitle": "المناطق",
       "addZone": "+ إضافة منطقة",
@@ -228,10 +230,20 @@
     "disable": "تعطيل",
     "enable": "تفعيل",
     "save": "حفظ",
+    "edit": "تعديل",
     "cancel": "إلغاء",
     "presentToday": "حاضر اليوم",
     "present": "حاضر",
-    "absent": "غائب"
+    "absent": "غائب",
+    "tabs": {
+      "list": "الموظفون",
+      "attendance": "الحضور"
+    },
+    "attendance": {
+      "today": "اليوم",
+      "present": "الحضور",
+      "noStaff": "لا يوجد موظفون نشطون."
+    }
   },
   "orders": {
     "title": "الطلبات",

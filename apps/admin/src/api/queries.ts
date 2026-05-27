@@ -273,6 +273,14 @@ export const api = {
     return apiRequest<Receipt>(`/orders/${orderId}/receipt`, { token });
   },
 
+  // Danger zone
+  resetOperationalData(token: string) {
+    return apiRequest<{ deletedOrders: number; deletedPayments: number; deletedFeedback: number }>(
+      '/restaurant/operational-data',
+      { method: 'DELETE', token },
+    );
+  },
+
   // Feedback
   listFeedback(token: string, q: { page?: number; pageSize?: number } = {}) {
     return apiRequest<{

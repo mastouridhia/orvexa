@@ -351,6 +351,13 @@
   border: 1px solid var(--line);
 }
 
+/* Danger zone section */
+.tf-a-settings__section--danger {
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
+}
+.tf-a-settings__section-title--danger { color: var(--danger); }
+.tf-a-settings__section-icon--danger { color: var(--danger); }
+
 /* Override LanguageSelector in settings context — nicer card style */
 .tf-a-settings .lang-selector {
   display: flex;

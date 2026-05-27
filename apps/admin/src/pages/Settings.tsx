@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode, PaymentPoint, Restaurant } from '@orvexa/shared';
 import { LanguageSelector } from '@orvexa/ui';
@@ -26,6 +26,14 @@ export function Settings() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const resetInputRef = useRef<HTMLInputElement>(null);
+
+  const RESET_KEYWORD = t('settings.dangerZone.confirmKeyword');
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -40,6 +48,32 @@ export function Settings() {
       cancelled = true;
     };
   }, [authedFetch]);
+
+  const openResetModal = () => {
+    setResetConfirmText('');
+    setResetError(null);
+    setResetModalOpen(true);
+    setTimeout(() => resetInputRef.current?.focus(), 50);
+  };
+
+  const closeResetModal = () => {
+    if (resetBusy) return;
+    setResetModalOpen(false);
+  };
+
+  const doReset = async () => {
+    if (resetConfirmText !== RESET_KEYWORD) return;
+    setResetBusy(true);
+    setResetError(null);
+    try {
+      await authedFetch((tk) => api.resetOperationalData(tk));
+      setResetModalOpen(false);
+    } catch (err) {
+      setResetError(getErrorMessage(err));
+    } finally {
+      setResetBusy(false);
+    }
+  };
 
   const save = async () => {
     if (!restaurant) return;
@@ -290,6 +324,26 @@ export function Settings() {
           </div>
         </section>
 
+        {/* ── Danger zone ── */}
+        <section className="tf-a-settings__section tf-a-settings__section--danger">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon tf-a-settings__section-icon--danger">⚠</span>
+            <div>
+              <div className="tf-a-settings__section-title tf-a-settings__section-title--danger">
+                {t('settings.dangerZone.title')}
+              </div>
+              <div className="tf-a-settings__section-sub">
+                {t('settings.dangerZone.sub')}
+              </div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <button type="button" className="btn btn-danger" onClick={openResetModal}>
+              {t('settings.dangerZone.resetButton')}
+            </button>
+          </div>
+        </section>
+
         {/* ── Sign out ── */}
         <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
@@ -323,6 +377,61 @@ export function Settings() {
           </div>
         </section>
       </div>
+
+      {resetModalOpen && (
+        <div className="modal-backdrop" onClick={closeResetModal}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <header>
+              <h2 style={{ color: 'var(--danger)' }}>{t('settings.dangerZone.modalTitle')}</h2>
+              <button type="button" className="close btn-ghost" onClick={closeResetModal}>×</button>
+            </header>
+            <div className="body">
+              <p style={{ margin: 0 }}>{t('settings.dangerZone.modalBody')}</p>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--fg-soft)' }}>
+                  {t('settings.dangerZone.modalKeywordHint', { keyword: RESET_KEYWORD })}
+                </span>
+                <input
+                  ref={resetInputRef}
+                  type="text"
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && doReset()}
+                  placeholder={RESET_KEYWORD}
+                  autoComplete="off"
+                  spellCheck={false}
+                  style={{ fontFamily: 'monospace' }}
+                />
+              </label>
+              {resetError && (
+                <p style={{ margin: 0, color: 'var(--danger)', fontSize: '0.85rem' }}>
+                  {resetError}
+                </p>
+              )}
+            </div>
+            <footer>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={closeResetModal}
+                disabled={resetBusy}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={doReset}
+                disabled={resetConfirmText !== RESET_KEYWORD || resetBusy}
+              >
+                {resetBusy
+                  ? t('settings.dangerZone.resetting')
+                  : t('settings.dangerZone.confirmButton')}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </>
   );
 }

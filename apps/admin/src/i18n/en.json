@@ -195,6 +195,8 @@
     "mergedMember": "→ {{label}}",
     "tabList": "List",
     "tabFloorPlan": "Floor plan",
+    "floorPlanWip": "Floor plan coming soon",
+    "floorPlanWipSub": "We're working on this feature — check back soon.",
     "floorPlan": {
       "zonesTitle": "Zones",
       "addZone": "+ Add zone",
@@ -228,10 +230,20 @@
     "disable": "Disable",
     "enable": "Enable",
     "save": "Save",
+    "edit": "Edit",
     "cancel": "Cancel",
     "presentToday": "Present today",
     "present": "Present",
-    "absent": "Absent"
+    "absent": "Absent",
+    "tabs": {
+      "list": "Staff",
+      "attendance": "Attendance"
+    },
+    "attendance": {
+      "today": "Today",
+      "present": "Present",
+      "noStaff": "No active staff found."
+    }
   },
   "orders": {
     "title": "Orders",
@@ -311,14 +323,26 @@
     "sectionLocalizationSub": "Timezone, default menu language, and languages available to customers.",
     "sectionPricing": "Pricing",
     "sectionPricingSub": "Tax and service percentages applied to every order.",
-    "pricingNote": "Amounts are in Tunisian Dinar (TND). Tax and service are calculated on the order subtotal."
+    "pricingNote": "Amounts are in Tunisian Dinar (TND). Tax and service are calculated on the order subtotal.",
+    "dangerZone": {
+      "title": "Danger zone",
+      "sub": "Wipes all orders, payments and customer reviews. Irreversible.",
+      "resetButton": "Reset operational data",
+      "modalTitle": "Reset all data?",
+      "modalBody": "This will permanently delete all orders, payments and customer reviews. Reports will be empty. This action cannot be undone.",
+      "modalKeywordHint": "Type « {{keyword}} » to confirm:",
+      "confirmKeyword": "RESET",
+      "confirmButton": "Delete everything",
+      "resetting": "Deleting…"
+    }
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "common": {
     "loading": "Loading…",
     "error": "Error",
     "retry": "Retry",
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "feedback": {
     "title": "Customer feedback",

@@ -199,6 +199,8 @@
     "mergedMember": "→ {{label}}",
     "tabList": "Liste",
     "tabFloorPlan": "Plan de salle",
+    "floorPlanWip": "Plan de salle en cours de développement",
+    "floorPlanWipSub": "Cette fonctionnalité sera disponible prochainement.",
     "floorPlan": {
       "zonesTitle": "Zones",
       "addZone": "+ Ajouter une zone",
@@ -232,10 +234,20 @@
     "disable": "Désactiver",
     "enable": "Réactiver",
     "save": "Enregistrer",
+    "edit": "Modifier",
     "cancel": "Annuler",
     "presentToday": "Présent aujourd'hui",
     "present": "Présent",
-    "absent": "Absent"
+    "absent": "Absent",
+    "tabs": {
+      "list": "Personnel",
+      "attendance": "Présences"
+    },
+    "attendance": {
+      "today": "Aujourd'hui",
+      "present": "Présence",
+      "noStaff": "Aucun personnel actif."
+    }
   },
   "orders": {
     "title": "Commandes",
@@ -315,14 +327,26 @@
     "sectionLocalizationSub": "Fuseau horaire, langue par défaut du menu et langues disponibles pour les clients.",
     "sectionPricing": "Tarification",
     "sectionPricingSub": "TVA et frais de service appliqués à chaque commande.",
-    "pricingNote": "Les montants sont en Dinar Tunisien (TND). La TVA et le service sont calculés sur le sous-total de la commande."
+    "pricingNote": "Les montants sont en Dinar Tunisien (TND). La TVA et le service sont calculés sur le sous-total de la commande.",
+    "dangerZone": {
+      "title": "Zone dangereuse",
+      "sub": "Réinitialise toutes les commandes, paiements et avis clients. Irréversible.",
+      "resetButton": "Réinitialiser les données opérationnelles",
+      "modalTitle": "Réinitialiser les données ?",
+      "modalBody": "Cette action supprimera définitivement toutes les commandes, les paiements et les avis clients. Les rapports seront vides. Cette action est irréversible.",
+      "modalKeywordHint": "Tapez « {{keyword}} » pour confirmer :",
+      "confirmKeyword": "RÉINITIALISER",
+      "confirmButton": "Tout supprimer",
+      "resetting": "Suppression…"
+    }
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "common": {
     "loading": "Chargement…",
     "error": "Erreur",
     "retry": "Réessayer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "cancel": "Annuler"
   },
   "feedback": {
     "title": "Avis clients",
