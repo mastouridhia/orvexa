@@ -19,6 +19,7 @@ import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
+import { redis } from '../cache/client.js';
 import { registerPath, registerTag } from '../utils/openapi.js';
 import { getBus } from '../realtime/bus.js';
 
@@ -157,6 +158,23 @@ tablesRouter.post(
 );
 
 tablesRouter.post(
+  '/tables/:id/request-code',
+  requireCustomerSession,
+  validate({ params: IdParamsSchema }),
+  asyncHandler(async (req, res) => {
+    if (!req.customerSession) throw new UnauthorizedError('Customer session required');
+    if (req.customerSession.tableId !== req.params.id) {
+      throw new ForbiddenError('Session is for a different table');
+    }
+    const call = await service.requestCode(req.customerSession.restaurantId, req.params.id);
+    const atIso = call.createdAt.toISOString();
+    getBus().waiterCalled(call.restaurantId, call.tableId, atIso);
+    await emitTableStatus(call.restaurantId, call.tableId);
+    sendSuccess(res, { id: call.id, createdAt: atIso }, 201);
+  }),
+);
+
+tablesRouter.post(
   '/tables/:id/request-bill',
   requireAnyAuth,
   validate({ params: IdParamsSchema }),
@@ -220,6 +238,34 @@ tablesRouter.post(
   }),
 );
 
+tablesRouter.post(
+  '/tables/:id/ordering-code',
+  requireAuth,
+  requireRole('admin', 'manager', 'waiter'),
+  validate({ params: IdParamsSchema }),
+  asyncHandler(async (req, res) => {
+    if (!req.user) throw new UnauthorizedError('Authentication required');
+    const result = await service.issueOrderingCode(req.user.restaurantId, req.params.id);
+    sendSuccess(res, result, 201);
+  }),
+);
+
+tablesRouter.delete(
+  '/tables/:id/order-ceiling',
+  requireAuth,
+  requireRole('admin', 'manager', 'waiter'),
+  validate({ params: IdParamsSchema }),
+  asyncHandler(async (req, res) => {
+    if (!req.user) throw new UnauthorizedError('Authentication required');
+    // Grant a 30-min bypass so the waiter can unlock ordering for this table
+    // after visually verifying the guests.
+    try {
+      await redis.set(`ceiling:bypass:${req.params.id}`, '1', 'EX', 1800);
+    } catch { /* Redis down — bypass won't persist; acceptable */ }
+    sendSuccess(res, { ok: true });
+  }),
+);
+
 registerTag('tables', 'Table CRUD, QR codes, and customer signals.');
 
 const jsonOk = {
@@ -254,6 +300,16 @@ registerPath('post', '/tables/{id}/request-extras', {
 });
 registerPath('post', '/tables/{id}/clean', {
   summary: 'Mark a table as cleaned (waiter/admin/manager) — clears `needs_cleaning`',
+  tags: ['tables'],
+  responses: jsonOk,
+});
+registerPath('post', '/tables/{id}/ordering-code', {
+  summary: 'Issue/rotate the short ordering code for a table (waiter/admin/manager)',
+  tags: ['tables'],
+  responses: { '201': { description: 'Created' } },
+});
+registerPath('delete', '/tables/{id}/order-ceiling', {
+  summary: 'Unlock ordering above the per-table ceiling for 30 min (waiter/admin/manager)',
   tags: ['tables'],
   responses: jsonOk,
 });

@@ -36,6 +36,10 @@ export function TableDetail({
   const order = pickPrimaryOrder(orders);
   const unpaidOrders = orders.filter((o) => o.paymentStatus !== 'paid');
   const billTotalMillimes = unpaidOrders.reduce((s, o) => s + o.totalMillimes, 0);
+  const activeOrderCount = orders.filter((o) =>
+    ['received', 'preparing', 'ready'].includes(o.status),
+  ).length;
+  const ceilingHit = activeOrderCount >= 6;
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const me = useAuthStore((s) => s.user);
@@ -45,6 +49,11 @@ export function TableDetail({
   const [tipInput, setTipInput] = useState('');
   const [showOrder, setShowOrder] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
+  const [codeModalOpen, setCodeModalOpen] = useState(false);
+  const [code, setCode] = useState<string | null>(null);
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [ceilingBusy, setCeilingBusy] = useState(false);
+  const [ceilingUnlocked, setCeilingUnlocked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -177,6 +186,53 @@ export function TableDetail({
     }
   };
 
+  const openCodeModal = async () => {
+    setCodeModalOpen(true);
+    if (code) return;
+    setCodeBusy(true);
+    try {
+      const result = await authedFetch((tk) => api.issueOrderingCode(tk, table.id));
+      setCode(result.code);
+    } catch (err) {
+      setError(getErrorMessage(err));
+      setCodeModalOpen(false);
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
+  // Auto-open code modal when customer has requested a code.
+  useEffect(() => {
+    if (call?.kind === 'code_request' && !codeModalOpen) {
+      void openCodeModal();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call?.kind]);
+
+  const rotateCode = async () => {
+    setCodeBusy(true);
+    try {
+      const result = await authedFetch((tk) => api.issueOrderingCode(tk, table.id));
+      setCode(result.code);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
+  const unlockCeiling = async () => {
+    setCeilingBusy(true);
+    try {
+      await authedFetch((tk) => api.resetTableOrderCeiling(tk, table.id));
+      setCeilingUnlocked(true);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setCeilingBusy(false);
+    }
+  };
+
   const markClean = async () => {
     setBusy(true);
     setError(null);
@@ -231,8 +287,105 @@ export function TableDetail({
         ) : null}
       </header>
 
+      {codeModalOpen && (
+        <div className="modal-backdrop" onClick={() => setCodeModalOpen(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <header>
+              <h2>{t('detail.code.title', { label: table.label })}</h2>
+              <button type="button" className="close btn-ghost" onClick={() => setCodeModalOpen(false)}>×</button>
+            </header>
+            <div className="body" style={{ textAlign: 'center' }}>
+              <p className="tf-caption" style={{ marginBottom: '0.75rem' }}>
+                {t('detail.code.sub')}
+              </p>
+              {codeBusy ? (
+                <div className="tf-w-detail__code-display tf-mono">…</div>
+              ) : code ? (
+                <div className="tf-w-detail__code-display tf-display">{code}</div>
+              ) : null}
+              <p className="tf-caption" style={{ marginTop: '0.5rem', fontSize: '0.78rem' }}>
+                {t('detail.code.expire')}
+              </p>
+            </div>
+            <footer>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={async () => {
+                  setCodeModalOpen(false);
+                  if (call?.kind === 'code_request') await ackCall();
+                }}
+              >
+                {call?.kind === 'code_request' ? t('detail.code.done') : t('detail.code.close')}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={rotateCode}
+                disabled={codeBusy}
+              >
+                {t('detail.code.rotate')}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+
       <div className="tf-w-detail__body">
         {error ? <div className="error-banner">{error}</div> : null}
+
+        {ceilingHit && !ceilingUnlocked ? (
+          <div className="tf-w-detail__ceiling">
+            <div>
+              <strong>{t('detail.code.ceilingWarning')}</strong>
+              <div className="tf-caption">
+                {t('detail.code.ceilingWarningSub', { count: activeOrderCount })}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-sm btn-warning"
+              onClick={unlockCeiling}
+              disabled={ceilingBusy}
+            >
+              {ceilingBusy
+                ? t('detail.code.ceilingUnlocking')
+                : t('detail.code.ceilingReset')}
+            </button>
+          </div>
+        ) : ceilingUnlocked ? (
+          <div className="tf-w-detail__ceiling tf-w-detail__ceiling--ok">
+            {t('detail.code.ceilingOk')}
+          </div>
+        ) : null}
+
+        {call?.kind === 'code_request' ? (
+          <div className="tf-w-detail__code-request">
+            <div>
+              <strong>{t('detail.code.requestTitle')}</strong>
+              <div className="tf-caption">{t('detail.code.requestSub')}</div>
+            </div>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={openCodeModal}
+              disabled={codeBusy}
+            >
+              {t('detail.code.give')}
+            </button>
+          </div>
+        ) : (
+          <div className="tf-w-detail__code-action">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={openCodeModal}
+            >
+              {t('detail.code.get')}
+            </button>
+          </div>
+        )}
+
         {pendingPaymentId ? (
           <div className="tf-w-detail__pending">
             <div>
@@ -426,6 +579,15 @@ export function TableDetail({
             disabled={busy}
           >
             {busy ? t('detail.saving') : t('detail.markClean')}
+          </button>
+        ) : call?.kind === 'code_request' ? (
+          <button
+            type="button"
+            className="tf-w-detail__cta tf-w-detail__cta--amber"
+            onClick={openCodeModal}
+            disabled={codeBusy}
+          >
+            {codeBusy ? t('detail.saving') : t('detail.code.give')}
           </button>
         ) : call ? (
           <button

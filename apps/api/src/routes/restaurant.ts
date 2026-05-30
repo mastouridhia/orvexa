@@ -45,6 +45,17 @@ restaurantRouter.patch(
   }),
 );
 
+// Echoes the caller's public IP so an admin, while on the café Wi-Fi, can
+// one-tap register that network for the `wifi` ordering gate.
+restaurantRouter.get(
+  '/restaurant/detect-ip',
+  requireAuth,
+  requireRole('admin', 'manager'),
+  asyncHandler(async (req, res) => {
+    sendSuccess(res, { ip: req.ip ?? '' });
+  }),
+);
+
 registerTag('restaurant', 'Restaurant settings.');
 
 const jsonOk = {
@@ -58,6 +69,11 @@ registerPath('get', '/restaurant', {
 });
 registerPath('patch', '/restaurant', {
   summary: 'Update restaurant settings (admin/manager)',
+  tags: ['restaurant'],
+  responses: jsonOk,
+});
+registerPath('get', '/restaurant/detect-ip', {
+  summary: "Echo the caller's public IP (admin/manager) — for registering the café network",
   tags: ['restaurant'],
   responses: jsonOk,
 });

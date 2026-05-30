@@ -1066,6 +1066,35 @@
 }
 
 /* ── Settings sheet ──────────────────────────────────── */
+/* LanguageSelector inside the settings sheet — pill buttons */
+.tf-settings-sheet .lang-selector {
+  display: flex;
+  gap: 0.5rem;
+}
+.tf-settings-sheet .lang-selector button {
+  flex: 1;
+  height: 46px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--fg-soft);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 130ms, border-color 130ms, color 130ms;
+}
+.tf-settings-sheet .lang-selector button:hover {
+  border-color: rgba(25, 20, 14, 0.2);
+  color: var(--fg);
+}
+.tf-settings-sheet .lang-selector button[aria-pressed='true'] {
+  background: var(--tf-accent-bg);
+  border-color: var(--tf-accent);
+  color: var(--tf-accent-ink);
+  font-weight: 600;
+}
+
 .tf-settings-sheet {
   position: fixed;
   inset-inline: 0;
@@ -1084,59 +1113,71 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1.25rem 0.85rem;
-  border-bottom: 1px solid var(--line);
+  padding: 0.35rem 1.1rem 0.9rem;
+  border-bottom: 1px solid rgba(25, 20, 14, 0.1);
 }
 .tf-settings-sheet__title {
   margin: 0;
-  font-size: 1.55rem;
+  font-size: 1.45rem;
   font-weight: 400;
+  letter-spacing: -0.3px;
 }
 .tf-settings-sheet__body {
   flex: 1;
   overflow-y: auto;
-  padding: 1.25rem 1.25rem calc(1.5rem + var(--safe-bottom));
+  padding: 1rem 1rem calc(1.5rem + var(--safe-bottom));
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 .tf-settings-card {
   background: var(--bg-elev);
-  border: 1px solid var(--line);
+  border: 1px solid rgba(25, 20, 14, 0.13);
   border-radius: 16px;
-  padding: 1rem 1.1rem;
+  padding: 1.1rem 1.2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
+  gap: 0.85rem;
+  box-shadow: 0 1px 2px rgba(25, 20, 14, 0.04), 0 2px 8px rgba(25, 20, 14, 0.04);
 }
 .tf-settings-card__head {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 .tf-settings-card__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--fg);
 }
 .tf-settings-card__sub {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--fg-soft);
+  line-height: 1.4;
 }
 .tf-settings-meta {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid rgba(25, 20, 14, 0.1);
 }
 .tf-settings-meta__row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 0.75rem;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(25, 20, 14, 0.07);
+}
+.tf-settings-meta__row:last-child {
+  border-bottom: none;
 }
 .tf-settings-meta__row dt {
   color: var(--fg-soft);
@@ -1145,7 +1186,8 @@
 .tf-settings-meta__row dd {
   margin: 0;
   color: var(--fg);
-  font-weight: 500;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .tf-cartsheet__grabber {
   padding: 10px 0 4px;
@@ -2135,6 +2177,205 @@
 .tf-feedback-card__sent-text {
   font-size: 14px;
   font-weight: 500;
+}
+
+/* ── Boot-level WiFi gate (shown in SessionBoot before menu loads) ───────── */
+.tf-boot-gate {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 32px;
+  gap: 0;
+}
+.tf-boot-gate__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 40px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-soft);
+  margin-bottom: 24px;
+}
+.tf-boot-gate__title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--fg);
+  margin: 0 0 10px;
+}
+.tf-boot-gate__body {
+  font-size: 15px;
+  color: var(--fg-soft);
+  line-height: 1.55;
+  margin: 0 0 32px;
+  max-width: 300px;
+}
+.tf-boot-gate__retry {
+  height: 48px;
+  padding: 0 28px;
+  border-radius: 24px;
+  border: 0;
+  background: var(--tf-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: var(--shadow-saffron);
+  cursor: pointer;
+}
+
+/* ── Gate screen (ordering-access: wifi / code) ──────────────────────────── */
+.tf-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 28px 24px 8px;
+  gap: 0;
+}
+.tf-gate__icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 36px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-soft);
+  margin-bottom: 20px;
+}
+.tf-gate__title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  color: var(--fg);
+  margin: 0 0 8px;
+}
+.tf-gate__body {
+  font-size: 14px;
+  color: var(--fg-soft);
+  line-height: 1.55;
+  margin: 0 0 20px;
+  max-width: 300px;
+}
+
+/* Call-waiter CTA */
+.tf-gate__call {
+  width: 100%;
+  height: 52px;
+  border-radius: 26px;
+  border: 2px solid var(--tf-accent);
+  background: transparent;
+  color: var(--tf-accent);
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 20px;
+}
+.tf-gate__call:active {
+  background: var(--tf-accent-bg);
+}
+.tf-gate__call.is-sent {
+  border-color: var(--success-ink, #1d6339);
+  color: var(--success-ink, #1d6339);
+  background: var(--success-bg, #d1fae5);
+  cursor: default;
+}
+
+/* "or enter code" separator */
+.tf-gate__sep {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.tf-gate__sep::before,
+.tf-gate__sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.tf-gate__sep span {
+  font-size: 12px;
+  color: var(--fg-faint);
+  white-space: nowrap;
+}
+
+/* Large monospace code input */
+.tf-gate__input {
+  width: 100%;
+  height: 68px;
+  border-radius: 16px;
+  border: 2px solid var(--line);
+  background: var(--bg-elev);
+  font-size: 34px;
+  letter-spacing: 14px;
+  text-indent: 14px;
+  text-align: center;
+  color: var(--fg);
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tf-gate__input:focus {
+  border-color: var(--tf-accent);
+  outline: none;
+}
+
+.tf-gate__error {
+  font-size: 13px;
+  color: var(--danger-ink, #b91c1c);
+  margin: -4px 0 10px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Confirm / submit button */
+.tf-gate__submit {
+  width: 100%;
+  height: 52px;
+  border-radius: 26px;
+  border: 0;
+  background: var(--tf-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-saffron);
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+.tf-gate__submit:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Dismiss link */
+.tf-gate__dismiss {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--fg-soft);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 6px 0 2px;
+  cursor: pointer;
 }
 
 /* ── Status pill (for cancelled/served labels in tracking) ───────────────── */

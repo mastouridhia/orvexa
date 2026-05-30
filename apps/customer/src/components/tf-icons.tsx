@@ -133,3 +133,22 @@ export function IconSettings({ size = 18, ...rest }: IconProps) {
     </svg>
   );
 }
+export function IconWifiOff({ size = 24, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <line x1="1" y1="1" x2="23" y2="23" />
+      <path d="M16.7 16.7A7.5 7.5 0 0 1 12 18c-2.1 0-4-.8-5.4-2.1" />
+      <path d="M6.6 6.6A10.5 10.5 0 0 0 2 12c2.8-2.8 6.5-4.5 10.5-4.5.4 0 .8 0 1.2.1" />
+      <path d="M10.7 10.7A3.5 3.5 0 0 1 12 10.5c2 0 3.5 1.5 3.5 3.5" />
+      <path d="M19 12.3C20.3 10.8 21 8.9 21 7c-2.5 0-4.8.8-6.7 2.2" />
+    </svg>
+  );
+}
+export function IconLock({ size = 24, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}

@@ -24,7 +24,8 @@
     "eating": "À table",
     "paying": "Encaissement",
     "clean": "À nettoyer",
-    "call": "Sonne"
+    "call": "Sonne",
+    "needs_code": "Code demandé"
   },
 
   "floor": {
@@ -138,6 +139,24 @@
     "cancelOrder": "Annuler la commande",
     "cancelOrderConfirm": "Annuler cette commande ?",
     "saving": "Enregistrement…",
+
+    "code": {
+      "get": "Obtenir un code",
+      "give": "Donner le code",
+      "done": "Donné — terminé",
+      "requestTitle": "Le client a besoin du code de commande",
+      "requestSub": "Il n'est pas sur le WiFi du restaurant.",
+      "title": "Code · Table {{label}}",
+      "sub": "Lisez ce code au client.",
+      "expire": "Valable 6 h · réinitialisé à la fermeture de la table",
+      "rotate": "Émettre un nouveau code",
+      "close": "Fermer",
+      "ceilingWarning": "Limite de commandes atteinte",
+      "ceilingWarningSub": "Cette table a {{count}} commandes ouvertes. Autoriser plus ?",
+      "ceilingReset": "Autoriser plus de commandes",
+      "ceilingUnlocking": "Déverrouillage…",
+      "ceilingOk": "Déverrouillé ✓ — commandes autorisées 30 min"
+    },
 
     "payment": {
       "title": "Paiement",

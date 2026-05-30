@@ -9,7 +9,7 @@ Every task needed to ship Orvexa. We tick each one off together.
 - `[x]` done
 - `[-]` skipped / not needed (with reason)
 
-Last updated: 2026-04-26 (Phase 18.23 closed — ServicePulse 15-min bar chart wired into the admin dashboard on a real `/reports/sales?granularity=15min` endpoint)
+Last updated: 2026-05-29 (Phase 23 opened — anti-spam ordering access gate: WiFi / waiter-code presence checks so a photographed QR can't be used to spam orders from off-premises)
 
 ---
 
@@ -591,9 +591,51 @@ Systematic pass against the 7-area stability checklist. Goal: no major crashes, 
 
 ---
 
+## Phase 23 — Anti-Spam / Ordering Access Gate
+
+**Problem.** The printed QR encodes a stable public slug (`tables.public_slug`, never rotates). A photo — or decoding the QR's URL — is enough to open sessions and place orders forever, from anywhere. Per-volume rate limits only slow this; they don't stop an off-premises spammer flooding the kitchen. **Fix: prove the customer is physically present before accepting an order.** Two presence proofs, admin-selectable, plus volume backstops.
+
+Proxy verified safe for IP-based checks: single nginx hop + `trust proxy = 1` → `req.ip` is the real client IP and is **not** spoofable (a forged `X-Forwarded-For` gets the attacker's real IP appended after it).
+
+**Modes** (`restaurants.order_gate_mode`): `off` (today's behavior) · `wifi` (req.ip ∈ allowed networks) · `code` (waiter hands a short code, customer enters it) · `wifi_or_code` (either — **default recommendation**: WiFi = zero-friction self-serve, others get a waiter code; self-healing if the café IP drifts).
+
+### 23.1 Shared + DB foundation
+
+- [x] 23.1 `packages/shared`: add `OrderGateMode` type + zod enum; add `ApiErrorCode` entries `NOT_ON_PREMISES` (WiFi fail) and `TABLE_NOT_OPEN` (code fail); add `VerifyTableCodeRequest` + `DetectIpResponse` + restaurant-settings schema fields (`orderGateMode`, `allowedNetworks`) + `CustomerSession` exposes `orderGateMode`/`presenceVerified`.
+- [x] 23.2 Migration `0019_ordering_access_gate`: `restaurants.order_gate_mode` (default `off`), `restaurants.allowed_networks text[]`; `tables.ordering_code text`, `tables.ordering_code_expires_at timestamptz`; `customer_sessions.presence_verified_at timestamptz`. All nullable/defaulted — additive, safe on the live DB. Journal entry added.
+
+### 23.2 API — the gate
+
+- [x] 23.3 `utils/net.ts`: `ipInAllowedList(ip, cidrs)` — dependency-free (IPv4 exact + CIDR, IPv6 CIDR, bare IPv6 matched on /64). Also `parseNetwork`/`isValidNetwork` for settings validation.
+- [x] 23.4 `middleware/presence.ts` (`requirePresence`): wired on `POST /orders` + `POST /orders/:id/items` (after `orderRateLimit`). Reads gate mode; `wifi` → `ipInAllowedList(req.ip)`; `code` → `presenceVerifiedAt` set; `wifi_or_code` → either. Staff order routes untouched. Throws `NotOnPremisesError`/`TableNotOpenError`.
+- [x] 23.5 `POST /sessions/verify-code` (customer session + `authRateLimit`): `CustomerSessionService.verifyCode` compares to the table's active `ordering_code`; on match sets `presence_verified_at`. Attempt cap (5 fails → `clearOrderingCode`) via `utils/rate-attempts.ts` (Redis + in-memory fallback).
+- [x] 23.6 `POST /tables/:id/ordering-code` (waiter/manager/admin) → `TableService.issueOrderingCode` (4-digit, 6h safety expiry). `resetGuestStateForTable` now also `clearOrderingCode` so a leaked code dies on free/cleaning.
+- [x] 23.7 `GET /restaurant/detect-ip` (admin/manager): returns `{ ip: req.ip }` for one-tap café-network registration.
+- [x] 23.8 Restaurant settings PATCH accepts `orderGateMode` + `allowedNetworks` (validated via `isValidNetwork`); `orderGateMode`/`presenceVerified` exposed to the customer app on the session open/renew/verify responses.
+
+### 23.3 Frontends
+
+- [x] 23.9 Admin "Ordering access" settings card: mode dropdown, allowed-networks list + "Use this café's current internet" button (calls detect-ip), helper text per mode.
+- [x] 23.10 Waiter UI: per-table "Get code" action → shows the 4-digit code to read out; open/closed indicator. Also: ceiling warning banner + "Allow more orders" unlock button.
+- [x] 23.11 Customer UI: catch `NOT_ON_PREMISES` / `TABLE_NOT_OPEN` on order → friendly screen ("Connect to <café> WiFi to order, or ask your waiter for a code") + code-entry field calling verify-code. i18n keys in ar/fr/en.
+
+### 23.4 Volume backstops (independent of mode)
+
+- [x] 23.12 Fix session-mint hole: dropped `skipSuccessfulRequests` on the `/sessions` limiter (new `sessionMintLimit`); kept `authRateLimit` for login/refresh only.
+- [x] 23.13 Per-table order ceiling: DB count of active orders (≥6 → 429 RATE_LIMITED); waiter/manager/admin can unlock via `DELETE /tables/:id/order-ceiling` (Redis bypass key, 30-min TTL). Waiter app shows ceiling warning banner + "Allow more orders" CTA.
+- [x] 23.14 Idempotency-Key on `POST /orders` (Redis, ~2-min TTL): same `x-idempotency-key` within 2 min returns cached response — kills double-taps and retry duplicates.
+
+### 23.5 Tests
+
+- [x] 23.15 API tests: `net.test.ts` (IPv4 exact/CIDR, IPv6 /64 prefix, IPv4-mapped); `presence.test.ts` (gate modes off/wifi/code/wifi_or_code, verify-code happy + brute-force lockout, staff bypass, idempotency dedup, order ceiling + waiter unlock). 18 test files, 134 tests green.
+
+---
+
 ## Running Activity Log
 
 As we complete tasks, append short entries here with date + task number.
+
+- 2026-05-30 — Phase 23 (23.1–23.15) — Full ordering-access gate shipped. **Shared/DB (23.1–23.2)**: `OrderGateMode` type + zod enum; `ApiErrorCode` entries `NOT_ON_PREMISES`/`TABLE_NOT_OPEN`; migration 0019 adds `restaurants.order_gate_mode`, `restaurants.allowed_networks`, `tables.ordering_code`, `tables.ordering_code_expires_at`, `customer_sessions.presence_verified_at`. **API gate (23.3–23.8)**: `utils/net.ts` — dependency-free IPv4 exact/CIDR + IPv6 CIDR + bare-v6 /64 matcher; `middleware/presence.ts` (`requirePresence`) wired on `POST /orders` + `POST /orders/:id/items`; `POST /sessions/verify-code` with 5-attempt brute-force lockout; `POST /tables/:id/ordering-code` (4-digit, 6h TTL); `GET /restaurant/detect-ip`; restaurant PATCH accepts `orderGateMode`/`allowedNetworks`. **Frontends (23.9–23.11)**: admin "Ordering access" settings card (mode dropdown, networks list, detect-IP button, per-mode hint, i18n ar/fr/en); waiter "Get code" modal (large 4-digit display, rotate, copy) + ceiling warning banner + "Allow more orders" unlock; customer gate screen catches `NOT_ON_PREMISES`/`TABLE_NOT_OPEN` → WiFi message or code-entry form, calls `verify-code` before retrying order. **Volume backstops (23.12–23.14)**: session-mint rate limit decoupled from login limiter (`sessionMintLimit`, no `skipSuccessfulRequests`); per-table order ceiling (DB count ≥6 → 429 `RATE_LIMITED`, `DELETE /tables/:id/order-ceiling` Redis bypass 30-min); idempotency key on `POST /orders` (Redis 2-min TTL, 200 on cache hit). **Tests (23.15)**: `net.test.ts` (11 unit tests — IPv4/CIDR/v6/IPv4-mapped); `presence.test.ts` (23 integration tests — all 4 gate modes allow/deny, verify-code happy + lockout, staff bypass, idempotency dedup, ceiling + waiter unlock). 18 test files, 134 tests green.
 
 - 2026-05-25 — Phase 22 (22.26) — Edge-case tests + security fixes. 16 new tests across 3 files (auth token invalidation, order status transitions, customer sessions). Fixed two real bugs found by the tests: refresh token collision (added `jti: randomUUID()` to every refresh token so same-second logins can't produce identical JWTs) and waiter role bypass (added `ROLE_TRANSITIONS` map to `OrderService.updateStatus` so kitchen-only transitions return 403 for waiters). Fixed missing Drizzle journal entries for migrations 0017–0018. 98/98 API tests passing.
 

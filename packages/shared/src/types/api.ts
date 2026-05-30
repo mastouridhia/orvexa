@@ -7,6 +7,10 @@ export const ApiErrorCode = {
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
+  // Ordering-access gate: customer is not on the café network (wifi mode).
+  NOT_ON_PREMISES: 'NOT_ON_PREMISES',
+  // Ordering-access gate: table has no active waiter code / customer not verified.
+  TABLE_NOT_OPEN: 'TABLE_NOT_OPEN',
   INTERNAL: 'INTERNAL',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];

@@ -72,6 +72,17 @@ export class TableRepository extends BaseRepository {
     return row ?? null;
   }
 
+  async setOrderingCode(id: string, code: string, expiresAt: Date): Promise<TableRow | null> {
+    return this.update(id, { orderingCode: code, orderingCodeExpiresAt: expiresAt });
+  }
+
+  async clearOrderingCode(id: string): Promise<void> {
+    await this.db
+      .update(tables)
+      .set({ orderingCode: null, orderingCodeExpiresAt: null, updatedAt: new Date() })
+      .where(eq(tables.id, id));
+  }
+
   async delete(id: string): Promise<boolean> {
     const rows = await this.db.delete(tables).where(eq(tables.id, id)).returning({ id: tables.id });
     return rows.length > 0;

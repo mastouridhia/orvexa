@@ -1,6 +1,7 @@
 import type {
   Currency,
   LanguageCode,
+  OrderGateMode,
   PatchRestaurantRequest,
   PaymentPoint,
   Restaurant,
@@ -10,7 +11,8 @@ import {
   type RestaurantPatch,
   type RestaurantRow,
 } from '../repositories/restaurant.js';
-import { NotFoundError } from '../utils/errors.js';
+import { NotFoundError, ValidationError } from '../utils/errors.js';
+import { isValidNetwork } from '../utils/net.js';
 import { cacheGet, cacheSet, cacheDel } from '../cache/helpers.js';
 import { CacheKey, TTL } from '../cache/keys.js';
 
@@ -27,6 +29,8 @@ export function toRestaurant(row: RestaurantRow): Restaurant {
     defaultPrepMinutes: row.defaultPrepMinutes,
     timezone: row.timezone,
     paymentPoint: row.paymentPoint as PaymentPoint,
+    orderGateMode: row.orderGateMode as OrderGateMode,
+    allowedNetworks: row.allowedNetworks,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -61,6 +65,15 @@ export class RestaurantService {
     if (input.defaultPrepMinutes !== undefined) patch.defaultPrepMinutes = input.defaultPrepMinutes;
     if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.paymentPoint !== undefined) patch.paymentPoint = input.paymentPoint;
+    if (input.orderGateMode !== undefined) patch.orderGateMode = input.orderGateMode;
+    if (input.allowedNetworks !== undefined) {
+      const cleaned = input.allowedNetworks.map((n) => n.trim()).filter(Boolean);
+      const invalid = cleaned.filter((n) => !isValidNetwork(n));
+      if (invalid.length > 0) {
+        throw new ValidationError(`Invalid network entries: ${invalid.join(', ')}`);
+      }
+      patch.allowedNetworks = cleaned;
+    }
 
     if (Object.keys(patch).length === 0) {
       return this.get(id);

@@ -80,11 +80,13 @@ export function TablesList({
               const alertClass =
                 state === 'call'
                   ? 'is-alert is-alert--call'
-                  : state === 'ready'
-                    ? 'is-alert is-alert--ready'
-                    : state === 'paying'
-                      ? 'is-alert is-alert--paying'
-                      : '';
+                  : state === 'needs_code'
+                    ? 'is-alert is-alert--needs_code'
+                    : state === 'ready'
+                      ? 'is-alert is-alert--ready'
+                      : state === 'paying'
+                        ? 'is-alert is-alert--paying'
+                        : '';
               return (
                 <button
                   key={table.id}

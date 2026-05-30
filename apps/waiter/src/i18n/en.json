@@ -24,7 +24,8 @@
     "eating": "Eating",
     "paying": "Paying",
     "clean": "Needs cleaning",
-    "call": "Calling"
+    "call": "Calling",
+    "needs_code": "Needs code"
   },
 
   "floor": {
@@ -138,6 +139,24 @@
     "cancelOrder": "Cancel order",
     "cancelOrderConfirm": "Cancel this order?",
     "saving": "Saving…",
+
+    "code": {
+      "get": "Get code",
+      "give": "Give code",
+      "done": "Given — done",
+      "requestTitle": "Customer needs the ordering code",
+      "requestSub": "They are not on the restaurant WiFi.",
+      "title": "Code · Table {{label}}",
+      "sub": "Read this code to the customer.",
+      "expire": "Valid 6 h · resets when table closes",
+      "rotate": "Issue new code",
+      "close": "Close",
+      "ceilingWarning": "Order limit reached",
+      "ceilingWarningSub": "This table has {{count}} open orders. Allow more?",
+      "ceilingReset": "Allow more orders",
+      "ceilingUnlocking": "Unlocking…",
+      "ceilingOk": "Unlocked ✓ — orders allowed for 30 min"
+    },
 
     "payment": {
       "title": "Payment",

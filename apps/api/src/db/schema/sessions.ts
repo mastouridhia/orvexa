@@ -18,6 +18,9 @@ export const customerSessions = pgTable(
     locale: text('locale', { enum: ['ar', 'fr', 'en'] }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     absoluteExpiresAt: timestamp('absolute_expires_at', { withTimezone: true }).notNull(),
+    // Set when the guest passes the ordering-access gate (entered a valid table
+    // code). Null until verified; gate treats null as "not yet present".
+    presenceVerifiedAt: timestamp('presence_verified_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

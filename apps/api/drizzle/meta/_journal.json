@@ -134,6 +134,13 @@
       "when": 1748000400000,
       "tag": "0018_dishes_soft_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1748000500000,
+      "tag": "0019_ordering_access_gate",
+      "breakpoints": true
     }
   ]
 }

@@ -180,7 +180,7 @@ export function Dashboard() {
   const onCallCleared = useCallback((id: string) => {
     setCalls((prev) => {
       const cleared = prev.find((c) => c.id === id);
-      if (cleared) {
+      if (cleared && cleared.kind === 'request_bill') {
         setPendingCleanTables((s) => {
           const next = new Set(s);
           next.add(cleared.tableId);

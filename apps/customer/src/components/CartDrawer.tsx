@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { LanguageCode } from '@orvexa/shared';
 import { useEscapeKey, useFocusTrap } from '@orvexa/ui';
 import { api } from '../api/queries.js';
+import { ApiError } from '../api/client.js';
 import { handleApiError } from '../api/errorMessage.js';
 import {
   buildPlaceOrderItems,
@@ -16,7 +17,7 @@ import {
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
-import { IconArrowRight, IconBag, IconMinus, IconPlus } from './tf-icons.js';
+import { IconArrowRight, IconBag, IconLock, IconMinus, IconPlus, IconWifiOff } from './tf-icons.js';
 
 export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () => void }) {
   const { t } = useTranslation();
@@ -32,6 +33,12 @@ export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () 
   const rememberOrder = useOrderRefsStore((s) => s.remember);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gateCode, setGateCode] = useState<'NOT_ON_PREMISES' | 'TABLE_NOT_OPEN' | null>(null);
+  const [codeInput, setCodeInput] = useState('');
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [waiterCalled, setWaiterCalled] = useState(false);
+  const [waiterBusy, setWaiterBusy] = useState(false);
   const sheetRef = useFocusTrap<HTMLDivElement>();
   useEscapeKey(onClose);
 
@@ -67,10 +74,60 @@ export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () 
         }
       }
     } catch (err) {
+      if (err instanceof ApiError && err.code === 'NOT_ON_PREMISES') {
+        setGateCode('NOT_ON_PREMISES');
+        return;
+      }
+      if (err instanceof ApiError && err.code === 'TABLE_NOT_OPEN') {
+        setGateCode('TABLE_NOT_OPEN');
+        return;
+      }
       setError(handleApiError(err, t));
     } finally {
       setBusy(false);
     }
+  };
+
+  const submitCode = async () => {
+    if (!token || !codeInput.trim()) return;
+    setCodeBusy(true);
+    setCodeError(null);
+    try {
+      const result = await api.verifyCode(token, codeInput.trim());
+      useSessionStore.getState().setSession(result);
+      setGateCode(null);
+      setCodeInput('');
+      await checkout();
+    } catch (err) {
+      if (err instanceof ApiError && (err.status === 403 || err.status === 429)) {
+        setCodeError(t('gate.codeError'));
+      } else {
+        setCodeError(handleApiError(err, t));
+      }
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
+  const notifyWaiter = async () => {
+    if (!token || !session?.tableId || waiterCalled) return;
+    setWaiterBusy(true);
+    try {
+      await api.requestCode(token, session.tableId);
+      setWaiterCalled(true);
+    } catch {
+      // best-effort — don't block the user if this fails
+      setWaiterCalled(true);
+    } finally {
+      setWaiterBusy(false);
+    }
+  };
+
+  const dismissGate = () => {
+    setGateCode(null);
+    setCodeInput('');
+    setCodeError(null);
+    setWaiterCalled(false);
   };
 
   const tableShort = session?.tableLabel ?? '—';
@@ -112,7 +169,81 @@ export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () 
         </div>
 
         <div className="tf-cartsheet__body">
-          {lines.length === 0 ? (
+          {gateCode ? (
+            <div className="tf-gate">
+              <div className="tf-gate__icon" aria-hidden="true">
+                {gateCode === 'NOT_ON_PREMISES'
+                  ? <IconWifiOff size={32} />
+                  : <IconLock size={32} />}
+              </div>
+
+              {gateCode === 'NOT_ON_PREMISES' ? (
+                <>
+                  <h3 className="tf-gate__title">{t('gate.wifiTitle')}</h3>
+                  <p className="tf-gate__body">
+                    {t('gate.wifiBody', { name: restaurantName })}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="tf-gate__title">{t('gate.codeTitle')}</h3>
+                  <p className="tf-gate__body">{t('gate.codeBody')}</p>
+                </>
+              )}
+
+              {/* Call waiter — primary action for both cases */}
+              <button
+                type="button"
+                className={`tf-gate__call${waiterCalled ? ' is-sent' : ''}`}
+                onClick={notifyWaiter}
+                disabled={waiterCalled || waiterBusy}
+              >
+                {waiterCalled
+                  ? `✓ ${t('gate.waiterAsked')}`
+                  : t('gate.askWaiter')}
+              </button>
+
+              {/* Code input — shown when code entry is meaningful */}
+              {(gateCode === 'TABLE_NOT_OPEN' ||
+                session?.orderGateMode === 'wifi_or_code') && (
+                <>
+                  <div className="tf-gate__sep">
+                    <span>{t('gate.wifiOrCode')}</span>
+                  </div>
+                  <input
+                    className="tf-gate__input tf-mono"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="· · · ·"
+                    value={codeInput}
+                    onChange={(e) =>
+                      setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 4))
+                    }
+                    onKeyDown={(e) => e.key === 'Enter' && codeInput.length === 4 && submitCode()}
+                    autoFocus
+                  />
+                  {codeError && <p className="tf-gate__error">{codeError}</p>}
+                  <button
+                    type="button"
+                    className="tf-gate__submit"
+                    disabled={codeBusy || codeInput.length < 4}
+                    onClick={submitCode}
+                  >
+                    {codeBusy ? t('gate.codeVerifying') : t('gate.codeSubmit')}
+                  </button>
+                </>
+              )}
+
+              <button
+                type="button"
+                className="tf-gate__dismiss"
+                onClick={dismissGate}
+              >
+                {t('gate.dismiss')}
+              </button>
+            </div>
+          ) : lines.length === 0 ? (
             <div className="tf-cart-empty">
               <div className="tf-cart-empty__icon">
                 <IconBag />
@@ -195,7 +326,7 @@ export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () 
           {error ? <div className="error-banner">{error}</div> : null}
         </div>
 
-        {lines.length > 0 ? (
+        {lines.length > 0 && !gateCode ? (
           <div className="tf-cartsheet__bar">
             <button type="button" className="tf-cartsheet__cta" disabled={busy} onClick={checkout}>
               <span>{busy ? t('actions.calling') : t('cart.confirmOrder')}</span>

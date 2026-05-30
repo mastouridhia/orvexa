@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { IsoDateTimeSchema, UuidSchema } from './common.js';
 
-export const WaiterCallKindSchema = z.enum(['call_waiter', 'request_bill', 'request_extras']);
+export const WaiterCallKindSchema = z.enum(['call_waiter', 'request_bill', 'request_extras', 'code_request']);
 export type WaiterCallKind = z.infer<typeof WaiterCallKindSchema>;
 
 export const WaiterCallSchema = z.object({

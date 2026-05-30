@@ -47,6 +47,20 @@ async function loadFullOrders(tx: Db, rows: OrderRow[]): Promise<FullOrder[]> {
 }
 
 export class OrderRepository extends BaseRepository {
+  async countActiveForTable(restaurantId: string, tableId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ n: count() })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          eq(orders.tableId, tableId),
+          inArray(orders.status, [...ACTIVE_ORDER_STATUSES]),
+        ),
+      );
+    return row?.n ?? 0;
+  }
+
   async listActiveForTables(tableIds: string[]): Promise<OrderRow[]> {
     if (tableIds.length === 0) return [];
     return this.db

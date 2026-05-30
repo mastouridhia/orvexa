@@ -17,6 +17,7 @@ declare global {
         tableId: string;
         tableDayTokenId: string;
         locale: 'ar' | 'fr' | 'en';
+        presenceVerifiedAt: Date | null;
       };
     }
   }

@@ -58,6 +58,18 @@ export class RateLimitError extends HttpError {
   }
 }
 
+export class NotOnPremisesError extends HttpError {
+  constructor(message = 'You must be at the restaurant to place an order', details?: unknown) {
+    super(403, ApiErrorCode.NOT_ON_PREMISES, message, { details });
+  }
+}
+
+export class TableNotOpenError extends HttpError {
+  constructor(message = 'Ask your waiter for the table code to start ordering', details?: unknown) {
+    super(403, ApiErrorCode.TABLE_NOT_OPEN, message, { details });
+  }
+}
+
 export class InternalError extends HttpError {
   constructor(message = 'Internal server error', options: { cause?: unknown } = {}) {
     super(500, ApiErrorCode.INTERNAL, message, { expose: false, cause: options.cause });

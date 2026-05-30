@@ -4,6 +4,7 @@ import type {
   Dish,
   LanguageCode,
   Order,
+  OrderGateMode,
   PlaceOrderRequest,
 } from '@orvexa/shared';
 import { apiRequest } from './client.js';
@@ -18,6 +19,8 @@ export type CustomerSessionResponse = {
     tableLabel: string;
     locale: LanguageCode;
     expiresAt: string;
+    orderGateMode: OrderGateMode;
+    presenceVerified: boolean;
   };
   token: string;
 };
@@ -47,6 +50,13 @@ export const api = {
       token,
     });
   },
+  verifyCode(token: string, code: string) {
+    return apiRequest<CustomerSessionResponse>('/sessions/verify-code', {
+      method: 'POST',
+      token,
+      body: { code },
+    });
+  },
   getRestaurant(token: string) {
     return apiRequest<RestaurantInfo>('/restaurant', { token });
   },
@@ -73,6 +83,12 @@ export const api = {
   },
   callWaiter(token: string, tableId: string) {
     return apiRequest<{ id: string; createdAt: string }>(`/tables/${tableId}/call-waiter`, {
+      method: 'POST',
+      token,
+    });
+  },
+  requestCode(token: string, tableId: string) {
+    return apiRequest<{ id: string; createdAt: string }>(`/tables/${tableId}/request-code`, {
       method: 'POST',
       token,
     });

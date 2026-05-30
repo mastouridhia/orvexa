@@ -11,7 +11,9 @@ import {
   IconLogout,
   IconMonitor,
   IconReceipt,
+  IconShield,
 } from '../components/tf-icons.js';
+import type { OrderGateMode } from '@orvexa/shared';
 
 const LANGS: LanguageCode[] = ['fr', 'ar', 'en'];
 const LANG_LABELS: Record<LanguageCode, string> = { fr: 'Français', ar: 'العربية', en: 'English' };
@@ -31,6 +33,10 @@ export function Settings() {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
   const resetInputRef = useRef<HTMLInputElement>(null);
+
+  const [newNetwork, setNewNetwork] = useState('');
+  const [detecting, setDetecting] = useState(false);
+  const [detectedIp, setDetectedIp] = useState<string | null>(null);
 
   const RESET_KEYWORD = t('settings.dangerZone.confirmKeyword');
 
@@ -75,6 +81,36 @@ export function Settings() {
     }
   };
 
+  const addNetwork = () => {
+    if (!restaurant || !newNetwork.trim()) return;
+    const n = newNetwork.trim();
+    if (restaurant.allowedNetworks.includes(n)) { setNewNetwork(''); return; }
+    setRestaurant({ ...restaurant, allowedNetworks: [...restaurant.allowedNetworks, n] });
+    setNewNetwork('');
+  };
+
+  const removeNetwork = (n: string) => {
+    if (!restaurant) return;
+    setRestaurant({ ...restaurant, allowedNetworks: restaurant.allowedNetworks.filter((x) => x !== n) });
+  };
+
+  const detectAndAddIp = async () => {
+    if (!restaurant) return;
+    setDetecting(true);
+    setDetectedIp(null);
+    try {
+      const { ip } = await authedFetch((tk) => api.detectIp(tk));
+      setDetectedIp(ip);
+      if (!restaurant.allowedNetworks.includes(ip)) {
+        setRestaurant({ ...restaurant, allowedNetworks: [...restaurant.allowedNetworks, ip] });
+      }
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setDetecting(false);
+    }
+  };
+
   const save = async () => {
     if (!restaurant) return;
     setBusy(true);
@@ -89,6 +125,8 @@ export function Settings() {
           servicePercent: restaurant.servicePercent,
           timezone: restaurant.timezone,
           paymentPoint: restaurant.paymentPoint,
+          orderGateMode: restaurant.orderGateMode,
+          allowedNetworks: restaurant.allowedNetworks,
         }),
       );
       setRestaurant(updated);
@@ -308,6 +346,100 @@ export function Settings() {
           </div>
         </section>
 
+        {/* ── Ordering access ── */}
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconShield />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">
+                {t('settings.orderingAccess.section')}
+              </div>
+              <div className="tf-a-settings__section-sub">
+                {t('settings.orderingAccess.sectionSub')}
+              </div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <label className="tf-a-settings__field">
+              <span className="tf-a-settings__field-label">
+                {t('settings.orderingAccess.mode')}
+              </span>
+              <select
+                value={restaurant.orderGateMode}
+                onChange={(e) =>
+                  setRestaurant({ ...restaurant, orderGateMode: e.target.value as OrderGateMode })
+                }
+              >
+                {(['off', 'wifi', 'code', 'wifi_or_code'] as OrderGateMode[]).map((m) => (
+                  <option key={m} value={m}>
+                    {t(`settings.orderingAccess.modes.${m}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="tf-a-settings__note">
+              {t(`settings.orderingAccess.hint.${restaurant.orderGateMode}`)}
+            </p>
+            {(restaurant.orderGateMode === 'wifi' || restaurant.orderGateMode === 'wifi_or_code') && (
+              <div className="tf-a-settings__networks-section">
+                <span className="tf-a-settings__field-label">
+                  {t('settings.orderingAccess.networks')}
+                </span>
+                <div className="tf-a-settings__networks">
+                  {restaurant.allowedNetworks.map((net) => (
+                    <div key={net} className="tf-a-settings__network-row">
+                      <span className="tf-a-settings__network-addr">{net}</span>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => removeNetwork(net)}
+                        aria-label={t('common.remove')}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="tf-a-settings__network-add">
+                  <input
+                    type="text"
+                    className="tf-a-settings__network-input"
+                    placeholder={t('settings.orderingAccess.networkPlaceholder')}
+                    value={newNetwork}
+                    onChange={(e) => setNewNetwork(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addNetwork()}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-primary"
+                    onClick={addNetwork}
+                    disabled={!newNetwork.trim()}
+                  >
+                    {t('settings.orderingAccess.addNetwork')}
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={detectAndAddIp}
+                  disabled={detecting}
+                >
+                  {detecting
+                    ? t('settings.orderingAccess.detecting')
+                    : t('settings.orderingAccess.detectIp')}
+                </button>
+                {detectedIp && (
+                  <p className="tf-a-settings__note">
+                    {t('settings.orderingAccess.detected', { ip: detectedIp })}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* ── Interface ── */}
         <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
@@ -362,17 +494,9 @@ export function Settings() {
               type="button"
               className="btn btn-ghost"
               onClick={logout}
-              aria-label={t('nav.logout')}
-              title={t('nav.logout')}
-              style={{
-                width: 44,
-                height: 44,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
             >
               <IconLogout />
+              {t('nav.logout')}
             </button>
           </div>
         </section>

@@ -73,6 +73,9 @@ export const api = {
   patchRestaurant(token: string, body: PatchRestaurantRequest) {
     return apiRequest<Restaurant>('/restaurant', { method: 'PATCH', token, body });
   },
+  detectIp(token: string) {
+    return apiRequest<{ ip: string }>('/restaurant/detect-ip', { token });
+  },
 
   // Dashboard + Reports
   getDashboardSummary(token: string) {

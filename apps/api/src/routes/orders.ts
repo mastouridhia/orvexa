@@ -23,11 +23,17 @@ import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
 import { orderRateLimit } from '../middleware/rateLimit.js';
+import { requirePresence } from '../middleware/presence.js';
+import { redis } from '../cache/client.js';
+import { OrderRepository } from '../repositories/order.js';
+import { RateLimitError } from '../utils/errors.js';
 import { registerPath, registerTag } from '../utils/openapi.js';
 import { getBus } from '../realtime/bus.js';
 
 const service = new OrderService();
 const tableService = new TableService();
+const orderRepo = new OrderRepository();
+const ORDER_CEILING = 6;
 
 async function emitTableStatus(restaurantId: string, tableId: string): Promise<void> {
   const status = await tableService.deriveForTable(restaurantId, tableId);
@@ -45,19 +51,60 @@ ordersRouter.post(
   '/orders',
   requireCustomerSession,
   orderRateLimit,
+  requirePresence,
   validate({ body: PlaceOrderRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
-    const orders = await service.placeMulti({
-      restaurantId: req.customerSession.restaurantId,
-      tableId: req.customerSession.tableId,
+    const { restaurantId, tableId } = req.customerSession;
+
+    // 23.14 Idempotency: return the cached response if this key was seen in the last 2 min.
+    const idemHeader = req.headers['x-idempotency-key'];
+    const idemKey = typeof idemHeader === 'string' ? idemHeader.slice(0, 128) : undefined;
+    if (idemKey) {
+      const rKey = `idem:${restaurantId}:${idemKey}`;
+      try {
+        const cached = await redis.get(rKey);
+        if (cached) {
+          sendSuccess(res, JSON.parse(cached));
+          return;
+        }
+      } catch { /* Redis down — proceed normally */ }
+    }
+
+    // 23.13 Per-table order ceiling (waiter can bypass for 30 min via DELETE /tables/:id/order-ceiling).
+    try {
+      const bypass = await redis.get(`ceiling:bypass:${tableId}`);
+      if (!bypass) {
+        const active = await orderRepo.countActiveForTable(restaurantId, tableId);
+        if (active >= ORDER_CEILING) {
+          throw new RateLimitError(
+            'Too many open orders at this table — ask your waiter to unlock more.',
+          );
+        }
+      }
+    } catch (err) {
+      if (err instanceof RateLimitError) throw err;
+      // Redis/DB glitch — skip ceiling rather than blocking the customer.
+    }
+
+    const placedOrders = await service.placeMulti({
+      restaurantId,
+      tableId,
       tableDayTokenId: null,
       sessionId: req.customerSession.id,
       body: req.body,
     });
-    for (const o of orders) getBus().orderCreated(o);
-    await emitTableStatus(orders[0]!.restaurantId, orders[0]!.tableId);
-    sendSuccess(res, orders, 201);
+    for (const o of placedOrders) getBus().orderCreated(o);
+    await emitTableStatus(placedOrders[0]!.restaurantId, placedOrders[0]!.tableId);
+
+    if (idemKey) {
+      const rKey = `idem:${restaurantId}:${idemKey}`;
+      try {
+        await redis.set(rKey, JSON.stringify(placedOrders), 'EX', 120);
+      } catch { /* ignore */ }
+    }
+
+    sendSuccess(res, placedOrders, 201);
   }),
 );
 
@@ -87,6 +134,7 @@ ordersRouter.post(
   '/orders/:id/items',
   requireCustomerSession,
   orderRateLimit,
+  requirePresence,
   validate({ params: IdParams, body: AddOrderItemsRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');

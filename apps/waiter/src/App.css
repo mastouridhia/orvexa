@@ -334,6 +334,25 @@
   margin-top: 0.15rem;
 }
 
+.tf-w-detail__code-request {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 0.75rem;
+  border-radius: 12px;
+  background: rgba(255, 186, 0, 0.12);
+  border: 1px solid #D4A000;
+  font-size: 0.88rem;
+}
+.tf-w-detail__code-request .tf-caption {
+  color: var(--fg-soft);
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+}
+.tf-w-detail__cta--amber { background: #D4A000; color: #fff; }
+
 .tf-w-settings__logout {
   width: 100%;
   height: 48px;
@@ -725,7 +744,8 @@
 .tf-w-floor__dot--eating  { background: #EFE6F5; color: #4A2E6B; border-color: rgba(92, 58, 130, 0.4); }
 .tf-w-floor__dot--paying  { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .tf-w-floor__dot--clean   { background: var(--success-bg); color: var(--success-ink); border-color: rgba(46, 139, 87, 0.4); }
-.tf-w-floor__dot--call    { background: var(--danger); color: #fff; border-color: var(--danger); }
+.tf-w-floor__dot--call       { background: var(--danger); color: #fff; border-color: var(--danger); }
+.tf-w-floor__dot--needs_code { background: #D4A000; color: #fff; border-color: #A87C00; }
 
 .tf-w-floor__dot.is-calling {
   animation: tf-late-throb 1.4s ease-in-out infinite,
@@ -783,7 +803,8 @@
 .tf-w-floor__legend-chip--eating  .tf-w-floor__legend-dot { background: #EFE6F5; border-color: rgba(92, 58, 130, 0.4); }
 .tf-w-floor__legend-chip--paying  .tf-w-floor__legend-dot { background: var(--fg); }
 .tf-w-floor__legend-chip--clean   .tf-w-floor__legend-dot { background: var(--success-bg); border-color: rgba(46, 139, 87, 0.4); }
-.tf-w-floor__legend-chip--call    .tf-w-floor__legend-dot { background: var(--danger); }
+.tf-w-floor__legend-chip--call       .tf-w-floor__legend-dot { background: var(--danger); }
+.tf-w-floor__legend-chip--needs_code .tf-w-floor__legend-dot { background: #D4A000; }
 
 /* ── Calls view ──────────────────────────────────────── */
 .tf-w-calls {
@@ -1012,6 +1033,10 @@
 }
 .tf-w-tables__row.is-alert--call {
   animation: tf-w-flash-danger 1.2s ease-in-out infinite;
+}
+.tf-w-tables__row.is-alert--needs_code {
+  background: rgba(212, 160, 0, 0.08);
+  border-color: rgba(212, 160, 0, 0.4);
 }
 .tf-w-tables__row.is-alert--ready {
   animation: tf-w-pulse-lime 1.8s ease-in-out infinite;
@@ -1445,6 +1470,76 @@
   font-variant-numeric: tabular-nums;
 }
 .tf-w-detail__cta--ink .tf-w-detail__cta-amount { color: var(--bg); }
+
+/* ── Code display inside the modal ─────────────────────────── */
+.tf-w-detail__code-display {
+  display: inline-block;
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  padding: 0.5rem 1rem;
+  background: var(--bg-soft);
+  border-radius: 12px;
+  min-width: 180px;
+  text-align: center;
+}
+
+/* ── Generic modal overlay ──────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.modal-card {
+  background: var(--bg, #fff);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.modal-card > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border, #e5e5e5);
+}
+.modal-card > header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+.modal-card > header .close {
+  font-size: 1.4rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fg-soft, #888);
+  padding: 0 0.25rem;
+}
+.modal-card > .body {
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.modal-card > footer {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--border, #e5e5e5);
+}
 
 /* ── Shift start ─────────────────────────────────────── */
 .tf-w-shift {

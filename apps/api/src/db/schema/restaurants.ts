@@ -14,6 +14,14 @@ export const restaurants = pgTable('restaurants', {
   paymentPoint: text('payment_point', { enum: ['table', 'counter'] })
     .notNull()
     .default('table'),
+  // Ordering-access gate — defends the static printed QR against off-premises spam.
+  orderGateMode: text('order_gate_mode', {
+    enum: ['off', 'wifi', 'code', 'wifi_or_code'],
+  })
+    .notNull()
+    .default('off'),
+  // IPv4/IPv6 addresses or CIDRs treated as "the café network" for the wifi gate.
+  allowedNetworks: text('allowed_networks').array().notNull().default([]),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

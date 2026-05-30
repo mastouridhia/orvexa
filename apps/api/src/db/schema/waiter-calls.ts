@@ -13,7 +13,7 @@ export const waiterCalls = pgTable(
     tableId: uuid('table_id')
       .notNull()
       .references(() => tables.id, { onDelete: 'cascade' }),
-    kind: text('kind', { enum: ['call_waiter', 'request_bill', 'request_extras'] }).notNull(),
+    kind: text('kind', { enum: ['call_waiter', 'request_bill', 'request_extras', 'code_request'] }).notNull(),
     note: text('note'),
     clearedAt: timestamp('cleared_at', { withTimezone: true }),
     clearedByUserId: uuid('cleared_by_user_id').references(() => users.id, {

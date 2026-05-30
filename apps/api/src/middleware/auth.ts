@@ -54,7 +54,8 @@ export const requireCustomerSession: RequestHandler = async (req, _res, next) =>
       .where(eq(customerSessions.id, payload.sid))
       .limit(1);
     if (!session) return next(new UnauthorizedError('Session not found'));
-    if (session.expiresAt.getTime() <= Date.now()) {
+    const now = Date.now();
+    if (session.expiresAt.getTime() <= now || session.absoluteExpiresAt.getTime() <= now) {
       return next(new UnauthorizedError('Session expired'));
     }
     req.customerSession = {
@@ -63,6 +64,7 @@ export const requireCustomerSession: RequestHandler = async (req, _res, next) =>
       tableId: session.tableId,
       tableDayTokenId: session.tableDayTokenId,
       locale: session.locale,
+      presenceVerifiedAt: session.presenceVerifiedAt,
     };
     next();
   } catch (err) {

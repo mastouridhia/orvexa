@@ -70,7 +70,10 @@ export async function resolveHandshakeIdentity(handshake: RawHandshake): Promise
     .where(eq(customerSessions.id, customer.sid))
     .limit(1);
   if (!session) throw new Error('Session not found');
-  if (session.expiresAt.getTime() <= Date.now()) throw new Error('Session expired');
+  const now = Date.now();
+  if (session.expiresAt.getTime() <= now || session.absoluteExpiresAt.getTime() <= now) {
+    throw new Error('Session expired');
+  }
 
   return {
     kind: 'customer',

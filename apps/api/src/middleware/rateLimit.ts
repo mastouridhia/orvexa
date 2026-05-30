@@ -36,17 +36,30 @@ export const orderRateLimit = rateLimit({
 });
 
 /**
- * Stricter limiter for the auth surface — login + refresh + sessions issuance.
- * Sized for low double-digit attempts per IP per minute (default 10/min) to slow
- * credential-stuffing without inconveniencing legitimate users on flaky networks.
+ * Stricter limiter for the auth surface — login + refresh only.
+ * Skips successful requests so a legitimate session cycling access tokens
+ * doesn't self-throttle. Never use this on POST /sessions — that route needs
+ * to count successes too (see sessionMintLimit below).
  */
 export const authRateLimit = rateLimit({
   windowMs: 60 * 1000,
   limit: 10,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  // Skip successful auth — only count failures + early aborts. Keeps a busy
-  // logged-in session from being self-throttled when the access token expires.
   skipSuccessfulRequests: true,
+  handler: tooManyRequestsHandler,
+});
+
+/**
+ * Session-mint limiter for POST /sessions (QR-token → JWT exchange).
+ * Does NOT skip successful requests so bulk session creation is bounded.
+ * 20/min handles a full-room scan burst on a shared café NAT IP without
+ * blocking individual legitimate customers.
+ */
+export const sessionMintLimit = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
   handler: tooManyRequestsHandler,
 });

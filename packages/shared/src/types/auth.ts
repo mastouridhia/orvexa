@@ -30,3 +30,10 @@ export const OpenCustomerSessionRequestSchema = z.object({
   locale: LanguageCodeSchema,
 });
 export type OpenCustomerSessionRequest = z.infer<typeof OpenCustomerSessionRequestSchema>;
+
+// Customer submits the short numeric code the waiter handed them to unlock
+// ordering (used by the `code` / `wifi_or_code` access gates).
+export const VerifyTableCodeRequestSchema = z.object({
+  code: z.string().regex(/^\d{4}$/, 'Code must be 4 digits'),
+});
+export type VerifyTableCodeRequest = z.infer<typeof VerifyTableCodeRequestSchema>;

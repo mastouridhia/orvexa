@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import QRCode from 'qrcode';
 import type {
   BulkUpdateTableLayoutRequest,
@@ -14,6 +15,10 @@ import { OrderRepository, type OrderRow } from '../repositories/order.js';
 import { TableCartRepository } from '../repositories/table-cart.js';
 import { TableRepository, TableZoneRepository, type TableRow } from '../repositories/table.js';
 import { WaiterCallRepository, type WaiterCallRow } from '../repositories/waiter-call.js';
+
+// Safety expiry for a waiter-issued ordering code; the primary lifecycle is
+// "cleared when the table is freed", this just caps an abandoned code.
+const ORDERING_CODE_TTL_MS = 6 * 60 * 60 * 1000;
 
 export function toTable(row: TableRow): Table {
   return {
@@ -86,7 +91,28 @@ export class TableService {
     await Promise.all([
       this.customerSessionRepo.expireActiveForTable(tableId),
       this.tableCartRepo.deleteByTableId(tableId),
+      // Drop the ordering code so a code leaked to the previous party can't be
+      // reused by the next one (or by an outsider once the party leaves).
+      this.tableRepo.clearOrderingCode(tableId),
     ]);
+  }
+
+  /**
+   * Issue (rotate) the short ordering code a waiter reads out to a table so the
+   * guests can unlock ordering under the `code` / `wifi_or_code` access gates.
+   * Valid until the table is freed, with a safety expiry as a backstop.
+   */
+  async issueOrderingCode(
+    restaurantId: string,
+    tableId: string,
+  ): Promise<{ code: string; expiresAt: string }> {
+    const table = await this.tableRepo.findById(tableId);
+    if (!table) throw new NotFoundError('Table not found');
+    if (table.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
+    const code = randomInt(0, 10000).toString().padStart(4, '0');
+    const expiresAt = new Date(Date.now() + ORDERING_CODE_TTL_MS);
+    await this.tableRepo.setOrderingCode(tableId, code, expiresAt);
+    return { code, expiresAt: expiresAt.toISOString() };
   }
 
   async list(restaurantId: string): Promise<TableWithDerived[]> {
@@ -268,16 +294,20 @@ export class TableService {
     const url = `${config.customer.appUrl}/t/${table.publicSlug}`;
 
     if (format === 'svg') {
+      // ECC Q (25% redundancy) lets the printed card overlay a centre brand
+      // mark without breaking scanning; transparent light lets the card's
+      // paper colour show through behind the modules.
       const body = await QRCode.toString(url, {
         type: 'svg',
-        errorCorrectionLevel: 'M',
+        errorCorrectionLevel: 'Q',
         margin: 1,
+        color: { dark: '#19140E', light: '#00000000' },
       });
       return { format, url, token: table.publicSlug, body, contentType: 'image/svg+xml' };
     }
     const body = await QRCode.toBuffer(url, {
       type: 'png',
-      errorCorrectionLevel: 'M',
+      errorCorrectionLevel: 'Q',
       margin: 1,
       width: 512,
     });
@@ -296,10 +326,14 @@ export class TableService {
     return this.recordCall(restaurantId, tableId, 'request_extras', note);
   }
 
+  async requestCode(restaurantId: string, tableId: string): Promise<WaiterCallRow> {
+    return this.recordCall(restaurantId, tableId, 'code_request');
+  }
+
   private async recordCall(
     restaurantId: string,
     tableId: string,
-    kind: 'call_waiter' | 'request_bill' | 'request_extras',
+    kind: 'call_waiter' | 'request_bill' | 'request_extras' | 'code_request',
     note?: string | null,
   ): Promise<WaiterCallRow> {
     const table = await this.tableRepo.findById(tableId);

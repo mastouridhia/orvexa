@@ -358,6 +358,54 @@
 .tf-a-settings__section-title--danger { color: var(--danger); }
 .tf-a-settings__section-icon--danger { color: var(--danger); }
 
+/* Network list inside ordering-access section */
+.tf-a-settings__networks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.tf-a-settings__networks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.tf-a-settings__network-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.tf-a-settings__network-addr {
+  flex: 1;
+  font-family: var(--tf-mono);
+  font-size: 0.85rem;
+  color: var(--fg);
+}
+.tf-a-settings__network-add {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.tf-a-settings__network-input {
+  flex: 1;
+  font-family: var(--tf-mono);
+  font-size: 0.88rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  color: var(--fg);
+  transition: border-color 150ms;
+}
+.tf-a-settings__network-input:focus {
+  outline: none;
+  border-color: var(--tf-accent);
+  box-shadow: 0 0 0 3px var(--tf-accent-glow, rgba(217,122,44,0.15));
+}
+
 /* Override LanguageSelector in settings context — nicer card style */
 .tf-a-settings .lang-selector {
   display: flex;

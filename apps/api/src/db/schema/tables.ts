@@ -58,6 +58,10 @@ export const tables = pgTable(
     })
       .notNull()
       .default('free'),
+    // Waiter-issued ordering code (presence proof for the `code` gate). Cleared
+    // when the table is freed/cleaned so a leaked code dies with the party.
+    orderingCode: text('ordering_code'),
+    orderingCodeExpiresAt: timestamp('ordering_code_expires_at', { withTimezone: true }),
     mergedIntoTableId: uuid('merged_into_table_id').references((): AnyPgColumn => tables.id, {
       onDelete: 'set null',
     }),

@@ -14,7 +14,8 @@ export type WaiterVisualState =
   | 'eating'
   | 'paying'
   | 'clean'
-  | 'call';
+  | 'call'
+  | 'needs_code';
 
 export type CallContext = {
   /** Most-recent open call against the table (if any). */
@@ -46,6 +47,7 @@ export function visualStateOf(
   callForTable: WaiterCall | null,
 ): WaiterVisualState {
   if (table.derivedStatus === 'needs_cleaning') return 'clean';
+  if (callForTable?.kind === 'code_request') return 'needs_code';
   if (callForTable) return 'call';
   if (table.derivedStatus === 'needs_bill') return 'paying';
   const active = ordersForTable.filter((o) => ACTIVE_STATUSES.has(o.status));

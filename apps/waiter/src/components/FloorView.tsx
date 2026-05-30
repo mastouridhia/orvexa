@@ -12,11 +12,12 @@ import {
   visualStateOf,
   type WaiterVisualState,
 } from '../utils/waiter.js';
-import { IconBellRing } from './tf-icons.js';
+import { IconBellRing, IconHash } from './tf-icons.js';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 const STATE_ORDER: WaiterVisualState[] = [
   'call',
+  'needs_code',
   'ready',
   'cooking',
   'ordered',
@@ -149,7 +150,7 @@ export function FloorView({
     return allPlaced.filter((v) => v.table.zoneId === activeZone);
   }, [allPlaced, activeZone]);
 
-  const callQueue = filteredItems.filter((v) => v.state === 'call');
+  const callQueue = filteredItems.filter((v) => v.state === 'call' || v.state === 'needs_code');
   const readyCount = filteredItems.filter((v) => v.state === 'ready').length;
   const tablesOnYou = filteredItems.filter((v) => v.state !== 'open').length;
 
@@ -233,6 +234,7 @@ export function FloorView({
             {/* Table dots */}
             {allPlaced.map(({ table, state, secondary, pos, minsInOrder, callAge }) => {
               const calling = state === 'call';
+              const needsCode = state === 'needs_code';
               const ready = state === 'ready';
               const overdue = calling && callUrgency(callAge) === 'overdue';
               const dim = isDimmed(table.zoneId);
@@ -280,6 +282,11 @@ export function FloorView({
                   {calling && (
                     <span className="tf-w-floor__dot-bell">
                       <IconBellRing />
+                    </span>
+                  )}
+                  {needsCode && (
+                    <span className="tf-w-floor__dot-bell">
+                      <IconHash />
                     </span>
                   )}
                 </button>

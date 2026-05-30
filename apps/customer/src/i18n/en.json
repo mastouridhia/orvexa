@@ -195,5 +195,19 @@
     "boot": "Could not start session. Check your connection.",
     "reconnecting": "Reconnecting…"
   },
+  "gate": {
+    "wifiTitle": "You're not on the restaurant's network",
+    "wifiBody": "Connect to {{name}} WiFi to order.",
+    "wifiOrCode": "…or enter the 4-digit code from your waiter",
+    "codeTitle": "Enter the waiter's code",
+    "codeBody": "Ask your waiter for the 4-digit table code to start ordering.",
+    "codePlaceholder": "4-digit code",
+    "codeSubmit": "Confirm",
+    "codeVerifying": "Checking…",
+    "codeError": "Invalid code. Ask your waiter for a new one.",
+    "askWaiter": "Ask waiter for code",
+    "waiterAsked": "Waiter notified",
+    "dismiss": "Go back"
+  },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" }
 }

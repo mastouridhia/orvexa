@@ -125,4 +125,16 @@ export const api = {
       token,
     });
   },
+  issueOrderingCode(token: string, tableId: string) {
+    return apiRequest<{ code: string; expiresAt: string }>(`/tables/${tableId}/ordering-code`, {
+      method: 'POST',
+      token,
+    });
+  },
+  resetTableOrderCeiling(token: string, tableId: string) {
+    return apiRequest<{ ok: boolean }>(`/tables/${tableId}/order-ceiling`, {
+      method: 'DELETE',
+      token,
+    });
+  },
 };

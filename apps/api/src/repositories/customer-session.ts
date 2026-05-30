@@ -27,6 +27,7 @@ export class CustomerSessionRepository extends BaseRepository {
     locale: LanguageCode;
     expiresAt: Date;
     absoluteExpiresAt: Date;
+    presenceVerifiedAt?: Date;
   }): Promise<CustomerSessionRow> {
     const [row] = await this.db.insert(customerSessions).values(input).returning();
     if (!row) throw new Error('Failed to create customer session');
@@ -39,6 +40,15 @@ export class CustomerSessionRepository extends BaseRepository {
       .from(customerSessions)
       .where(eq(customerSessions.id, id))
       .limit(1);
+    return row ?? null;
+  }
+
+  async markPresenceVerified(id: string): Promise<CustomerSessionRow | null> {
+    const [row] = await this.db
+      .update(customerSessions)
+      .set({ presenceVerifiedAt: sql`NOW()` })
+      .where(eq(customerSessions.id, id))
+      .returning();
     return row ?? null;
   }
 

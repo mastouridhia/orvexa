@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orvexa — Printable table cards</title>
+  <link rel="icon" href="assets/orvexa-mark.svg" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <style>
+    :root {
+      --ink: #19140E;
+      --cream: #FBEED9;
+      --saffron: #D97A2C;
+      --saffron-deep: #A8561A;
+      --paper: #FAF8F4;
+      --paper-warm: #F5EFE6;
+
+      --font-display: 'Newsreader', 'Times New Roman', serif;
+      --font-sans: 'Geist', 'Inter', -apple-system, sans-serif;
+      --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,ital,wght@6..72,1,400;6..72,1,500;6..72,1,600&family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-sans); background: #2a2520; color: var(--paper); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SCREEN UI — control panel (hidden on print)
+       ═══════════════════════════════════════════════════════════════════ */
+    .controls {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--ink);
+      border-bottom: 1px solid rgba(245,239,230,0.1);
+      padding: 18px 32px;
+      display: flex; gap: 24px; align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls__brand {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: var(--paper-warm);
+    }
+    .controls__brand svg { width: 24px; height: 24px; }
+    .controls__brand em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--saffron); }
+    .controls__divider {
+      width: 1px; height: 24px;
+      background: rgba(245,239,230,0.16);
+    }
+    .field {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .field__lbl {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: rgba(245,239,230,0.4);
+    }
+    .field input, .field select {
+      background: rgba(245,239,230,0.06);
+      border: 1px solid rgba(245,239,230,0.16);
+      color: var(--paper-warm);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: -0.1px;
+      min-width: 220px;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--saffron);
+      box-shadow: 0 0 0 3px rgba(217, 122, 44, 0.2);
+    }
+    .field input.short { min-width: 80px; }
+    .styles {
+      display: flex; gap: 6px;
+    }
+    .style-btn {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(245,239,230,0.16);
+      background: transparent;
+      color: rgba(245,239,230,0.7);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: -0.1px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .style-btn:hover { background: rgba(245,239,230,0.06); color: var(--paper); }
+    .style-btn.active {
+      background: var(--saffron);
+      border-color: var(--saffron);
+      color: #fff;
+    }
+    .print-btn {
+      margin-left: auto;
+      padding: 10px 22px;
+      border-radius: 999px;
+      background: var(--saffron);
+      border: 0;
+      color: #fff;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.1px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(217, 122, 44, 0.3);
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .print-btn:hover { filter: brightness(1.05); }
+    .print-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PAGE LAYOUT — A4 portrait, 4 cards per page
+       Each card is A6 (105 × 148 mm). 2×2 grid fills A4 exactly.
+       ═══════════════════════════════════════════════════════════════════ */
+    .doc {
+      padding: 32px;
+      display: flex; flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .sheet {
+      width: 210mm;
+      height: 297mm;
+      background: #fff;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      position: relative;
+      page-break-after: always;
+      break-after: page;
+    }
+    .sheet__lbl {
+      position: absolute;
+      top: -28px; left: 0;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: rgba(245,239,230,0.5);
+    }
+    .sheet__lbl b { color: var(--saffron); }
+
+    /* Each card slot is 105×148mm (A6) */
+    .card {
+      position: relative;
+      overflow: hidden;
+      width: 105mm; height: 148mm;
+      background: var(--paper);
+      display: flex; flex-direction: column;
+    }
+
+    /* CUT MARKS — small L-shaped corner crops, just outside the cards' inner area */
+    .card::before,
+    .card::after,
+    .card > .cut-tr,
+    .card > .cut-bl {
+      content: '';
+      position: absolute;
+      width: 4mm; height: 4mm;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+    /* Top-left */
+    .card::before {
+      top: 0; left: 0;
+      border-top: 0.3mm solid var(--ink);
+      border-left: 0.3mm solid var(--ink);
+    }
+    /* Bottom-right */
+    .card::after {
+      bottom: 0; right: 0;
+      border-bottom: 0.3mm solid var(--ink);
+      border-right: 0.3mm solid var(--ink);
+    }
+    /* Top-right + Bottom-left via marker spans */
+    .card > .cut-tr {
+      top: 0; right: 0;
+      border-top: 0.3mm solid var(--ink);
+      border-right: 0.3mm solid var(--ink);
+    }
+    .card > .cut-bl {
+      bottom: 0; left: 0;
+      border-bottom: 0.3mm solid var(--ink);
+      border-left: 0.3mm solid var(--ink);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       STYLE A · CLASSIC — paper bg, ink mark, italic instruction
+       ═══════════════════════════════════════════════════════════════════ */
+    .doc[data-style="classic"] .card {
+      background: var(--paper);
+      color: var(--ink);
+      padding: 12mm 10mm 10mm;
+      align-items: center;
+      gap: 4mm;
+    }
+    .doc[data-style="classic"] .card-top {
+      width: 100%;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .doc[data-style="classic"] .card-brand {
+      display: flex; align-items: center; gap: 2mm;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 12pt;
+      letter-spacing: -0.2pt;
+    }
+    .doc[data-style="classic"] .card-brand svg { width: 6mm; height: 6mm; }
+    .doc[data-style="classic"] .card-brand em {
+      font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--saffron);
+    }
+    .doc[data-style="classic"] .card-table {
+      font-family: var(--font-mono);
+      font-size: 8pt;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--saffron-deep);
+      background: rgba(217, 122, 44, 0.12);
+      padding: 1mm 2mm;
+      border-radius: 1mm;
+    }
+    .doc[data-style="classic"] .card-qr-wrap {
+      position: relative;
+      width: 60mm; height: 60mm;
+      margin-top: 2mm;
+    }
+    .doc[data-style="classic"] .card-qr-wrap svg { width: 100%; height: 100%; }
+    .doc[data-style="classic"] .card-qr-wrap .qr-mark {
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 13mm; height: 13mm;
+      background: var(--paper);
+      border-radius: 2mm;
+      padding: 1.6mm;
+      box-shadow: 0 0 0 1.4mm var(--paper);
+    }
+    .doc[data-style="classic"] .card-qr-wrap .qr-mark svg { width: 100%; height: 100%; box-shadow: none; }
+    .doc[data-style="classic"] .card-instr {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      font-size: 20pt;
+      letter-spacing: -0.4pt;
+      color: var(--ink);
+      margin-top: 2mm;
+      text-align: center;
+    }
+    .doc[data-style="classic"] .card-instr em { color: var(--saffron); }
+    .doc[data-style="classic"] .card-rule {
+      width: 12mm; height: 0.3mm;
+      background: var(--saffron);
+      margin: 1mm 0;
+    }
+    .doc[data-style="classic"] .card-steps {
+      display: flex; flex-direction: column; gap: 1.2mm;
+      align-items: center;
+    }
+    .doc[data-style="classic"] .card-step {
+      display: flex; align-items: center; gap: 1.5mm;
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(25, 20, 14, 0.55);
+    }
+    .doc[data-style="classic"] .card-step .n {
+      width: 3mm; height: 3mm; border-radius: 50%;
+      background: var(--saffron); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 6pt;
+    }
+    .doc[data-style="classic"] .card-foot {
+      margin-top: auto;
+      width: 100%;
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 2mm;
+      border-top: 0.2mm solid rgba(25,20,14,0.1);
+      font-family: var(--font-mono);
+      font-size: 6pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(25,20,14,0.4);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       STYLE B · SAFFRON HEADER
+       ═══════════════════════════════════════════════════════════════════ */
+    .doc[data-style="saffron"] .card {
+      background: var(--paper);
+      color: var(--ink);
+      padding: 0;
+      display: grid;
+      grid-template-rows: 38mm 1fr 14mm;
+    }
+    .doc[data-style="saffron"] .card-header {
+      background: var(--saffron);
+      color: #fff;
+      padding: 6mm 8mm;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .doc[data-style="saffron"] .card-header-top {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .doc[data-style="saffron"] .card-brand {
+      display: flex; align-items: center; gap: 2mm;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 12pt;
+      letter-spacing: -0.2pt;
+      color: #fff;
+    }
+    .doc[data-style="saffron"] .card-brand svg { width: 6mm; height: 6mm; }
+    .doc[data-style="saffron"] .card-brand em {
+      font-family: var(--font-display); font-style: italic; font-weight: 400; color: rgba(255,255,255,0.7);
+    }
+    .doc[data-style="saffron"] .card-header__tag {
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+    }
+    .doc[data-style="saffron"] .card-header__table {
+      display: flex; align-items: baseline; gap: 3mm;
+    }
+    .doc[data-style="saffron"] .card-header__table-num {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      font-size: 44pt;
+      letter-spacing: -2pt;
+      line-height: 1;
+      color: #fff;
+    }
+    .doc[data-style="saffron"] .card-header__table-lbl {
+      font-family: var(--font-mono);
+      font-size: 8pt;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+    }
+    .doc[data-style="saffron"] .card-body {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3mm;
+      padding: 4mm;
+    }
+    .doc[data-style="saffron"] .card-qr-wrap {
+      position: relative;
+      width: 56mm; height: 56mm;
+    }
+    .doc[data-style="saffron"] .card-qr-wrap svg { width: 100%; height: 100%; }
+    .doc[data-style="saffron"] .card-qr-wrap .qr-mark {
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 12mm; height: 12mm;
+      background: var(--paper);
+      border-radius: 2mm;
+      padding: 1.4mm;
+      box-shadow: 0 0 0 1.2mm var(--paper);
+    }
+    .doc[data-style="saffron"] .card-qr-wrap .qr-mark svg { width: 100%; height: 100%; }
+    .doc[data-style="saffron"] .card-instr {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      font-size: 14pt;
+      color: var(--ink);
+      text-align: center;
+      letter-spacing: -0.2pt;
+    }
+    .doc[data-style="saffron"] .card-instr em { color: var(--saffron); }
+    .doc[data-style="saffron"] .card-foot {
+      background: var(--ink);
+      color: var(--paper-warm);
+      padding: 4mm 8mm;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+    .doc[data-style="saffron"] .card-foot b { color: var(--saffron); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       STYLE C · EDITORIAL — minimal, big italic table number, QR bottom-right
+       ═══════════════════════════════════════════════════════════════════ */
+    .doc[data-style="editorial"] .card {
+      background: var(--paper);
+      color: var(--ink);
+      padding: 10mm 9mm;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+    .doc[data-style="editorial"] .card-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .doc[data-style="editorial"] .card-top-brand {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      font-size: 11pt;
+      color: var(--saffron);
+      letter-spacing: -0.2pt;
+    }
+    .doc[data-style="editorial"] .card-top-meta {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 6.5pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(25, 20, 14, 0.5);
+      line-height: 1.5;
+    }
+    .doc[data-style="editorial"] .card-top-meta b { color: var(--ink); font-weight: 500; }
+    .doc[data-style="editorial"] .card-rule {
+      width: 12mm; height: 0.4mm;
+      background: var(--saffron);
+      margin: 4mm 0 2mm;
+    }
+    .doc[data-style="editorial"] .card-middle {
+      display: flex; flex-direction: column; justify-content: space-between;
+      flex: 1;
+    }
+    .doc[data-style="editorial"] .card-table-num {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      font-size: 96pt;
+      letter-spacing: -5pt;
+      line-height: 0.9;
+      color: var(--ink);
+      margin: 2mm 0;
+    }
+    .doc[data-style="editorial"] .card-instr {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 12pt;
+      letter-spacing: -0.3pt;
+      color: var(--ink);
+      max-width: 50mm;
+      line-height: 1.2;
+    }
+    .doc[data-style="editorial"] .card-instr em {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      color: var(--saffron);
+    }
+    .doc[data-style="editorial"] .card-bottom {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      gap: 4mm;
+    }
+    .doc[data-style="editorial"] .card-steps {
+      display: flex; flex-direction: column; gap: 1mm;
+      font-family: var(--font-mono);
+      font-size: 6.5pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(25, 20, 14, 0.5);
+      max-width: 30mm;
+    }
+    .doc[data-style="editorial"] .card-steps b { color: var(--saffron); font-weight: 600; }
+    .doc[data-style="editorial"] .card-qr-wrap {
+      position: relative;
+      width: 38mm; height: 38mm;
+      flex-shrink: 0;
+    }
+    .doc[data-style="editorial"] .card-qr-wrap svg { width: 100%; height: 100%; }
+    .doc[data-style="editorial"] .card-qr-wrap .qr-mark {
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 8mm; height: 8mm;
+      background: var(--paper);
+      border-radius: 1.5mm;
+      padding: 1mm;
+      box-shadow: 0 0 0 1mm var(--paper);
+    }
+    .doc[data-style="editorial"] .card-qr-wrap .qr-mark svg { width: 100%; height: 100%; }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       STYLE D · DARK — ink bg, cream QR, premium
+       ═══════════════════════════════════════════════════════════════════ */
+    .doc[data-style="dark"] .card {
+      background: var(--ink);
+      color: var(--paper-warm);
+      padding: 11mm 9mm;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 3mm;
+    }
+    .doc[data-style="dark"] .card::before,
+    .doc[data-style="dark"] .card::after,
+    .doc[data-style="dark"] .card > .cut-tr,
+    .doc[data-style="dark"] .card > .cut-bl {
+      border-color: var(--saffron);
+      opacity: 0.6;
+    }
+    .doc[data-style="dark"] .card-top {
+      width: 100%;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .doc[data-style="dark"] .card-brand {
+      display: flex; align-items: center; gap: 2mm;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 12pt;
+      letter-spacing: -0.2pt;
+      color: var(--paper-warm);
+    }
+    .doc[data-style="dark"] .card-brand svg { width: 6mm; height: 6mm; }
+    .doc[data-style="dark"] .card-brand em {
+      font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--saffron);
+    }
+    .doc[data-style="dark"] .card-table {
+      font-family: var(--font-mono);
+      font-size: 8pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--saffron);
+      background: rgba(217, 122, 44, 0.16);
+      padding: 1mm 2mm;
+      border-radius: 1mm;
+    }
+    .doc[data-style="dark"] .card-qr-wrap {
+      position: relative;
+      width: 58mm; height: 58mm;
+      margin-top: 2mm;
+      background: var(--paper);
+      padding: 3mm;
+      border-radius: 2mm;
+    }
+    .doc[data-style="dark"] .card-qr-wrap svg { width: 100%; height: 100%; }
+    .doc[data-style="dark"] .card-qr-wrap .qr-mark {
+      position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 13mm; height: 13mm;
+      background: var(--paper);
+      border-radius: 2mm;
+      padding: 1.4mm;
+      box-shadow: 0 0 0 1.2mm var(--paper);
+    }
+    .doc[data-style="dark"] .card-qr-wrap .qr-mark svg { width: 100%; height: 100%; }
+    .doc[data-style="dark"] .card-instr {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      font-size: 18pt;
+      color: var(--paper-warm);
+      letter-spacing: -0.4pt;
+      margin-top: 2mm;
+      text-align: center;
+    }
+    .doc[data-style="dark"] .card-instr em { color: var(--saffron); }
+    .doc[data-style="dark"] .card-rule {
+      width: 12mm; height: 0.3mm;
+      background: var(--saffron);
+      margin: 1mm 0;
+    }
+    .doc[data-style="dark"] .card-sub {
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(245, 239, 230, 0.5);
+      text-align: center;
+    }
+    .doc[data-style="dark"] .card-foot {
+      margin-top: auto;
+      width: 100%;
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 2mm;
+      border-top: 0.2mm solid rgba(245, 239, 230, 0.12);
+      font-family: var(--font-mono);
+      font-size: 6pt;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(245, 239, 230, 0.4);
+    }
+    .doc[data-style="dark"] .card-foot b { color: var(--saffron); }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       PRINT RULES — A4 portrait, no padding, exact sizes
+       ═══════════════════════════════════════════════════════════════════ */
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+    @media print {
+      body { background: white; }
+      .controls { display: none; }
+      .docs-block { display: none; }
+      .doc { padding: 0; gap: 0; background: white; }
+      .sheet {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+        break-after: page;
+      }
+      .sheet:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+      .sheet__lbl { display: none; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       DOCS BLOCK — explainer for the next Claude
+       ═══════════════════════════════════════════════════════════════════ */
+    .docs-block {
+      max-width: 900px;
+      margin: 32px auto 64px;
+      background: var(--ink);
+      color: var(--paper-warm);
+      border-radius: 16px;
+      padding: 32px 40px;
+      font-family: var(--font-sans);
+    }
+    .docs-block h3 {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 26px;
+      letter-spacing: -0.8px;
+      margin-bottom: 16px;
+    }
+    .docs-block h3 em {
+      font-family: var(--font-display);
+      font-style: italic; font-weight: 400;
+      color: var(--saffron);
+    }
+    .docs-block p {
+      font-size: 14px; line-height: 1.55;
+      color: rgba(245, 239, 230, 0.75);
+      margin-bottom: 16px;
+    }
+    .docs-block p em { font-family: var(--font-display); font-style: italic; color: var(--saffron); }
+    .docs-block code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(245, 239, 230, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--saffron);
+    }
+    .docs-block pre {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: rgba(245, 239, 230, 0.04);
+      padding: 16px 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+      color: rgba(245, 239, 230, 0.9);
+      line-height: 1.6;
+      margin-bottom: 16px;
+      border: 1px solid rgba(245, 239, 230, 0.06);
+    }
+    .docs-block pre b { color: var(--saffron); font-weight: 500; }
+    .docs-block pre i { color: rgba(245,239,230,0.5); font-style: normal; }
+    .docs-block ul {
+      list-style: none; padding: 0;
+      display: flex; flex-direction: column; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .docs-block ul li {
+      padding-left: 18px;
+      position: relative;
+      font-size: 13px;
+      color: rgba(245, 239, 230, 0.75);
+      line-height: 1.55;
+    }
+    .docs-block ul li::before {
+      content: '·';
+      position: absolute; left: 6px; top: -2px;
+      color: var(--saffron);
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .docs-block ul li b { color: var(--paper-warm); font-weight: 500; }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════ CONTROLS (screen only) ════════════ -->
+  <div class="controls">
+    <div class="controls__brand">
+      <svg viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="50" fill="#19140E"/>
+        <circle cx="50" cy="50" r="31" fill="#FBEED9"/>
+        <circle cx="50" cy="50" r="19" fill="#D97A2C"/>
+      </svg>
+      <span>Orvexa<em>.</em> · table cards</span>
+    </div>
+
+    <div class="controls__divider"></div>
+
+    <div class="field">
+      <span class="field__lbl">Restaurant</span>
+      <input id="restaurant" type="text" value="Dar Slah" />
+    </div>
+
+    <div class="field">
+      <span class="field__lbl">Location</span>
+      <input id="location" type="text" value="La Marsa" />
+    </div>
+
+    <div class="field">
+      <span class="field__lbl">Number of tables</span>
+      <input id="count" class="short" type="number" min="1" max="200" value="20" />
+    </div>
+
+    <div class="field">
+      <span class="field__lbl">Style</span>
+      <div class="styles">
+        <button class="style-btn active" data-style="classic">A · Classic</button>
+        <button class="style-btn" data-style="saffron">B · Saffron</button>
+        <button class="style-btn" data-style="editorial">C · Editorial</button>
+        <button class="style-btn" data-style="dark">D · Dark</button>
+      </div>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">
+      <svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+      Print all tables
+    </button>
+  </div>
+
+  <!-- ════════════ DOCUMENT ════════════ -->
+  <div class="doc" data-style="classic" id="doc"></div>
+
+  <!-- ════════════ DOCS · for the next Claude ════════════ -->
+  <div class="docs-block">
+    <h3>For <em>Claude:</em> how this template works</h3>
+
+    <p>This is a print-ready table-card template for Orvexa. Diners scan the QR on the table, open the PWA at <code>orvexa.tn/T{n}</code>, and order. The card layout is one of four styles — pick the one the user wants and keep it consistent across the whole restaurant.</p>
+
+    <p><b>One A4 sheet = 4 cards (2×2 grid).</b> Each card is exactly A6 (105 × 148 mm). Print on plain A4 paper, then cut along the corner crop marks — 4 cards per sheet, no waste.</p>
+
+    <p>To regenerate with a different table list, just change the <code>count</code> input (1–200 supported). The template auto-pages and lays out as many sheets as needed.</p>
+
+    <p><b>To extend or customise the design</b>, here's the structure of one card:</p>
+
+    <pre><i>&lt;!-- One A6 card · style A (classic) --&gt;</i>
+&lt;div <b>class="card"</b>&gt;
+  &lt;span class="cut-tr"&gt;&lt;/span&gt;  <i>&lt;!-- cut marks --&gt;</i>
+  &lt;span class="cut-bl"&gt;&lt;/span&gt;
+
+  &lt;div class="card-top"&gt;
+    &lt;div class="card-brand"&gt;<b>Orvexa.</b>&lt;/div&gt;
+    &lt;div class="card-table"&gt;Table · <b>14</b>&lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class="card-qr-wrap"&gt;
+    <i>&lt;!-- real QR SVG injected via JS --&gt;</i>
+    &lt;div class="qr-mark"&gt;
+      <i>&lt;!-- Orvexa mark · ink + cream + saffron --&gt;</i>
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class="card-instr"&gt;Scan to &lt;em&gt;order&lt;/em&gt;&lt;/div&gt;
+  <i>&lt;!-- steps + footer --&gt;</i>
+&lt;/div&gt;</pre>
+
+    <ul>
+      <li><b>The QR data is <code>https://orvexa.tn/T{n}</code></b> — short URL, ECC level Q (25% redundancy) so the central mark doesn't break scanning. The daily rotating token rides as a query param the backend appends, so the printed code never needs reprinting.</li>
+      <li><b>The mark in the centre covers 22% of the QR</b>. Don't go above 25% — the QR will stop reading. Always padded with a paper-coloured halo so the scanner reads it as one omitted block.</li>
+      <li><b>Quiet zone is ≥ 4 modules</b> on every side (handled automatically by the QR generator's <code>padding</code> setting).</li>
+      <li><b>Print: A4 portrait, 0 margins</b> (set in <code>@page</code>), 2×2 grid fills the page exactly. Cut marks on every corner of every card guide the scissors.</li>
+      <li><b>Four styles</b>: Classic (paper, ink), Saffron (orange header), Editorial (big italic number, QR small), Dark (ink bg, premium). Pick one per restaurant for brand consistency.</li>
+      <li><b>To add a new table:</b> just increment the count input — the JS regenerates the document. No HTML editing required. The QR for each table points to a unique URL.</li>
+    </ul>
+
+    <p style="margin-top: 24px;"><b>Files this template depends on:</b></p>
+    <pre>colors_and_type.css   <i>// brand tokens (colours, type)</i>
+assets/orvexa-mark.svg <i>// the three-disc mark · ink/cream/saffron</i>
+qrcode-generator       <i>// CDN: jsdelivr</i></pre>
+
+    <p style="margin-top: 24px; color: rgba(245,239,230,0.5); font-family: var(--font-mono); font-size: 12px;">Orvexa table-card template · v1 · May 2026 · part of the design system</p>
+  </div>
+
+  <!-- ════════════ GENERATE QR CODE ════════════ -->
+  <script>
+    /* ─────────────────────────────────────────────────────────────────────
+       The brand mark SVG, reused inside every card's qr-mark hole.
+       ───────────────────────────────────────────────────────────────────── */
+    const MARK_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="50" fill="#19140E"/>
+      <circle cx="50" cy="50" r="31" fill="#FBEED9"/>
+      <circle cx="50" cy="50" r="19" fill="#D97A2C"/>
+    </svg>`;
+
+    /* ─────────────────────────────────────────────────────────────────────
+       Generate a QR SVG for a given URL. ECC level Q. Quiet zone 4 modules.
+       ───────────────────────────────────────────────────────────────────── */
+    function makeQR(url, opts) {
+      opts = opts || {};
+      const moduleColor = opts.moduleColor || '#19140E';
+      const bgColor = opts.bgColor || 'transparent';
+      const padding = opts.padding != null ? opts.padding : 4;
+
+      const qr = qrcode(0, 'Q');
+      qr.addData(url);
+      qr.make();
+      const N = qr.getModuleCount();
+      const vb = N + padding * 2;
+
+      let body = bgColor === 'transparent' ? '' : `<rect width="100%" height="100%" fill="${bgColor}"/>`;
+      for (let y = 0; y < N; y++) {
+        for (let x = 0; x < N; x++) {
+          if (!qr.isDark(y, x)) continue;
+          body += `<rect x="${x + padding}" y="${y + padding}" width="1" height="1" fill="${moduleColor}"/>`;
+        }
+      }
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vb} ${vb}" shape-rendering="crispEdges">${body}</svg>`;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────
+       Card templates by style. Each takes ({ table, restaurant, location })
+       and returns the inner-HTML of one .card.
+       ───────────────────────────────────────────────────────────────────── */
+    const TEMPLATES = {
+      classic: ({ table, restaurant, location, qr }) => `
+        <span class="cut-tr"></span><span class="cut-bl"></span>
+        <div class="card-top">
+          <div class="card-brand">
+            ${MARK_SVG}
+            <span>Orvexa<em>.</em></span>
+          </div>
+          <span class="card-table">Table · ${String(table).padStart(2,'0')}</span>
+        </div>
+        <div class="card-qr-wrap">
+          ${qr}
+          <div class="qr-mark">${MARK_SVG}</div>
+        </div>
+        <div class="card-instr">Scan to <em>order</em></div>
+        <div class="card-rule"></div>
+        <div class="card-steps">
+          <div class="card-step"><span class="n">1</span>Open your camera</div>
+          <div class="card-step"><span class="n">2</span>Point at the code</div>
+          <div class="card-step"><span class="n">3</span>That's it</div>
+        </div>
+        <div class="card-foot">
+          <span>${restaurant} · ${location}</span>
+          <span>orvexa.tn/T${String(table).padStart(2,'0')}</span>
+        </div>
+      `,
+
+      saffron: ({ table, restaurant, location, qr }) => `
+        <span class="cut-tr"></span><span class="cut-bl"></span>
+        <div class="card-header">
+          <div class="card-header-top">
+            <div class="card-brand">
+              ${MARK_SVG}
+              <span>Orvexa<em>.</em></span>
+            </div>
+            <span class="card-header__tag">${restaurant}</span>
+          </div>
+          <div class="card-header__table">
+            <span class="card-header__table-num">${String(table).padStart(2,'0')}</span>
+            <span class="card-header__table-lbl">Your table</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-qr-wrap">
+            ${qr}
+            <div class="qr-mark">${MARK_SVG}</div>
+          </div>
+          <div class="card-instr">Scan to <em>order</em></div>
+        </div>
+        <div class="card-foot">
+          <span>${location}</span>
+          <span>orvexa.tn / <b>T${String(table).padStart(2,'0')}</b></span>
+        </div>
+      `,
+
+      editorial: ({ table, restaurant, location, qr }) => `
+        <span class="cut-tr"></span><span class="cut-bl"></span>
+        <div class="card-top">
+          <div class="card-top-brand">Orvexa.</div>
+          <div class="card-top-meta">
+            <b>${restaurant}</b><br/>
+            ${location}<br/>
+            orvexa.tn
+          </div>
+        </div>
+        <div class="card-rule"></div>
+        <div class="card-middle">
+          <div class="card-table-num">${String(table).padStart(2,'0')}</div>
+          <div class="card-instr">Scan the code · order in your <em>language.</em></div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-steps">
+            <span><b>01 ·</b> Open the camera</span>
+            <span><b>02 ·</b> Point at the code</span>
+            <span><b>03 ·</b> No app, no login</span>
+          </div>
+          <div class="card-qr-wrap">
+            ${qr}
+            <div class="qr-mark">${MARK_SVG}</div>
+          </div>
+        </div>
+      `,
+
+      dark: ({ table, restaurant, location, qr }) => `
+        <span class="cut-tr"></span><span class="cut-bl"></span>
+        <div class="card-top">
+          <div class="card-brand">
+            ${MARK_SVG}
+            <span>Orvexa<em>.</em></span>
+          </div>
+          <span class="card-table">Table · ${String(table).padStart(2,'0')}</span>
+        </div>
+        <div class="card-qr-wrap">
+          ${qr}
+          <div class="qr-mark">${MARK_SVG}</div>
+        </div>
+        <div class="card-instr">Scan to <em>order</em></div>
+        <div class="card-rule"></div>
+        <div class="card-sub">No app · no login · ar · fr · en</div>
+        <div class="card-foot">
+          <span><b>${restaurant}</b> · ${location}</span>
+          <span>orvexa.tn/T${String(table).padStart(2,'0')}</span>
+        </div>
+      `,
+    };
+
+    /* ─────────────────────────────────────────────────────────────────────
+       Build the document.
+       ───────────────────────────────────────────────────────────────────── */
+    function buildDoc() {
+      const doc = document.getElementById('doc');
+      const count = Math.max(1, Math.min(200, parseInt(document.getElementById('count').value, 10) || 20));
+      const restaurant = document.getElementById('restaurant').value || 'Dar Slah';
+      const location = document.getElementById('location').value || 'La Marsa';
+      const style = doc.getAttribute('data-style') || 'classic';
+      const template = TEMPLATES[style];
+
+      doc.innerHTML = '';
+
+      const totalSheets = Math.ceil(count / 4);
+      let table = 1;
+      for (let s = 0; s < totalSheets; s++) {
+        const sheet = document.createElement('div');
+        sheet.className = 'sheet';
+        const lbl = document.createElement('div');
+        lbl.className = 'sheet__lbl';
+        lbl.innerHTML = `Sheet <b>${s + 1}</b> of ${totalSheets} · tables ${table}–${Math.min(count, table + 3)}`;
+        sheet.appendChild(lbl);
+
+        for (let i = 0; i < 4; i++) {
+          const card = document.createElement('div');
+          card.className = 'card';
+          if (table > count) {
+            // Empty placeholder if we run out of tables — still keep the cut grid
+            card.style.opacity = '0';
+          } else {
+            const url = `https://orvexa.tn/T${String(table).padStart(2, '0')}`;
+            const qr = makeQR(url);
+            card.innerHTML = template({ table, restaurant, location, qr });
+          }
+          sheet.appendChild(card);
+          table++;
+        }
+        doc.appendChild(sheet);
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────
+       Wire up controls.
+       ───────────────────────────────────────────────────────────────────── */
+    document.querySelectorAll('.style-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('doc').setAttribute('data-style', btn.dataset.style);
+        buildDoc();
+      });
+    });
+    ['count', 'restaurant', 'location'].forEach(id => {
+      document.getElementById(id).addEventListener('input', buildDoc);
+    });
+
+    // Initial build
+    buildDoc();
+  </script>
+
+</body>
+</html>
