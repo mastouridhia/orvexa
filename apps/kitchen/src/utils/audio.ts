@@ -26,16 +26,33 @@ export function isAudioEnabled(): boolean {
 
 /** Initial unlock — call from a user gesture handler (login button, sound toggle). */
 export function unlockAudio(): void {
-  if (!ctx) {
-    enableAudio();
-  }
+  if (!ctx) enableAudio();
   if (ctx?.state === 'suspended') void ctx.resume();
+}
+
+/**
+ * Register a one-time document listener so audio unlocks on the first tap/click/key
+ * on the Board page — covers the case where the user was already authenticated and
+ * skipped the login form (page refresh, direct URL).
+ */
+export function scheduleAutoUnlock(): void {
+  const unlock = () => {
+    unlockAudio();
+    document.removeEventListener('pointerdown', unlock, true);
+    document.removeEventListener('keydown', unlock, true);
+  };
+  document.addEventListener('pointerdown', unlock, true);
+  document.addEventListener('keydown', unlock, true);
 }
 
 /** Plays a loud three-beep "new order" alert — square wave + compressor for max punch. */
 export function playDing(): void {
-  if (!enabled) return;
-  if (!ctx) return;
+  if (!enabled || !ctx) return;
+  // Context can become suspended after the tab is backgrounded — resume then retry.
+  if (ctx.state === 'suspended') {
+    void ctx.resume().then(() => playDing());
+    return;
+  }
 
   const compressor = ctx.createDynamicsCompressor();
   compressor.threshold.value = -6;

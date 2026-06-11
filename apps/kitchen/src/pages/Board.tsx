@@ -13,6 +13,7 @@ import {
   enableAudio,
   disableAudio,
   unlockAudio,
+  scheduleAutoUnlock,
 } from '../utils/audio.js';
 import { ageBucket, type AgeBucket } from '../utils/kds.js';
 import { navigate } from '../utils/nav.js';
@@ -83,6 +84,12 @@ export function Board() {
     ordersRef.current = orders;
     authedFetchRef.current = authedFetch;
   });
+
+  // Unlock audio on first user interaction — covers page-refresh / direct-URL cases
+  // where the login form gesture never fired.
+  useEffect(() => {
+    scheduleAutoUnlock();
+  }, []);
 
   // Tick every second so age + MM:SS counters update live.
   useEffect(() => {
