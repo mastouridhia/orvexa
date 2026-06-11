@@ -19,7 +19,27 @@ export function TablesManager() {
   const [printing, setPrinting] = useState(false);
   const [tab, setTab] = useState<Tab>('list');
   const [reloadKey, setReloadKey] = useState(0);
+  const [bulkProgress, setBulkProgress] = useState<number | null>(null);
   const reload = () => setReloadKey((k) => k + 1);
+
+  const bulkAdd100 = async () => {
+    const highest = tables.reduce((max, tb) => {
+      const m = /^Table (\d+)$/i.exec(tb.label);
+      return m ? Math.max(max, Number(m[1])) : max;
+    }, 0);
+    setBulkProgress(0);
+    try {
+      for (let i = 1; i <= 100; i++) {
+        await authedFetch((tk) => api.createTable(tk, { label: `Table ${highest + i}`, seats: 4 }));
+        setBulkProgress(i);
+      }
+      await reload();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setBulkProgress(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +88,14 @@ export function TablesManager() {
           <div className="row-gap">
             <button type="button" className="btn" onClick={() => setPrinting(true)}>
               {t('tables.printSheet')}
+            </button>
+            <button
+              type="button"
+              className="btn"
+              onClick={bulkAdd100}
+              disabled={bulkProgress !== null}
+            >
+              {bulkProgress !== null ? `${bulkProgress}/100…` : '+ 100 tables'}
             </button>
             <button type="button" className="btn btn-primary" onClick={() => setEditing('new')}>
               + {t('tables.new')}
