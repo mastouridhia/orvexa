@@ -71,7 +71,10 @@
   align-items: center;
   gap: 18px;
   background: var(--kds-bg);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tf-kds__topbar::-webkit-scrollbar { display: none; }
 .tf-kds__brand {
   display: flex;
   align-items: baseline;
@@ -181,7 +184,10 @@
   gap: 4px;
   border-bottom: 1px solid var(--kds-line);
   background: var(--kds-bg);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tf-kds__sections::-webkit-scrollbar { display: none; }
 .tf-kds__section-tab {
   height: 44px;
   padding: 0 20px;
@@ -228,7 +234,10 @@
   gap: 8px;
   border-bottom: 1px solid var(--kds-line);
   background: var(--kds-bg);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.tf-kds__filters::-webkit-scrollbar { display: none; }
 .tf-kds__filter {
   height: 34px;
   padding: 0 14px;
