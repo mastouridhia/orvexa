@@ -8,6 +8,7 @@ import {
   orders,
   orderItemVariants,
   orderItems,
+  payments,
   restaurants,
   variantGroups,
   variants,
@@ -40,6 +41,7 @@ async function main() {
       await db.delete(orderItemVariants).where(inArray(orderItemVariants.orderItemId, itemIds));
       await db.delete(orderItems).where(inArray(orderItems.id, itemIds));
     }
+    await db.delete(payments).where(inArray(payments.orderId, orderIds));
     await db.delete(orders).where(inArray(orders.id, orderIds));
   }
 
