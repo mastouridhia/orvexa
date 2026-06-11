@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 import { useEscapeKey, useFocusTrap } from '../hooks/useFocusTrap.js';
 
@@ -11,7 +12,7 @@ export type ModalProps = {
 export function Modal({ title, onClose, children, footer }: ModalProps) {
   const cardRef = useFocusTrap<HTMLDivElement>();
   useEscapeKey(onClose);
-  return (
+  return createPortal(
     <div
       className="modal-backdrop"
       onClick={(e) => {
@@ -33,6 +34,7 @@ export function Modal({ title, onClose, children, footer }: ModalProps) {
         <div className="body">{children}</div>
         {footer ? <footer>{footer}</footer> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
