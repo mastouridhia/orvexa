@@ -190,6 +190,24 @@
     "submitting": "Signing in…"
   },
 
+  "dish": {
+    "addToCart": "Add",
+    "notes": "Kitchen notes (optional)",
+    "notesPlaceholder": "Allergies, preferences…",
+    "quantity": "Quantity",
+    "selectOne": "Choose 1",
+    "selectMin": "At least {{min}}",
+    "selectUpTo": "Up to {{max}}"
+  },
+
+  "cart": {
+    "items_one": "{{count}} item",
+    "items_other": "{{count}} items",
+    "confirmOrder": "Confirm"
+  },
+
+  "common": { "close": "Close" },
+
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {
     "loginFailed": "Invalid credentials.",

@@ -190,6 +190,24 @@
     "submitting": "جاري الدخول…"
   },
 
+  "dish": {
+    "addToCart": "أضف",
+    "notes": "ملاحظات للمطبخ (اختياري)",
+    "notesPlaceholder": "الحساسية، التفضيلات…",
+    "quantity": "الكمية",
+    "selectOne": "اختر 1",
+    "selectMin": "على الأقل {{min}}",
+    "selectUpTo": "حتى {{max}}"
+  },
+
+  "cart": {
+    "items_one": "{{count}} صنف",
+    "items_other": "{{count}} أصناف",
+    "confirmOrder": "تأكيد"
+  },
+
+  "common": { "close": "إغلاق" },
+
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {
     "loginFailed": "بيانات الدخول غير صحيحة.",

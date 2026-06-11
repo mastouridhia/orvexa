@@ -190,6 +190,24 @@
     "submitting": "Connexion…"
   },
 
+  "dish": {
+    "addToCart": "Ajouter",
+    "notes": "Notes cuisine (optionnel)",
+    "notesPlaceholder": "Allergies, préférences…",
+    "quantity": "Quantité",
+    "selectOne": "Choisissez 1",
+    "selectMin": "Au moins {{min}}",
+    "selectUpTo": "Jusqu'à {{max}}"
+  },
+
+  "cart": {
+    "items_one": "{{count}} article",
+    "items_other": "{{count}} articles",
+    "confirmOrder": "Confirmer"
+  },
+
+  "common": { "close": "Fermer" },
+
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {
     "loginFailed": "Identifiants incorrects.",
