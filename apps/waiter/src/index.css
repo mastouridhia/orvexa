@@ -105,6 +105,10 @@ button {
   background: none;
   cursor: pointer;
   color: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
 }
 button:disabled { cursor: not-allowed; opacity: 0.55; }
 

@@ -65,6 +65,9 @@ export function ItemDetailModal({
       return Math.max(0, i - 1);
     });
   };
+  const onTouchCancel = () => {
+    touchStartX.current = null;
+  };
 
   const variantById = useMemo(() => {
     const map = new Map<string, Variant>();
@@ -126,7 +129,7 @@ export function ItemDetailModal({
         className="tf-sheet__scroll"
         onScroll={(e) => setScrollY((e.target as HTMLDivElement).scrollTop)}
       >
-        <div className="tf-sheet__hero" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="tf-sheet__hero" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} onTouchCancel={onTouchCancel}>
           <div
             className="tf-sheet__hero-img"
             style={{
