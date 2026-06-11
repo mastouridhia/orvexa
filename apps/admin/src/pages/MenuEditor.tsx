@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Category, Dish, LanguageCode, LocalizedString, VariantGroup } from '@orvexa/shared';
+import type { Category, Dish, KitchenSection, LanguageCode, LocalizedString, VariantGroup } from '@orvexa/shared';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
@@ -237,10 +237,30 @@ function CategoriesPanel({
                   ⠿
                 </td>
                 <td>{pickLang(c.name, lang)}</td>
-                <td>{c.isActive ? '✓' : '—'}</td>
+                <td style={{ textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={c.isActive}
+                    onChange={async (e) => {
+                      const next = e.target.checked;
+                      setOrdered((prev) =>
+                        prev.map((x) => (x.id === c.id ? { ...x, isActive: next } : x)),
+                      );
+                      try {
+                        await authedFetch((tk) =>
+                          api.updateCategory(tk, c.id, { isActive: next }),
+                        );
+                      } catch (err) {
+                        setOrdered((prev) =>
+                          prev.map((x) => (x.id === c.id ? { ...x, isActive: !next } : x)),
+                        );
+                      }
+                    }}
+                  />
+                </td>
                 <td>
                   <span className={`section-badge section-badge--${c.kitchenSection}`}>
-                    {c.kitchenSection === 'bar' ? t('menu.sectionBar') : t('menu.sectionKitchen')}
+                    {t(`menu.section${c.kitchenSection.charAt(0).toUpperCase()}${c.kitchenSection.slice(1)}`, { defaultValue: c.kitchenSection })}
                   </span>
                 </td>
                 <td className="right">
@@ -284,7 +304,7 @@ function CategoryEditor({
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [name, setName] = useState<LocalizedString>(initial?.name ?? { ...EMPTY_L10N });
   const [isActive, setIsActive] = useState<boolean>(initial?.isActive ?? true);
-  const [kitchenSection, setKitchenSection] = useState<'kitchen' | 'bar'>(
+  const [kitchenSection, setKitchenSection] = useState<KitchenSection>(
     initial?.kitchenSection ?? 'kitchen',
   );
   const [busy, setBusy] = useState(false);
@@ -336,10 +356,13 @@ function CategoryEditor({
         {t('menu.section')}
         <select
           value={kitchenSection}
-          onChange={(e) => setKitchenSection(e.target.value as 'kitchen' | 'bar')}
+          onChange={(e) => setKitchenSection(e.target.value as KitchenSection)}
         >
           <option value="kitchen">{t('menu.sectionKitchen')}</option>
           <option value="bar">{t('menu.sectionBar')}</option>
+          <option value="restaurant">{t('menu.sectionRestaurant')}</option>
+          <option value="cafe">{t('menu.sectionCafe')}</option>
+          <option value="pizzeria">{t('menu.sectionPizzeria')}</option>
         </select>
       </label>
     </Modal>
