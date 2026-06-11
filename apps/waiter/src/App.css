@@ -175,7 +175,7 @@
 /* ── Settings bottom sheet ───────────────────────────── */
 .tf-w-settings-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(25, 20, 14, 0.48);
   z-index: 40;
   animation: tf-fade 180ms ease both;
@@ -761,7 +761,7 @@
 /* Reorder split — bottom-right triangle shows the secondary round's state. */
 .tf-w-floor__dot-split {
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   clip-path: polygon(100% 0, 100% 100%, 0 100%);
   pointer-events: none;
 }
@@ -1161,7 +1161,7 @@
 /* ── Table detail (full-screen sheet) ─────────────────── */
 .tf-w-detail {
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: var(--bg);
   z-index: 30;
   display: flex;
@@ -1383,11 +1383,12 @@
 }
 
 /* ── Waiter order sheet ─────────────────────────────────── */
-.tf-w-order { position: fixed; inset: 0; z-index: 50; }
-.tf-w-order__backdrop { position: absolute; inset: 0; background: rgba(10, 8, 5, 0.45); }
+.tf-w-order { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; }
+.tf-w-order__backdrop { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgba(10, 8, 5, 0.45); }
 .tf-w-order__sheet {
   position: absolute;
-  inset: auto 0 0 0;
+  top: auto; right: 0; bottom: 0; left: 0;
+  height: 78vh;
   height: min(78vh, 680px);
   background: var(--bg);
   border-radius: 18px 18px 0 0;
@@ -1497,7 +1498,7 @@
 /* ── Generic modal overlay ──────────────────────────────────── */
 .modal-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   z-index: 300;
   background: rgba(0, 0, 0, 0.45);
   display: flex;

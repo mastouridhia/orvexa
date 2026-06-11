@@ -33,7 +33,7 @@
 .nav-backdrop {
   display: none;
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(25, 20, 14, 0.45);
   z-index: 20;
   border: 0;
@@ -1029,7 +1029,7 @@
 /* ── Modal ───────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: rgba(25, 20, 14, 0.45);
   display: flex;
   align-items: center;
@@ -1480,7 +1480,7 @@ textarea.invalid {
 .tf-a-floor__canvas.is-placing { cursor: crosshair; }
 .tf-a-floor__canvas-empty {
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   display: grid;
   place-items: center;
   color: var(--fg-soft);
