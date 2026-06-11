@@ -1511,9 +1511,15 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
   width: 100%;
   max-width: 420px;
+  max-height: 85vh;
+  max-height: 85dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+.modal-card > header,
+.modal-card > footer {
+  flex-shrink: 0;
 }
 .modal-card > header {
   display: flex;
@@ -1540,8 +1546,11 @@
   padding: 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 0.5rem;
+  overflow-y: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 .modal-card > footer {
   display: flex;
