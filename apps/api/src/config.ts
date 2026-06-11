@@ -48,7 +48,7 @@ export const config = {
 
   rateLimit: {
     windowMs: parseInteger(process.env.RATE_LIMIT_WINDOW_MS, 60_000),
-    max: parseInteger(process.env.RATE_LIMIT_MAX, 120),
+    max: parseInteger(process.env.RATE_LIMIT_MAX, 60),
   },
 
   shutdown: {

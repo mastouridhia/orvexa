@@ -23,7 +23,7 @@ import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
 import { ForbiddenError, UnauthorizedError } from '../utils/errors.js';
-import { orderRateLimit } from '../middleware/rateLimit.js';
+import { orderCooldown, orderRateLimit } from '../middleware/rateLimit.js';
 import { requirePresence } from '../middleware/presence.js';
 import { redis } from '../cache/client.js';
 import { OrderRepository } from '../repositories/order.js';
@@ -52,6 +52,7 @@ ordersRouter.post(
   '/orders',
   requireCustomerSession,
   orderRateLimit,
+  orderCooldown,
   requirePresence,
   validate({ body: PlaceOrderRequestSchema }),
   asyncHandler(async (req, res) => {

@@ -69,6 +69,27 @@ export function attachRealtime(httpServer: HttpServer): { io: OrvexaIo; bus: Rea
       'socket connected',
     );
 
+    // Throttle subscribe events: max 5 per 10 s per socket. A legitimate
+    // client subscribes once on connect; anything more is a reconnect loop.
+    let subscribeCount = 0;
+    let subscribeWindowStart = Date.now();
+    const guardSubscribe = (): boolean => {
+      const now = Date.now();
+      if (now - subscribeWindowStart > 10_000) {
+        subscribeCount = 0;
+        subscribeWindowStart = now;
+      }
+      subscribeCount++;
+      if (subscribeCount > 5) {
+        socket.disconnect(true);
+        return false;
+      }
+      return true;
+    };
+
+    socket.on('customer:subscribe', () => { guardSubscribe(); });
+    socket.on('staff:subscribe', () => { guardSubscribe(); });
+
     socket.on('disconnect', (reason) => {
       logger.debug({ socketId: socket.id, reason }, 'socket disconnected');
     });

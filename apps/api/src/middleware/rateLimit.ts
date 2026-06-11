@@ -25,13 +25,29 @@ export const globalRateLimit = rateLimit({
  * Per-session order limiter: all tables share the same WiFi exit IP so a
  * per-IP global limit would let one table starve every other. Keyed on the
  * customer session id (falls back to IP for requests without a session).
+ * 10 submissions/min ≈ one every 6 s — more than enough for any real customer.
  */
 export const orderRateLimit = rateLimit({
   windowMs: 60 * 1000,
-  limit: 30,
+  limit: 10,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req: Request) => req.customerSession?.id ?? ipKeyGenerator(req.ip ?? ''),
+  handler: tooManyRequestsHandler,
+});
+
+/**
+ * Enforces a minimum gap between consecutive order submissions from the same
+ * session. Prevents rapid double-taps or client retry loops from creating
+ * duplicate orders even when the idempotency key is missing.
+ * Window = 8 s, limit = 1 → at most one submission per 8 s per session.
+ */
+export const orderCooldown = rateLimit({
+  windowMs: 8 * 1000,
+  limit: 1,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => `cooldown:${req.customerSession?.id ?? ipKeyGenerator(req.ip ?? '')}`,
   handler: tooManyRequestsHandler,
 });
 
