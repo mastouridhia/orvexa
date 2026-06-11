@@ -397,7 +397,6 @@ function PrintSheet({
   const restaurantName = restaurant?.name ?? '';
   const gateMode = restaurant?.orderGateMode ?? 'off';
   const needsCode = gateMode === 'code' || gateMode === 'wifi_or_code';
-  const wifiMissing = wifiSsid.trim() === '' || wifiPassword.trim() === '';
 
   return (
     <div className="orvexa-pcards" style={{ margin: '-1.5rem -1.75rem', padding: '1.5rem 1.75rem', minHeight: '100%', background: 'var(--bg)', overflowX: 'auto' }}>
@@ -423,12 +422,12 @@ function PrintSheet({
           <div style={{ width: '1px', height: '24px', background: 'var(--line)', margin: '0 4px' }} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             <label style={{ fontSize: '0.7rem', color: 'var(--fg-soft)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              {t('tables.printWifiSsid')} <span style={{ color: 'var(--danger, #e53e3e)' }}>*</span>
+              {t('tables.printWifiSsid')}
             </label>
             <input
               type="text"
-              className={`tf-input${wifiSsid.trim() === '' ? ' input-error' : ''}`}
-              placeholder="WiFi"
+              className="tf-input"
+              placeholder="WiFi (optional)"
               value={wifiSsid}
               onChange={(e) => setWifiSsid(e.target.value)}
               style={{ minWidth: '130px', maxWidth: '160px' }}
@@ -436,11 +435,11 @@ function PrintSheet({
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             <label style={{ fontSize: '0.7rem', color: 'var(--fg-soft)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-              {t('tables.printWifiPassword')} <span style={{ color: 'var(--danger, #e53e3e)' }}>*</span>
+              {t('tables.printWifiPassword')}
             </label>
             <input
               type="text"
-              className={`tf-input${wifiPassword.trim() === '' ? ' input-error' : ''}`}
+              className="tf-input"
               placeholder="••••••••"
               value={wifiPassword}
               onChange={(e) => setWifiPassword(e.target.value)}
@@ -456,18 +455,11 @@ function PrintSheet({
             type="button"
             className="btn btn-primary"
             onClick={() => window.print()}
-            disabled={wifiMissing}
-            title={wifiMissing ? t('tables.printWifiRequired') : undefined}
           >
             {t('tables.printAction')}
           </button>
         </div>
       </div>
-      {wifiMissing && (
-        <div className="error-banner no-print" style={{ marginBottom: '1rem' }}>
-          {t('tables.printWifiRequired')}
-        </div>
-      )}
       {error ? <div className="error-banner">{error}</div> : null}
       <div className="orvexa-pcards-doc" data-style={style}>
         {sheets.map((sheetTables, si) => (
