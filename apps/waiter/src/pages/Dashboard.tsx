@@ -331,6 +331,8 @@ export function Dashboard() {
         </div>
       ) : null}
 
+      <TabBar tab={tab} setTab={setTab} callCount={calls.length} />
+
       <div className="tf-w-body">
         <div style={tab !== 'floor' ? { display: 'none' } : { display: 'contents' }}>
           <FloorView
@@ -368,8 +370,6 @@ export function Dashboard() {
           />
         </div>
       </div>
-
-      <TabBar tab={tab} setTab={setTab} callCount={calls.length} />
 
       {openTable ? (
         <TableDetail

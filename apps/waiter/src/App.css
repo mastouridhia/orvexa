@@ -509,14 +509,13 @@
 }
 .tf-w-topbar__logout:hover { color: var(--fg); border-color: var(--fg-faint); }
 
-/* Body wraps the tab content; reserves space for the bottom tabbar. */
+/* Body wraps the tab content; grows to fill space below the tabbar. */
 .tf-w-body {
   flex: 1;
   min-height: 0;
   position: relative;
   display: flex;
   flex-direction: column;
-  padding-bottom: 92px;
   overflow: hidden;
 }
 
@@ -1111,14 +1110,11 @@
 
 /* ── Tab bar ─────────────────────────────────────────── */
 .tf-w-tabbar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 8px 16px calc(20px + var(--safe-bottom));
+  flex-shrink: 0;
+  padding: 6px 16px;
   background: rgba(250, 248, 244, 0.94);
   backdrop-filter: blur(20px);
-  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   display: flex;
   gap: 4px;
   z-index: 5;

@@ -194,15 +194,15 @@ export function WaiterOrderSheet({
           </button>
         </div>
 
-        {openDish ? (
-          <DishAddModal
-            dish={openDish}
-            lang={lang}
-            onClose={() => setOpenDish(null)}
-            onAdd={(line) => setLines((prev) => [...prev, line])}
-          />
-        ) : null}
       </div>
+      {openDish ? (
+        <DishAddModal
+          dish={openDish}
+          lang={lang}
+          onClose={() => setOpenDish(null)}
+          onAdd={(line) => setLines((prev) => [...prev, line])}
+        />
+      ) : null}
     </div>
   );
 }
