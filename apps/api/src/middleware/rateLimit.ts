@@ -18,6 +18,10 @@ export const globalRateLimit = rateLimit({
   limit: config.rateLimit.max,
   standardHeaders: 'draft-7',
   legacyHeaders: false,
+  // Authenticated staff all share one restaurant IP — skip the IP-based global
+  // limit for them; their JWT auth is the throttle. Unauthenticated requests
+  // (customer, public) still get rate-limited.
+  skip: (req: Request) => !!req.headers.authorization?.startsWith('Bearer '),
   handler: tooManyRequestsHandler,
 });
 
