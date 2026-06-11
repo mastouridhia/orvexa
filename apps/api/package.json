@@ -12,7 +12,7 @@
     "db:seed": "tsx src/db/seed.ts",
     "db:provision": "tsx src/db/provision-restaurant.ts",
     "db:add-admin": "tsx src/db/add-admin.ts",
-    "db:seed:capitol": "tsx src/db/seed-capitol.ts",
+    "db:seed:capitol": "npx tsx src/db/seed-capitol.ts",
     "db:reset": "tsx src/db/reset.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",

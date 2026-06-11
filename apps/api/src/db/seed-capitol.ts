@@ -2,7 +2,16 @@
 import 'dotenv/config';
 import { eq, inArray } from 'drizzle-orm';
 import { db, pool } from './client.js';
-import { categories, dishes, restaurants, variantGroups, variants } from './schema/index.js';
+import {
+  categories,
+  dishes,
+  orders,
+  orderItemVariants,
+  orderItems,
+  restaurants,
+  variantGroups,
+  variants,
+} from './schema/index.js';
 import { CAPITOL_MENU } from './capitol/menu-data.js';
 
 const SLUG = 'capitol-park';
@@ -14,6 +23,25 @@ async function main() {
     throw new Error(`[seed-capitol] restaurant slug="${SLUG}" not found — run db:provision first`);
   }
   console.log(`[seed-capitol] restaurant ${restaurant.name} (id=${restaurant.id})`);
+
+  console.log('[seed-capitol] clearing existing orders for Capitol Park…');
+  const existingOrders = await db
+    .select({ id: orders.id })
+    .from(orders)
+    .where(eq(orders.restaurantId, restaurant.id));
+  if (existingOrders.length > 0) {
+    const orderIds = existingOrders.map((o) => o.id);
+    const existingOrderItems = await db
+      .select({ id: orderItems.id })
+      .from(orderItems)
+      .where(inArray(orderItems.orderId, orderIds));
+    if (existingOrderItems.length > 0) {
+      const itemIds = existingOrderItems.map((i) => i.id);
+      await db.delete(orderItemVariants).where(inArray(orderItemVariants.orderItemId, itemIds));
+      await db.delete(orderItems).where(inArray(orderItems.id, itemIds));
+    }
+    await db.delete(orders).where(inArray(orders.id, orderIds));
+  }
 
   console.log('[seed-capitol] clearing existing menu data for Capitol Park…');
   const existingDishes = await db
