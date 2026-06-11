@@ -8,6 +8,7 @@ import { connectStaffSocket } from '../socket/client.js';
 import { TicketCard } from '../components/TicketCard.js';
 import { ageBucket } from '../utils/kds.js';
 import { navigate } from '../utils/nav.js';
+import { playDing, scheduleAutoUnlock } from '../utils/audio.js';
 import { IconTablet, IconWifi, IconWifiOff } from '../components/tf-icons.js';
 
 const WALL_SECTIONS: KitchenSection[] = ['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria'];
@@ -50,6 +51,10 @@ export function Wall() {
   });
 
   useEffect(() => {
+    scheduleAutoUnlock();
+  }, []);
+
+  useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
@@ -81,10 +86,15 @@ export function Wall() {
   useEffect(() => {
     if (!accessToken) return;
     const socket = connectStaffSocket(accessToken);
+    const seenIds = new Set<string>();
     const onCreated = (payload: { order: Order }) => {
       setOrders((prev) =>
         prev.some((o) => o.id === payload.order.id) ? prev : [payload.order, ...prev],
       );
+      if (!seenIds.has(payload.order.id)) {
+        seenIds.add(payload.order.id);
+        playDing();
+      }
     };
     const onStatus = (payload: { orderId: string; status: OrderStatus }) => {
       if (payload.status === 'served' || payload.status === 'cancelled') {
