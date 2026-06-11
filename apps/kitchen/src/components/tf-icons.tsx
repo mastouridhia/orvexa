@@ -110,6 +110,22 @@ export function IconTablet({ size = 16, ...rest }: IconProps) {
     </svg>
   );
 }
+export function IconWifi({ size = 16, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <path d="M5 12.5a9.7 9.7 0 0 1 14 0M1.5 8.5a15 15 0 0 1 21 0M8.5 16.5a5 5 0 0 1 7 0" />
+      <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+export function IconWifiOff({ size = 16, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 5.2-1.2M5 12.5a9.7 9.7 0 0 1 8.3-2.7M1.5 8.5a15 15 0 0 1 8.7-4.2M19 12.5a9.7 9.7 0 0 0-2.7-1.9" />
+      <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 export function IconSettings({ size = 16, ...rest }: IconProps) {
   return (
     <svg {...base(size, rest)}>

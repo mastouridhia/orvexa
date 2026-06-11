@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
   min-height: 100dvh;
   padding: 1.5rem;
   background: var(--kds-bg);
@@ -54,6 +55,7 @@
 .tf-kds {
   display: flex;
   flex-direction: column;
+  height: 100vh;
   height: 100dvh;
   background: var(--kds-bg);
   color: var(--kds-ink);
@@ -741,6 +743,14 @@
 }
 .tf-kds__wall-stat--lime .tf-kds__wall-stat-value { color: var(--kds-lime); }
 .tf-kds__wall-stat--late .tf-kds__wall-stat-value { color: var(--kds-late); }
+.tf-kds__wall-net {
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+  transition: color 0.3s, opacity 0.3s;
+}
+.tf-kds__wall-net--on  { color: var(--kds-lime); opacity: 0.7; }
+.tf-kds__wall-net--off { color: var(--kds-late); opacity: 1; }
 .tf-kds__wall-clock {
   font-size: 13px;
   letter-spacing: 1.4px;

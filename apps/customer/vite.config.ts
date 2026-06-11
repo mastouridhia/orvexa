@@ -16,5 +16,8 @@ export default defineConfig({
       }),
   ].filter(Boolean),
   envDir: '../..',
+  // Older phones (iOS 14+, Android WebView/Chrome 87+) — Vite 8's default
+  // baseline target (Safari 16+) white-screens anything older.
+  build: { target: ['es2019', 'chrome87', 'safari14'] },
   server: { host: true, port: 5173, strictPort: true },
 });

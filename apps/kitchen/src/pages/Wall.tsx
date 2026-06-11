@@ -8,7 +8,7 @@ import { connectStaffSocket } from '../socket/client.js';
 import { TicketCard } from '../components/TicketCard.js';
 import { ageBucket } from '../utils/kds.js';
 import { navigate } from '../utils/nav.js';
-import { IconTablet } from '../components/tf-icons.js';
+import { IconTablet, IconWifi, IconWifiOff } from '../components/tf-icons.js';
 
 const WALL_SECTIONS: KitchenSection[] = ['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria'];
 
@@ -36,6 +36,7 @@ export function Wall() {
   const [doneOrders, setDoneOrders] = useState<Map<string, Order>>(() => new Map());
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [online, setOnline] = useState(() => navigator.onLine);
   const tableLabels = useMemo(() => new Map<string, string>(), []);
   const fetchedRef = useRef(false);
   const ordersRef = useRef<Order[]>([]);
@@ -51,6 +52,17 @@ export function Wall() {
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => {
+      window.removeEventListener('online', on);
+      window.removeEventListener('offline', off);
+    };
   }, []);
 
   useEffect(() => {
@@ -161,6 +173,12 @@ export function Wall() {
           <WallStat label={t('stat.open')} value={open.length} />
           <WallStat label={t('stat.ready')} value={ready.length} accent="lime" />
           <WallStat label={t('stat.late')} value={late.length} accent="late" />
+          <span
+            className={`tf-kds__wall-net tf-kds__wall-net--${online ? 'on' : 'off'}`}
+            title={online ? 'Connected' : 'No internet'}
+          >
+            {online ? <IconWifi size={20} /> : <IconWifiOff size={20} />}
+          </span>
           <span className="tf-mono tf-kds__wall-clock">{clock}</span>
           <button
             type="button"

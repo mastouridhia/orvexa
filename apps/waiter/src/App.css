@@ -11,6 +11,7 @@
    before the login screen.
    ──────────────────────────────────────────────────────── */
 .tf-w-langpick {
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -188,6 +189,7 @@
   background: var(--bg-elev);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   padding: 0 1.25rem calc(1.5rem + var(--safe-bottom));
+  max-height: 88vh;
   max-height: 88dvh;
   overflow-y: auto;
   animation: tf-sheet-up 320ms var(--ease-spring) both;
@@ -404,6 +406,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
   min-height: 100dvh;
   padding: 1.5rem;
   background: var(--bg);
@@ -452,6 +455,7 @@
 .app-shell {
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg);
   position: relative;
@@ -1554,6 +1558,7 @@
   justify-content: center;
   padding: 32px;
   flex: 1;
+  min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg);
 }
