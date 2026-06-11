@@ -32,23 +32,35 @@ export function unlockAudio(): void {
   if (ctx?.state === 'suspended') void ctx.resume();
 }
 
-/** Plays a short two-tone "new order" ding. */
+/** Plays a loud three-beep "new order" alert — square wave + compressor for max punch. */
 export function playDing(): void {
   if (!enabled) return;
   if (!ctx) return;
-  const now = ctx.currentTime;
-  const tone = (start: number, freq: number, duration: number) => {
+
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -6;
+  compressor.knee.value = 3;
+  compressor.ratio.value = 4;
+  compressor.attack.value = 0;
+  compressor.release.value = 0.1;
+  compressor.connect(ctx.destination);
+
+  const beep = (start: number, freq: number, duration: number) => {
     const osc = ctx!.createOscillator();
     const gain = ctx!.createGain();
     osc.frequency.value = freq;
-    osc.type = 'sine';
+    osc.type = 'square';
     gain.gain.setValueAtTime(0, start);
-    gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    osc.connect(gain).connect(ctx!.destination);
+    gain.gain.linearRampToValueAtTime(0.45, start + 0.01);
+    gain.gain.setValueAtTime(0.45, start + duration - 0.02);
+    gain.gain.linearRampToValueAtTime(0, start + duration);
+    osc.connect(gain).connect(compressor);
     osc.start(start);
     osc.stop(start + duration);
   };
-  tone(now, 880, 0.15);
-  tone(now + 0.13, 1175, 0.22);
+
+  const now = ctx.currentTime;
+  beep(now,        1047, 0.13); // C6
+  beep(now + 0.20, 1047, 0.13); // C6
+  beep(now + 0.40, 1319, 0.22); // E6 — rising finish
 }
