@@ -988,6 +988,21 @@
   color: #4f46e5;
   border: 1px solid rgba(99, 102, 241, 0.25);
 }
+.section-badge--restaurant {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.section-badge--cafe {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+.section-badge--pizzeria {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
 
 /* ── Tabs ────────────────────────────────────────────── */
 .tabs {

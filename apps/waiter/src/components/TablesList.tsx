@@ -4,10 +4,25 @@ import type { Order, TableWithDerived, TableZone, WaiterCall } from '@orvexa/sha
 import {
   indexCallsByTable,
   pickActiveOrder,
+  pickActiveOrders,
   visualStateOf,
   type WaiterVisualState,
 } from '../utils/waiter.js';
+
 import { IconChevronRight } from './tf-icons.js';
+
+const STATE_PRIORITY: Record<WaiterVisualState, number> = {
+  call: 0,
+  needs_code: 1,
+  ready: 2,
+  paying: 3,
+  cooking: 4,
+  ordered: 5,
+  eating: 6,
+  seated: 7,
+  clean: 8,
+  open: 9,
+};
 
 export function TablesList({
   tables,
@@ -39,16 +54,24 @@ export function TablesList({
       list.push(tbl);
       byZoneId.set(key, list);
     }
+
+    const sortByUrgency = (list: TableWithDerived[]) =>
+      [...list].sort((a, b) => {
+        const sa = visualStateOf(a, pickActiveOrders(orders, a.id), callsByTable.get(a.id) ?? null);
+        const sb = visualStateOf(b, pickActiveOrders(orders, b.id), callsByTable.get(b.id) ?? null);
+        return STATE_PRIORITY[sa] - STATE_PRIORITY[sb];
+      });
+
     for (const z of zones) {
       const list = byZoneId.get(z.id);
-      if (list && list.length > 0) buckets.push([z.name, list]);
+      if (list && list.length > 0) buckets.push([z.name, sortByUrgency(list)]);
     }
     const unassigned = byZoneId.get('__unassigned__');
     if (unassigned && unassigned.length > 0) {
-      buckets.push([t('tables.zones.unassigned'), unassigned]);
+      buckets.push([t('tables.zones.unassigned'), sortByUrgency(unassigned)]);
     }
     return buckets;
-  }, [tables, zones, t]);
+  }, [tables, zones, orders, callsByTable, t]);
 
   const totalLabel = t('tables.totalCount', { count: tables.length });
   const dateNow = new Date(now).toLocaleTimeString(i18n.resolvedLanguage ?? 'fr', {

@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, inArray, lte, max, ne, notInArray } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
+import type { KitchenSection } from '@orvexa/shared';
 import { orderItems, orderItemVariants, orders } from '../db/schema/orders.js';
 import { BaseRepository } from './base.js';
 
@@ -293,7 +294,7 @@ export class OrderRepository extends BaseRepository {
 
   async advanceSectionItems(input: {
     orderId: string;
-    section: 'kitchen' | 'bar';
+    section: KitchenSection;
     itemStatus: 'preparing' | 'ready';
   }): Promise<FullOrder | null> {
     return this.db.transaction(async (tx) => {

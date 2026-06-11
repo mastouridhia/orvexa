@@ -11,7 +11,7 @@ export const categories = pgTable(
     nameAr: text('name_ar').notNull(),
     nameFr: text('name_fr').notNull(),
     nameEn: text('name_en').notNull(),
-    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar'] })
+    kitchenSection: text('kitchen_section', { enum: ['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria'] })
       .notNull()
       .default('kitchen'),
     sortOrder: integer('sort_order').notNull().default(0),

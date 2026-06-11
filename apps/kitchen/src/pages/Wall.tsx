@@ -10,9 +10,17 @@ import { ageBucket } from '../utils/kds.js';
 import { navigate } from '../utils/nav.js';
 import { IconTablet } from '../components/tf-icons.js';
 
+const WALL_SECTIONS: KitchenSection[] = ['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria'];
+
+function sectionFromPath(path: string): KitchenSection {
+  const slug = path.replace(/^\/wall\/?/, '') as KitchenSection;
+  return WALL_SECTIONS.includes(slug) ? slug : 'kitchen';
+}
+
 /**
  * Read-only "wall display" — designed for overhead screens at each station.
- * /wall → kitchen section, /wall/bar → bar section.
+ * /wall → kitchen, /wall/bar → bar, /wall/restaurant → restaurant,
+ * /wall/cafe → cafe, /wall/pizzeria → pizzeria.
  * No interaction; just a glanceable grid of the 6 oldest open tickets and a
  * stat strip. Auth still required.
  */
@@ -22,9 +30,7 @@ export function Wall() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const authedFetch = useAuthStore((s) => s.authedFetch);
 
-  const section: KitchenSection = window.location.pathname.startsWith('/wall/bar')
-    ? 'bar'
-    : 'kitchen';
+  const section: KitchenSection = sectionFromPath(window.location.pathname);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [doneOrders, setDoneOrders] = useState<Map<string, Order>>(() => new Map());

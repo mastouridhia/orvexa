@@ -332,7 +332,7 @@ export function Dashboard() {
       ) : null}
 
       <div className="tf-w-body">
-        {tab === 'floor' && (
+        <div style={tab !== 'floor' ? { display: 'none' } : { display: 'contents' }}>
           <FloorView
             tables={tables}
             zones={zones}
@@ -342,9 +342,9 @@ export function Dashboard() {
             meEmail={user?.email ?? null}
             onOpen={(id) => setOpenTableId(id)}
           />
-        )}
-        {tab === 'calls' &&
-          (loading ? (
+        </div>
+        <div style={tab !== 'calls' ? { display: 'none' } : { display: 'contents' }}>
+          {loading ? (
             <WaiterEmptyCalls />
           ) : (
             <CallsView
@@ -355,8 +355,9 @@ export function Dashboard() {
               onAck={ackCall}
               onOpenTable={(id) => setOpenTableId(id)}
             />
-          ))}
-        {tab === 'tables' && (
+          )}
+        </div>
+        <div style={tab !== 'tables' ? { display: 'none' } : { display: 'contents' }}>
           <TablesList
             tables={tables}
             zones={zones}
@@ -365,7 +366,7 @@ export function Dashboard() {
             now={now}
             onOpen={(id) => setOpenTableId(id)}
           />
-        )}
+        </div>
       </div>
 
       <TabBar tab={tab} setTab={setTab} callCount={calls.length} />

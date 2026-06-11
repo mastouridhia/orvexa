@@ -4,6 +4,7 @@ import type {
   CreateDishRequest,
   CreateVariantGroupRequest,
   Dish,
+  KitchenSection,
   ReorderCategoriesRequest,
   SetDishAvailabilityRequest,
   UpdateCategoryRequest,
@@ -31,7 +32,7 @@ export function rowToCategory(row: CategoryRow): Category {
     id: row.id,
     restaurantId: row.restaurantId,
     name: { ar: row.nameAr, fr: row.nameFr, en: row.nameEn },
-    kitchenSection: row.kitchenSection as 'kitchen' | 'bar',
+    kitchenSection: row.kitchenSection as KitchenSection,
     sortOrder: row.sortOrder,
     isActive: row.isActive,
   };

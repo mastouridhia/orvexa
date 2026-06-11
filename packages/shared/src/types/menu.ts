@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { LocalizedStringSchema, UuidSchema } from './common.js';
 
-export const KitchenSectionSchema = z.enum(['kitchen', 'bar']);
+export const KitchenSectionSchema = z.enum(['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria']);
 export type KitchenSection = z.infer<typeof KitchenSectionSchema>;
 
 export const CategorySchema = z.object({

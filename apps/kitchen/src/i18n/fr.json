@@ -94,7 +94,10 @@
   },
   "section": {
     "kitchen": "Cuisine",
-    "bar": "Bar & Café"
+    "bar": "Bar & Café",
+    "restaurant": "Restaurant",
+    "cafe": "Café",
+    "pizzeria": "Pizzeria"
   },
   "lang": { "fr": "FR", "ar": "ع", "en": "EN" },
   "errors": {

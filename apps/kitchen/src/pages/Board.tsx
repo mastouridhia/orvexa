@@ -234,9 +234,9 @@ export function Board() {
 
   // Per-section active-order counts for tab badges.
   const sectionCounts = useMemo(() => {
-    const counts: Record<SectionId, number> = { kitchen: 0, bar: 0 };
+    const counts: Record<SectionId, number> = { kitchen: 0, bar: 0, restaurant: 0, cafe: 0, pizzeria: 0 };
     for (const o of orders) {
-      for (const sec of ['kitchen', 'bar'] as SectionId[]) {
+      for (const sec of ['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria'] as SectionId[]) {
         if (o.items.some((i) => i.kitchenSection === sec)) counts[sec] += 1;
       }
     }
@@ -385,7 +385,7 @@ export function Board() {
           <button
             type="button"
             className="tf-kds__icon-btn"
-            onClick={() => navigate(section === 'bar' ? '/wall/bar' : '/wall')}
+            onClick={() => navigate(section === 'kitchen' ? '/wall' : `/wall/${section}`)}
             title={t('header.openWall')}
             aria-label={t('header.openWall')}
           >
@@ -435,7 +435,7 @@ export function Board() {
 
       {/* Section tabs */}
       <nav className="tf-kds__sections" aria-label="Kitchen section">
-        {(['kitchen', 'bar'] as SectionId[]).map((sec) => {
+        {(['kitchen', 'bar', 'restaurant', 'cafe', 'pizzeria'] as SectionId[]).map((sec) => {
           const active = section === sec;
           const count = sectionCounts[sec];
           return (
