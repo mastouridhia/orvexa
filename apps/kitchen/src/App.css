@@ -778,3 +778,75 @@
 @media (max-width: 1100px) {
   .tf-kds__wall-grid { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Mobile chrome (≤ 640px, e.g. iPhone XR) ──────────── */
+@media (max-width: 640px) {
+  /* Topbar: two rows — brand+live+actions on row 1, stats on row 2 */
+  .tf-kds__topbar {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 14px 8px;
+    overflow-x: unset;
+  }
+
+  .tf-kds__sep { display: none; }
+
+  .tf-kds__live { order: 1; }
+  .tf-kds__brand { order: 0; }
+
+  /* Push actions to the far right on row 1 */
+  .tf-kds__topbar-actions {
+    order: 2;
+    margin-inline-start: auto;
+    gap: 6px;
+  }
+
+  /* Stats drop to their own full-width row */
+  .tf-kds__stats {
+    order: 3;
+    width: 100%;
+    margin-inline-start: 0;
+    padding-inline: 0;
+    justify-content: space-between;
+    gap: 0;
+    border-top: 1px solid var(--kds-line);
+    padding-top: 8px;
+    margin-top: 2px;
+  }
+
+  .tf-kds__stat {
+    align-items: center;
+    min-width: unset;
+    flex: 1;
+  }
+
+  .tf-kds__stat-value { font-size: 20px; }
+
+  .tf-kds__icon-btn { width: 36px; height: 36px; }
+
+  /* Section tabs: wrap so all tabs are visible */
+  .tf-kds__sections {
+    flex-wrap: wrap;
+    padding: 4px 8px;
+    gap: 2px;
+    overflow-x: unset;
+  }
+
+  .tf-kds__section-tab {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  /* Filter pills: wrap */
+  .tf-kds__filters {
+    flex-wrap: wrap;
+    padding: 8px 14px;
+    gap: 6px;
+    overflow-x: unset;
+  }
+
+  .tf-kds__filter-spacer { display: none; }
+  .tf-kds__user { display: none; }
+}
