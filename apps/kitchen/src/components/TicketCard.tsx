@@ -99,6 +99,11 @@ export function TicketCard({
     }, 16);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    startHold();
+  };
+
   const endHold = () => {
     if (holdTimerRef.current !== null) {
       window.clearInterval(holdTimerRef.current);
@@ -205,8 +210,9 @@ export function TicketCard({
             onMouseDown={startHold}
             onMouseUp={endHold}
             onMouseLeave={endHold}
-            onTouchStart={startHold}
+            onTouchStart={handleTouchStart}
             onTouchEnd={endHold}
+            onTouchCancel={endHold}
             disabled={!next}
           >
             {holdPct > 0 ? (

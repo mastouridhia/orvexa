@@ -544,6 +544,7 @@
   height: 44px;
   border-radius: 10px;
   border: none;
+  touch-action: none;
   background: var(--kds-lime);
   color: var(--kds-lime-ink);
   font-size: 13px;
