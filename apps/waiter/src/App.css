@@ -998,6 +998,12 @@
   background: var(--bg);
 }
 .tf-w-tables__head { padding: 16px 20px 12px; }
+.tf-w-tables__empty {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--fg-soft);
+  font-size: 15px;
+}
 .tf-w-tables__head-row {
   display: flex;
   justify-content: space-between;

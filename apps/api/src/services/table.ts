@@ -9,7 +9,7 @@ import type {
   UpdateTableRequest,
 } from '@orvexa/shared';
 import { config } from '../config.js';
-import { ForbiddenError, NotFoundError } from '../utils/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { CustomerSessionRepository } from '../repositories/customer-session.js';
 import { OrderRepository, type OrderRow } from '../repositories/order.js';
 import { TableCartRepository } from '../repositories/table-cart.js';
@@ -281,6 +281,12 @@ export class TableService {
     const existing = await this.tableRepo.findById(id);
     if (!existing) throw new NotFoundError('Table not found');
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
+    const hasActive = await this.orderRepo.hasNonTerminalForTable(id);
+    if (hasActive)
+      throw new ConflictError('Cannot delete a table with an active order. Close or cancel the order first.');
+    const hasHistory = await this.orderRepo.hasAnyForTable(id);
+    if (hasHistory)
+      throw new ConflictError('Cannot delete a table that has order history.');
     await this.tableRepo.delete(id);
   }
 

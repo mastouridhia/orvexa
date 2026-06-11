@@ -99,12 +99,11 @@ export function TableDetail({
   const assignedToOther = order !== null && order.assignedWaiterId !== null && !assignedToMe;
   const canSettleBill = unpaidOrders.some((o) => o.status === 'served');
 
-  const advance = async (next: 'preparing' | 'ready' | 'served') => {
-    if (!order) return;
+  const advance = async (orderId: string, next: 'preparing' | 'ready' | 'served') => {
     setBusy(true);
     setError(null);
     try {
-      const updated = await authedFetch((tk) => api.updateOrderStatus(tk, order.id, next));
+      const updated = await authedFetch((tk) => api.updateOrderStatus(tk, orderId, next));
       onOrderChange(updated);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -424,7 +423,17 @@ export function TableDetail({
                       {oMins}m {t('detail.elapsed')}
                     </span>
                   ) : null}
-                  {o.status === 'received' || o.status === 'preparing' ? (
+                  {o.status === 'ready' ? (
+                    <button
+                      type="button"
+                      className="btn btn-success btn-sm"
+                      onClick={() => advance(o.id, 'served')}
+                      disabled={busy}
+                    >
+                      <IconBolt size={12} />
+                      {t('detail.markPassed')}
+                    </button>
+                  ) : o.status === 'received' || o.status === 'preparing' ? (
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
@@ -602,7 +611,7 @@ export function TableDetail({
           <button
             type="button"
             className="tf-w-detail__cta tf-w-detail__cta--lime"
-            onClick={() => advance('served')}
+            onClick={() => order && advance(order.id, 'served')}
             disabled={busy}
           >
             <IconBolt />
@@ -624,8 +633,6 @@ export function TableDetail({
           ) : null
         ) : order && state === 'cooking' ? (
           <div className="tf-w-detail__cta tf-w-detail__cta--info">{t('detail.cookingNote')}</div>
-        ) : order && state === 'ordered' ? (
-          <div className="tf-w-detail__cta tf-w-detail__cta--info">{t('detail.orderedNote')}</div>
         ) : order === null || order.status === 'received' ? (
           <button
             type="button"

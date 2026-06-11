@@ -29,6 +29,7 @@ export const RestaurantSchema = z.object({
   paymentPoint: PaymentPointSchema,
   orderGateMode: OrderGateModeSchema,
   allowedNetworks: z.array(z.string()),
+  orderCeiling: z.number().int().min(1).max(100),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 });
@@ -47,6 +48,7 @@ export const PatchRestaurantRequestSchema = z
     orderGateMode: OrderGateModeSchema,
     // Each entry is an IPv4/IPv6 address or CIDR; validated server-side.
     allowedNetworks: z.array(z.string().min(1).max(64)).max(20),
+    orderCeiling: z.number().int().min(1).max(100),
   })
   .partial();
 export type PatchRestaurantRequest = z.infer<typeof PatchRestaurantRequestSchema>;

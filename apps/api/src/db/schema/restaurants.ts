@@ -22,6 +22,9 @@ export const restaurants = pgTable('restaurants', {
     .default('off'),
   // IPv4/IPv6 addresses or CIDRs treated as "the café network" for the wifi gate.
   allowedNetworks: text('allowed_networks').array().notNull().default([]),
+  // Max concurrent active orders per table before customers are prompted to ask
+  // the waiter. Waiter can temporarily bypass via DELETE /tables/:id/order-ceiling.
+  orderCeiling: integer('order_ceiling').notNull().default(20),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

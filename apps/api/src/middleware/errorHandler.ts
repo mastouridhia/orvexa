@@ -1,6 +1,7 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { ApiErrorCode } from '@orvexa/shared';
-import { HttpError, NotFoundError } from '../utils/errors.js';
+import { HttpError, NotFoundError, ServiceUnavailableError } from '../utils/errors.js';
+import { wrapDbError } from '../utils/db-error.js';
 import { errorEnvelope } from '../utils/envelope.js';
 
 export const notFoundHandler: RequestHandler = (req, _res, next) => {
@@ -28,6 +29,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
 
+  const wrapped = wrapDbError(err);
+  if (wrapped instanceof ServiceUnavailableError) {
+    req.log.error({ err }, 'database unavailable');
+    res.status(503).json(errorEnvelope({ code: ApiErrorCode.SERVICE_UNAVAILABLE, message: 'Service temporarily unavailable' }));
+    return;
+  }
   req.log.error({ err }, 'unhandled error');
   res.status(500).json(
     errorEnvelope({

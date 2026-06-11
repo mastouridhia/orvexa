@@ -12,7 +12,7 @@ import type {
   Variant,
   VariantGroup,
 } from '@orvexa/shared';
-import { ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../utils/errors.js';
 import {
   CategoryRepository,
   DishRepository,
@@ -208,6 +208,9 @@ export class MenuService {
     const existing = await this.categoryRepo.findById(id);
     if (!existing) throw new NotFoundError('Category not found');
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
+    const dishCount = await this.dishRepo.countByCategory(id);
+    if (dishCount > 0)
+      throw new ConflictError(`Cannot delete a category that contains ${dishCount} dish${dishCount === 1 ? '' : 'es'}. Move or delete the dishes first.`);
     await this.categoryRepo.delete(id);
     void this.bustMenu(restaurantId);
   }

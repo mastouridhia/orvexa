@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lt, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, lt, inArray, isNotNull, isNull, sql } from 'drizzle-orm';
 import type {
   CategoryRevenueRow,
   DashboardSummary,
@@ -11,8 +11,8 @@ import { db } from '../db/index.js';
 import { orders, orderItems, orderItemVariants } from '../db/schema/orders.js';
 import { dishes, categories } from '../db/schema/menu.js';
 import { tables } from '../db/schema/tables.js';
+import { payments } from '../db/schema/payments.js';
 import { waiterCalls } from '../db/schema/waiter-calls.js';
-import { isNull } from 'drizzle-orm';
 
 const TERMINAL_FOR_REVENUE = ['served'] as const;
 const ACTIVE_ORDER_STATUSES = ['received', 'preparing', 'ready'] as const;
@@ -240,6 +240,36 @@ export class ReportsService {
 
     const topItemsToday = await this.topItems(restaurantId, 5, todayStart, tomorrowStart);
 
+    // Avg dwell = average minutes from order created_at to payment paid_at, for
+    // today's orders that have been paid. Uses a subquery so we take the MAX
+    // paid_at per order (split-bill orders may have multiple payment rows).
+    const maxPaidAtSub = db
+      .select({
+        orderId: payments.orderId,
+        maxPaidAt: sql<Date>`MAX(${payments.paidAt})`.as('max_paid_at'),
+      })
+      .from(payments)
+      .where(and(eq(payments.status, 'paid'), isNotNull(payments.paidAt)))
+      .groupBy(payments.orderId)
+      .as('max_paid_at_sub');
+
+    const [dwellRow] = await db
+      .select({
+        avgDwellMinutes: sql<number | null>`ROUND(AVG(EXTRACT(EPOCH FROM (${maxPaidAtSub.maxPaidAt} - ${orders.createdAt})) / 60))::int`,
+      })
+      .from(orders)
+      .innerJoin(maxPaidAtSub, eq(maxPaidAtSub.orderId, orders.id))
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          gte(orders.createdAt, todayStart),
+          lt(orders.createdAt, tomorrowStart),
+        ),
+      );
+
+    const avgDwellMinutesToday =
+      dwellRow?.avgDwellMinutes != null ? Number(dwellRow.avgDwellMinutes) : null;
+
     // activeTablesCount = approx count of tables with an active order OR an open call
     // (conservative upper bound — double-counts a table that has both)
     const activeTablesCount = Math.min(
@@ -254,6 +284,7 @@ export class ReportsService {
       activeTablesCount,
       tablesTotal: tablesRow?.count ?? 0,
       topItemsToday,
+      avgDwellMinutesToday,
     };
   }
 }

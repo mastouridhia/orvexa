@@ -141,7 +141,23 @@ export function Dashboard() {
         .then((list) => setCalls(list))
         .catch(() => undefined);
     };
-    const onConnect = () => setSocketDisconnected(false);
+    const onConnect = () => {
+      setSocketDisconnected(false);
+      // Re-fetch all live state after reconnect — socket events missed during the
+      // disconnect gap don't replay, so tables/orders/calls would be stale otherwise.
+      void Promise.all([
+        authedFetch((tk) => api.listTables(tk)).then(setTables).catch(() => undefined),
+        Promise.all([
+          authedFetch((tk) => api.listActiveOrders(tk)),
+          authedFetch((tk) => api.listOpenBills(tk)),
+        ])
+          .then(([ords, bills]) => setActiveOrders(mergeOrders([], [...ords, ...bills])))
+          .catch(() => undefined),
+        authedFetch((tk) => api.listOpenWaiterCalls(tk))
+          .then(setCalls)
+          .catch(() => undefined),
+      ]);
+    };
     const onDisconnect = () => setSocketDisconnected(true);
 
     socket.on('order:created', onOrderCreated);

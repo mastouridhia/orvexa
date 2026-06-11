@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull } from 'drizzle-orm';
 import { categories, dishes, variantGroups, variants } from '../db/schema/menu.js';
 import { BaseRepository } from './base.js';
 
@@ -84,6 +84,14 @@ export class DishRepository extends BaseRepository {
       .from(dishes)
       .where(and(eq(dishes.restaurantId, restaurantId), isNull(dishes.deletedAt)))
       .orderBy(asc(dishes.sortOrder), asc(dishes.nameFr));
+  }
+
+  async countByCategory(categoryId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ n: count() })
+      .from(dishes)
+      .where(and(eq(dishes.categoryId, categoryId), isNull(dishes.deletedAt)));
+    return row?.n ?? 0;
   }
 
   listAvailable(restaurantId: string): Promise<DishRow[]> {

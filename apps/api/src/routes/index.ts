@@ -22,7 +22,7 @@ import { closeDayRouter } from './close-day.js';
 export const apiRouter = Router();
 
 apiRouter.use(healthRouter);
-apiRouter.use(docsRouter);
+if (process.env.NODE_ENV !== 'production') apiRouter.use(docsRouter);
 apiRouter.use(authRouter);
 apiRouter.use(sessionsRouter);
 apiRouter.use(cartsRouter);

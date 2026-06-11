@@ -21,18 +21,21 @@ export const requirePresence: RequestHandler = async (req, _res, next) => {
     const mode = restaurant.orderGateMode;
     if (mode === 'off') return next();
 
-    const onWifi = ipInAllowedList(req.ip, restaurant.allowedNetworks);
     const verified = session.presenceVerifiedAt != null;
+    // Already proved presence for this session — don't re-challenge on every order.
+    if (verified) return next();
+
+    const onWifi = ipInAllowedList(req.ip, restaurant.allowedNetworks);
 
     if (mode === 'wifi') {
       return onWifi ? next() : next(new NotOnPremisesError());
     }
     if (mode === 'code') {
-      return verified ? next() : next(new TableNotOpenError());
+      return next(new TableNotOpenError());
     }
     // wifi_or_code — either proof is enough. On failure prefer the code hint,
     // since a guest who isn't on the café WiFi can still ask the waiter.
-    if (onWifi || verified) return next();
+    if (onWifi) return next();
     return next(
       new TableNotOpenError('Connect to the café Wi-Fi or ask your waiter for the table code'),
     );

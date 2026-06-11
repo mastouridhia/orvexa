@@ -1,4 +1,4 @@
-import { ConflictError, InternalError } from './errors.js';
+import { ConflictError, InternalError, ServiceUnavailableError } from './errors.js';
 
 interface PgError {
   code?: string;
@@ -13,7 +13,10 @@ interface PgError {
  * Call this inside a catch block before re-throwing:
  *   try { ... } catch (err) { throw wrapDbError(err); }
  */
+const DB_CONN_CODES = new Set(['ECONNREFUSED', 'ENOTFOUND', 'ETIMEDOUT', 'ECONNRESET', 'EPIPE']);
+
 export function wrapDbError(err: unknown): unknown {
+  if (isConnError(err)) return new ServiceUnavailableError('Database unavailable', { cause: err });
   if (!isPgError(err)) return new InternalError('Database error', { cause: err });
 
   switch (err.code) {
@@ -42,5 +45,14 @@ function isPgError(err: unknown): err is PgError {
     err !== null &&
     'code' in err &&
     typeof (err as Record<string, unknown>).code === 'string'
+  );
+}
+
+function isConnError(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    DB_CONN_CODES.has((err as Record<string, unknown>).code as string)
   );
 }

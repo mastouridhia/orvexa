@@ -12,6 +12,7 @@ export const ApiErrorCode = {
   // Ordering-access gate: table has no active waiter code / customer not verified.
   TABLE_NOT_OPEN: 'TABLE_NOT_OPEN',
   INTERNAL: 'INTERNAL',
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
 } as const;
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
 

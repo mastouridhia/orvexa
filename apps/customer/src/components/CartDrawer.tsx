@@ -19,6 +19,12 @@ import { useOrderRefsStore } from '../store/orders.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
 import { IconArrowRight, IconBag, IconLock, IconMinus, IconPlus, IconWifiOff } from './tf-icons.js';
 
+function CartLineHero({ src }: { src: string | null }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) return <div className="tf-cartline__hero" aria-hidden="true" />;
+  return <img className="tf-cartline__hero" src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
+}
+
 export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -60,12 +66,14 @@ export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () 
         });
         rememberOrder(order.id);
         clearCart();
+        void api.clearCart(token);
         onClose();
         navigate(`/orders/${order.id}`);
       } else {
         const orders = await api.placeOrder(token, { items: buildPlaceOrderItems(lines) });
         rememberOrder(orders.map((o) => o.id));
         clearCart();
+        void api.clearCart(token);
         onClose();
         if (orders.length === 1) {
           navigate(`/orders/${orders[0]!.id}`);
@@ -259,11 +267,7 @@ export function CartDrawer({ lang, onClose }: { lang: LanguageCode; onClose: () 
             <div className="tf-cartsheet__list">
               {lines.map((line) => (
                 <div className="tf-cartline" key={line.uid}>
-                  {line.imageUrl ? (
-                    <img className="tf-cartline__hero" src={line.imageUrl} alt="" loading="lazy" />
-                  ) : (
-                    <div className="tf-cartline__hero" aria-hidden="true" />
-                  )}
+                  <CartLineHero src={line.imageUrl ?? null} />
                   <div className="tf-cartline__body">
                     <h4 className="tf-cartline__name">{pickLang(line.name, lang)}</h4>
                     {line.variants.length ? (

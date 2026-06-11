@@ -65,6 +65,11 @@ export function TablesList({
           <span className="tf-mono tf-w-tables__clock">{dateNow}</span>
         </div>
       </header>
+      {tables.length === 0 ? (
+        <div className="tf-w-tables__empty">
+          <p>{t('tables.empty', { defaultValue: 'No tables configured yet. Add tables from the admin panel.' })}</p>
+        </div>
+      ) : null}
       {grouped.map(([zone, list]) => (
         <section className="tf-w-tables__zone" key={zone}>
           <div className="tf-caption tf-w-tables__zone-label">{zone}</div>

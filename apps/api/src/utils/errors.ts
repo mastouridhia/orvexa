@@ -75,3 +75,9 @@ export class InternalError extends HttpError {
     super(500, ApiErrorCode.INTERNAL, message, { expose: false, cause: options.cause });
   }
 }
+
+export class ServiceUnavailableError extends HttpError {
+  constructor(message = 'Service temporarily unavailable', options: { cause?: unknown } = {}) {
+    super(503, ApiErrorCode.SERVICE_UNAVAILABLE, message, { expose: false, cause: options.cause });
+  }
+}

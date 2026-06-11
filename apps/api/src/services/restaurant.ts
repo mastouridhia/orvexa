@@ -31,6 +31,7 @@ export function toRestaurant(row: RestaurantRow): Restaurant {
     paymentPoint: row.paymentPoint as PaymentPoint,
     orderGateMode: row.orderGateMode as OrderGateMode,
     allowedNetworks: row.allowedNetworks,
+    orderCeiling: row.orderCeiling,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -66,6 +67,7 @@ export class RestaurantService {
     if (input.timezone !== undefined) patch.timezone = input.timezone;
     if (input.paymentPoint !== undefined) patch.paymentPoint = input.paymentPoint;
     if (input.orderGateMode !== undefined) patch.orderGateMode = input.orderGateMode;
+    if (input.orderCeiling !== undefined) patch.orderCeiling = input.orderCeiling;
     if (input.allowedNetworks !== undefined) {
       const cleaned = input.allowedNetworks.map((n) => n.trim()).filter(Boolean);
       const invalid = cleaned.filter((n) => !isValidNetwork(n));

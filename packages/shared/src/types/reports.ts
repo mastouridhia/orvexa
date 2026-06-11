@@ -53,5 +53,6 @@ export const DashboardSummarySchema = z.object({
   activeTablesCount: z.number().int().nonnegative(),
   tablesTotal: z.number().int().nonnegative(),
   topItemsToday: z.array(TopItemRowSchema),
+  avgDwellMinutesToday: z.number().int().nonnegative().nullable(),
 });
 export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;

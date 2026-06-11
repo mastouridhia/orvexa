@@ -10,6 +10,7 @@ import {
   UuidSchema,
 } from '@orvexa/shared';
 import { OrderService } from '../services/order.js';
+import { RestaurantService } from '../services/restaurant.js';
 import { TableService } from '../services/table.js';
 import {
   requireAnyAuth,
@@ -31,9 +32,9 @@ import { registerPath, registerTag } from '../utils/openapi.js';
 import { getBus } from '../realtime/bus.js';
 
 const service = new OrderService();
+const restaurantService = new RestaurantService();
 const tableService = new TableService();
 const orderRepo = new OrderRepository();
-const ORDER_CEILING = 6;
 
 async function emitTableStatus(restaurantId: string, tableId: string): Promise<void> {
   const status = await tableService.deriveForTable(restaurantId, tableId);
@@ -75,8 +76,11 @@ ordersRouter.post(
     try {
       const bypass = await redis.get(`ceiling:bypass:${tableId}`);
       if (!bypass) {
-        const active = await orderRepo.countActiveForTable(restaurantId, tableId);
-        if (active >= ORDER_CEILING) {
+        const [restaurant, active] = await Promise.all([
+          restaurantService.get(restaurantId),
+          orderRepo.countActiveForTable(restaurantId, tableId),
+        ]);
+        if (active >= restaurant.orderCeiling) {
           throw new RateLimitError(
             'Too many open orders at this table — ask your waiter to unlock more.',
           );

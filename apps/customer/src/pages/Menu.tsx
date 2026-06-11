@@ -9,6 +9,7 @@ import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
 import { useCartStore, cartLineCount, cartSubtotal } from '../store/cart.js';
 import { connectCustomerSocket } from '../socket/client.js';
+import { useSharedCart } from '../hooks/useSharedCart.js';
 import { CartDrawer } from '../components/CartDrawer.js';
 import { ExtrasSheet } from '../components/ExtrasSheet.js';
 import { ItemDetailModal } from '../components/ItemDetailModal.js';
@@ -36,6 +37,8 @@ export function Menu() {
 
   const lines = useCartStore((s) => s.lines);
   const prevCountRef = useRef(0);
+
+  useSharedCart();
 
   const orderIds = useOrderRefsStore((s) => s.ids);
   type OrderRef = {

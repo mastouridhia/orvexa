@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, lte, max, ne } from 'drizzle-orm';
+import { and, count, desc, eq, gte, inArray, lte, max, ne, notInArray } from 'drizzle-orm';
 import type { Db } from '../db/index.js';
 import { orderItems, orderItemVariants, orders } from '../db/schema/orders.js';
 import { BaseRepository } from './base.js';
@@ -75,7 +75,16 @@ export class OrderRepository extends BaseRepository {
     const [row] = await this.db
       .select({ id: orders.id })
       .from(orders)
-      .where(and(eq(orders.tableId, tableId), ne(orders.status, TERMINAL_ORDER_STATUSES[0])))
+      .where(and(eq(orders.tableId, tableId), notInArray(orders.status, [...TERMINAL_ORDER_STATUSES])))
+      .limit(1);
+    return row !== undefined;
+  }
+
+  async hasAnyForTable(tableId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ id: orders.id })
+      .from(orders)
+      .where(eq(orders.tableId, tableId))
       .limit(1);
     return row !== undefined;
   }

@@ -127,6 +127,7 @@ export function Settings() {
           paymentPoint: restaurant.paymentPoint,
           orderGateMode: restaurant.orderGateMode,
           allowedNetworks: restaurant.allowedNetworks,
+          orderCeiling: restaurant.orderCeiling,
         }),
       );
       setRestaurant(updated);
@@ -437,6 +438,35 @@ export function Settings() {
                 )}
               </div>
             )}
+            <label className="tf-a-settings__field" style={{ maxWidth: 220 }}>
+              <span className="tf-a-settings__field-label">
+                {t('settings.orderCeiling', { defaultValue: 'Max active orders per table' })}
+              </span>
+              <div className="tf-a-settings__field-addon">
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  step="1"
+                  value={restaurant.orderCeiling}
+                  onChange={(e) =>
+                    setRestaurant({
+                      ...restaurant,
+                      orderCeiling: Math.max(1, Math.min(100, Number(e.target.value) || 1)),
+                    })
+                  }
+                />
+                <span className="tf-a-settings__addon-unit">
+                  {t('settings.orderCeilingUnit', { defaultValue: 'orders' })}
+                </span>
+              </div>
+              <p className="tf-a-settings__note" style={{ marginTop: 4 }}>
+                {t('settings.orderCeilingHint', {
+                  defaultValue:
+                    'How many un-served orders can stack up at one table before customers are asked to call the waiter. The waiter can override this temporarily.',
+                })}
+              </p>
+            </label>
           </div>
         </section>
 

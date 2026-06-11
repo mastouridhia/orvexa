@@ -30,18 +30,19 @@ type Slot = {
  * with peak callout and 4 KPIs (Orders / Avg ticket / Revenue / Avg dwell)
  * each comparing today vs the same time-window yesterday.
  *
- * "Avg dwell" is currently rendered as "—" — deriving it cleanly needs an
- * Order.createdAt → Payment.createdAt aggregate that the backend doesn't
- * expose yet (filed as a Phase 19 follow-up).
+ * Avg dwell = MAX(payment.paid_at) − order.created_at, averaged over today's
+ * paid orders. Comes from DashboardSummary.avgDwellMinutesToday.
  */
 export function ServicePulse({
   refreshKey,
   lang,
   now,
+  avgDwellMinutesToday,
 }: {
   refreshKey: number;
   lang: LanguageCode;
   now: number;
+  avgDwellMinutesToday: number | null;
 }) {
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
@@ -244,9 +245,9 @@ export function ServicePulse({
         />
         <PulseKPI
           label={t('pulse.kpi.avgDwell')}
-          value="—"
+          value={avgDwellMinutesToday != null ? `${avgDwellMinutesToday}m` : '—'}
           delta={null}
-          deltaLabel={t('pulse.kpi.notTracked')}
+          deltaLabel={avgDwellMinutesToday != null ? t('pulse.kpi.vsYesterday') : t('pulse.kpi.notTracked')}
         />
       </footer>
     </article>

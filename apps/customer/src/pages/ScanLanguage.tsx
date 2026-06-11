@@ -8,7 +8,7 @@ import { ApiError } from '../api/client.js';
 import { useSessionStore } from '../store/session.js';
 import { useCartStore } from '../store/cart.js';
 import { useOrderRefsStore } from '../store/orders.js';
-import { IconQR } from '../components/tf-icons.js';
+import { IconQR, IconWifiOff } from '../components/tf-icons.js';
 
 export function ScanLanguage() {
   const { t, i18n } = useTranslation();
@@ -27,6 +27,8 @@ export function ScanLanguage() {
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [wifiGate, setWifiGate] = useState(false);
+  const [gateRestaurantName, setGateRestaurantName] = useState('');
 
   const initial = useMemo<LanguageCode>(() => {
     return ((i18n.resolvedLanguage as LanguageCode | undefined) ??
@@ -54,8 +56,15 @@ export function ScanLanguage() {
         clearOrderRefs();
       }
       setSession(result);
-      const restaurant = await api.getRestaurant(result.token);
-      setRestaurant(restaurant);
+      const restaurantData = await api.getRestaurant(result.token);
+      setRestaurant(restaurantData);
+
+      if (result.session.orderGateMode === 'wifi' && !result.session.presenceVerified) {
+        setGateRestaurantName(restaurantData.name ?? '');
+        setWifiGate(true);
+        return;
+      }
+
       navigate('/menu', { replace: true });
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('errors.boot'));
@@ -63,6 +72,27 @@ export function ScanLanguage() {
       setBusy(false);
     }
   };
+
+  if (wifiGate) {
+    return (
+      <div className="tf-boot-gate">
+        <div className="tf-boot-gate__icon" aria-hidden="true">
+          <IconWifiOff size={32} />
+        </div>
+        <h2 className="tf-boot-gate__title">{t('gate.wifiTitle')}</h2>
+        <p className="tf-boot-gate__body">
+          {t('gate.wifiBody', { name: gateRestaurantName })}
+        </p>
+        <button
+          type="button"
+          className="tf-boot-gate__retry"
+          onClick={() => void confirm()}
+        >
+          {t('errors.retry')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <section className="tf-welcome">

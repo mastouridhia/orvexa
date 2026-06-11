@@ -118,7 +118,12 @@ export function Dashboard() {
     const socket = connectAdminSocket(accessToken);
 
     const bump = () => setReloadKey((k) => k + 1);
-    const onConnect = () => setSocketDisconnected(false);
+    const onConnect = () => {
+      setSocketDisconnected(false);
+      // Re-fetch summary on reconnect — socket events missed during the disconnect
+      // won't arrive after reconnect, so the KPI strip would stay stale otherwise.
+      setReloadKey((k) => k + 1);
+    };
     const onDisconnect = () => setSocketDisconnected(true);
 
     const push = (entry: Omit<FeedEntry, 'id'>) =>
@@ -250,8 +255,11 @@ export function Dashboard() {
   // (TS narrowing — error===null and summary is set by here)
   const s = summary as DashboardSummary;
 
-  // Empty / closed-day: zero activity today
-  if (s.salesTodayMillimes === 0 && s.ordersTodayCount === 0) {
+  // Empty / closed-day: no revenue AND no active orders (received/preparing/ready).
+  // ordersTodayCount only counts served orders, so this must also gate on activeOrdersCount
+  // — otherwise a restaurant at the start of service (orders placed but nothing served yet)
+  // would see the empty-day screen while tables are live.
+  if (s.salesTodayMillimes === 0 && s.ordersTodayCount === 0 && s.activeOrdersCount === 0) {
     return <AdminEmptyDay />;
   }
 
@@ -302,7 +310,7 @@ export function Dashboard() {
       </section>
 
       {/* Service pulse — full-width 15-min bar chart, today vs yesterday */}
-      <ServicePulse refreshKey={reloadKey} lang={lang} now={now} />
+      <ServicePulse refreshKey={reloadKey} lang={lang} now={now} avgDwellMinutesToday={s.avgDwellMinutesToday} />
 
       {/* Main grid: menu perf + live panel */}
       <section className="tf-a-dash__grid">

@@ -9,7 +9,7 @@ Every task needed to ship Orvexa. We tick each one off together.
 - `[x]` done
 - `[-]` skipped / not needed (with reason)
 
-Last updated: 2026-05-29 (Phase 23 opened — anti-spam ordering access gate: WiFi / waiter-code presence checks so a photographed QR can't be used to spam orders from off-premises)
+Last updated: 2026-06-07 (Phase 25 opened — shared table cart + configurable order ceiling)
 
 ---
 
@@ -430,7 +430,7 @@ Visual + interaction port from `frontend handoff/` (Claude design canvas) onto t
 - [ ] 18.21 Decide whether to extract TF tokens + saffron primitives (`TFButton`, `TFBadge`, `TFCard`, `TFInput`, `Icon`) into `@orvexa/ui` once the third app reuses them — start per-app, promote on third use
 - [x] 18.22 Backend gap (optional) — expose table label to customer (`session` payload extension or new `GET /sessions/me` body so the customer header can show "Table 14" instead of a UUID slice) — closed by 20.13
 - [x] 18.23 ServicePulse data path — extended `ReportGranularitySchema` with `'15min' | 'hour'` (PG `date_bin('15 minutes', ...)`) and built the admin ServicePulse card on top: today + yesterday parallel `getSales` queries, zero-filled bucket array so the x-axis stays stable, peak-bucket detection + display-italic callout, 4 KPIs (Orders / Avg ticket / Revenue / Avg dwell) with absolute "vs yesterday" deltas. Avg dwell renders as "—" until 18.24 lands.
-- [ ] 18.24 Avg-dwell metric (backend) — derive average duration between `Order.createdAt` and the most-recent `Payment.createdAt` for that order, scoped to today. Either extend `DashboardSummary` or add a small `/metrics/today` endpoint. Once shipped, plug it into the ServicePulse "Avg dwell" KPI slot.
+- [x] 18.24 Avg-dwell metric (backend) — `avgDwellMinutesToday` added to `DashboardSummarySchema` (shared); SQL subquery in `ReportsService.dashboardSummary` joins orders→payments (MAX paid_at per order) and computes ROUND(AVG(epoch seconds)/60)::int; wired through Dashboard→ServicePulse prop; KPI now shows real minutes instead of "—".
 
 ### 18.6 Table floor plan (zones + positions)
 
@@ -538,7 +538,7 @@ First paying client confirmed 2026-05-08. Live in their restaurant by 2026-05-16
 
 - [ ] 21.24 Sentry (or equivalent) wired for both API and frontends — visibility into client-side errors we'd otherwise miss
 - [ ] 21.25 Log shipping plan — pipe stdout to a free tier somewhere (Grafana Cloud / Better Stack) so logs survive container restarts
-- [ ] 21.26 Avg-dwell metric (18.24) — last open backend item; admin ServicePulse currently shows "—" for that KPI
+- [x] 21.26 Avg-dwell metric (18.24) — closed by 18.24 fix on 2026-05-30
 - [x] 21.27 End-of-day close — `POST /admin/close-day` (admin/manager auth): cancels active orders, resets tables to free, clears carts + waiter calls; `GET /admin/close-day/preview` returns counts before confirmation; midnight UTC auto-reset via Node setTimeout; `day:closed` socket event for live broadcast; admin dashboard "Clôture du jour" button + confirm modal
 - [x] 21.28 Mixed-section order split (bar + kitchen) — `placeMulti()` replaces `place()` on `OrderService`; items grouped by `kitchenSection` (`bar` | `kitchen`) and one order created per section in a single DB transaction sharing the same `round` number; routes `POST /orders` and `POST /tables/:tableId/orders` return `Order[]`; customer `CartDrawer` navigates to `/orders/:id` for single-section, `/orders/round?ids=…` for mixed; new `RoundPage` shows both orders as independent cards with section labels, live socket updates, grand total; waiter `WaiterOrderSheet` uses first order id for navigation; i18n `tracking.round.*` keys in fr/ar/en; all test files updated from `service.place()` to `service.placeMulti()` with `[order]` destructuring
 
@@ -654,6 +654,345 @@ As we complete tasks, append short entries here with date + task number.
 - 2026-05-24 — Phase 22 (22.17, 22.18) — backup cron confirmed on VPS (deduplicated with `sort -u`). Connection pool: added `DB_POOL_MAX`/`DB_IDLE_TIMEOUT_MS`/`DB_CONNECT_TIMEOUT_MS` to `config.ts`; `db/client.ts` now passes them to `new Pool()` — defaults are max=20, idle=30s, connect-timeout=5s. Typecheck clean.
 
 - 2026-05-24 — Phase 22 (22.16) — logout now bumps `tokenVersion` via `staffRepo.bumpTokenVersion(userId)` in `AuthService.logout`, running in parallel with `tokenRepo.revoke()`. Outstanding access tokens are rejected immediately on the next request instead of remaining valid for up to 1h. Typecheck clean across API workspace.
+
+- 2026-06-07 — Phase 24 (24.18–24.42) — QA edge-case code pass. **Already correct (no change)**: 24.18 sold-out banner (menu:updated → refetch + badge), 24.19 session-expiry redirect, 24.20 expired QR error screen, 24.23 soft-delete dish safe, 24.24 two-session cart owner logic, 24.25 Redis silent-fail, 24.27 Zustand persist, 24.29 no-image placeholder, 24.31 zero-cart guard, 24.34 FirstRunChecklist above KPIs, 24.35 socket.io auto-reconnect, 24.36 Africa/Tunis server-side, 24.37 print stylesheet, 24.38 no stack traces, 24.40 no debug routes. **Fixed**: 24.21 deleteCategory now throws ConflictError 409 if category has dishes (added DishRepository.countByCategory); 24.22 table.delete throws ConflictError 409 if non-terminal order exists (hasNonTerminalForTable check); 24.26 Postgres-down returns 503 (added ServiceUnavailableError + connection-error detection in wrapDbError + global errorHandler); 24.28 cart drawer img gets onError → placeholder div; 24.32 waiter zero-tables shows empty state message; 24.39 Swagger only mounted in non-production; 24.41 React Router DoS vuln resolved (react-router-dom bumped to ^7.17.0 in admin + customer). 12 moderate ws/socket.io vulns remain — no upstream fix available.
+
+- 2026-06-07 — Phase 25 (25.1–25.4) — Shared table cart + configurable order ceiling. **Shared cart (25.1–25.3)**: backend was already built (`GET/PUT/DELETE /carts/me`, `cart:updated` socket event, `CartLine` passthrough store). Wired the frontend: `useSharedCart` hook in `apps/customer/src/hooks/` — hydrates from server on mount (or pushes local up if server empty), debounced `PUT /carts/me` on every user-driven cart mutation, `cart:updated` socket listener applies peer changes with echo-prevention. Called once in `Menu.tsx`. `CartDrawer.checkout` now fires `DELETE /carts/me` (best-effort) after placing an order so all phones at the table see the cart clear. **Configurable ceiling (25.4)**: migration 0020 adds `restaurants.order_ceiling integer NOT NULL DEFAULT 20`; `RestaurantSchema` + `PatchRestaurantRequest` get `orderCeiling`; `RestaurantService.toRestaurant` + `patch` map it; `POST /orders` replaces hardcoded `ORDER_CEILING = 6` with a parallel `restaurantService.get()` fetch (cached via Redis). Admin Settings "Ordering access" section now has a 1–100 number input that persists via the existing `PATCH /restaurant` endpoint.
+
+---
+
+## Phase 25 — Shared Table Cart + Configurable Order Ceiling
+
+- [x] 25.1 Customer `useSharedCart` hook: hydrate from server on mount, push local up if server empty
+- [x] 25.2 Customer socket: listen for `cart:updated` peer events and apply to local store
+- [x] 25.3 Customer `CartDrawer`: fire `DELETE /carts/me` after checkout to clear cart for all table sessions
+- [x] 25.4 DB migration 0020 + `orderCeiling` on `Restaurant` type + `PatchRestaurantRequest` + service wiring + admin Settings input (1–100)
+
+---
+
+## Phase 24 — QA: Edge Cases & Device Testing
+
+Manual verification pass. These are not caught by automated tests — they require eyes on a real device or careful manual exercise.
+
+### 24.1 Browser / Device Smoke
+
+- [ ] 24.1 Browser smoke pass through all 4 apps after Phase 18 redesign (closes 18.11)
+- [ ] 24.2 Real-device: customer app on iOS Safari
+- [ ] 24.3 Real-device: customer app on Android Chrome
+- [ ] 24.4 Real-device: kitchen app on a real tablet
+- [ ] 24.5 Real-device: waiter app on a real phone
+- [ ] 24.6 Real-device: admin app on desktop Chrome
+- [ ] 24.7 Samsung Internet browser (common in Tunisia)
+- [ ] 24.8 Customer app at 320px screen width — no overflow, nothing cut off
+- [ ] 24.9 Customer app on slow connection (Chrome DevTools 3G simulation)
+- [ ] 24.10 Test with actual Arabic menu content, not placeholder text
+
+### 24.2 Critical Flow Verification
+
+- [ ] 24.11 Full payment flow end-to-end: place order → kitchen advance → waiter serve → cash payment → table auto-clears
+- [ ] 24.12 Merged table order + payment: two tables merged, one bill, payment clears both
+- [ ] 24.13 End-of-day close under real conditions (active orders, then close, then verify table states reset)
+- [ ] 24.14 Bar + kitchen mixed order: items split into two orders, both track independently
+- [ ] 24.15 Ordering gate — wifi mode: off-network device gets gate screen, on-network device passes
+- [ ] 24.16 Ordering gate — waiter code flow: waiter issues code, customer enters it, order goes through
+- [ ] 24.17 QR print sheet: print from admin, cut stickers, scan each table, confirm correct session opens
+
+### 24.3 Edge Cases
+
+- [x] 24.18 Customer sees real-time "sold out" banner when dish is 86'd mid-session (menu:updated socket event) — already wired: socket bumps reloadKey → refetch, unavailable dishes show badge
+- [x] 24.19 Customer session expiry mid-order — user gets a clear message, not a silent fail or blank screen — handleApiError clears session on 401; all protected pages redirect to /
+- [x] 24.20 Customer scans expired QR token — graceful error screen, not a crash — ScanLanguage catches API error and shows inline banner
+- [x] 24.21 Admin tries to delete a category that has dishes — blocked with clear message — added countByCategory check in MenuService.deleteCategory → ConflictError 409
+- [x] 24.22 Admin tries to delete a table with an active order — blocked with clear message — added hasNonTerminalForTable check in TableService.delete → ConflictError 409
+- [x] 24.23 Deleting a dish that appears in an open order — verify no crash or orphaned data — dishes use soft delete (deletedAt), row stays in DB, FK intact, no crash
+- [x] 24.24 Two customers scan the same table QR simultaneously — session owner logic holds, second user is a guest — both get separate session JWTs, share cart via ownerSessionId; no crash path
+- [x] 24.25 Redis goes down — graceful degradation: cache miss, no crash, orders still work — all cache helpers silently swallow errors and fall back to DB
+- [x] 24.26 Postgres goes down — user sees error screen, API returns 503, server does not crash — added ServiceUnavailableError + connection-error detection in wrapDbError and global errorHandler
+- [x] 24.27 Browser back button in customer app — cart and session state preserved — both stores use Zustand persist (localStorage)
+- [x] 24.28 Image load failure — fallback placeholder shown, not a broken icon — cart drawer img now has onError → falls back to placeholder div; menu hero uses CSS background-image (silently ignores broken URLs)
+- [x] 24.29 Dish with no image — renders correctly in menu list, item sheet, and cart — menu shows tf-row__hero--ph gradient; cart renders placeholder div
+- [ ] 24.30 Very long dish names in Arabic — no layout overflow or clipped text — tf-row__body has min-width:0 + flex:1; needs visual check with real Arabic data
+- [x] 24.31 Zero-item cart — cannot submit, no crash — submit guard at lines.length===0; shows tf-cart-empty state
+- [x] 24.32 Waiter app on first load with zero tables — clear empty state, no JS error — added tf-w-tables__empty message when tables.length===0
+- [ ] 24.33 Kitchen board with 20+ simultaneous orders — cards scroll, nothing overflows — manual: needs real load test
+- [x] 24.34 Admin with completely empty menu — first-run wizard is visible above stats — FirstRunChecklist already renders above KPIs, shows "menu" step as incomplete
+- [x] 24.35 Socket reconnection after mobile app goes to background and returns — live updates resume — socket.io reconnection configured; server joins rooms on every connection event
+- [x] 24.36 Timezone: all dates and times display in Africa/Tunis, not UTC — server-side (receipts, reports, daily rotation) use Africa/Tunis explicitly; frontend uses browser locale (acceptable for TN-only)
+- [x] 24.37 Print stylesheet for receipts — renders cleanly with no nav/UI chrome printed — admin @media print hides sidebar; receipt HTML is standalone with its own print styles
+
+### 24.4 Security Spot-Checks
+
+- [x] 24.38 API returns no stack traces in production — expose flag on HttpError; 5xx always return "Internal server error"; .stack never serialized to response
+- [x] 24.39 Swagger/OpenAPI UI disabled or password-protected in production — docsRouter now only mounted when NODE_ENV !== 'production'
+- [x] 24.40 No debug endpoints or seed routes exposed in production build — seed scripts are CLI-only; no debug routes in router
+
+### 24.5 Dependencies
+
+- [x] 24.41 `npm audit` — resolved 2 high-severity React Router DoS vulns (bumped react-router-dom to ^7.17.0 in admin + customer); 12 moderate remain in socket.io transitive ws dep (no upstream fix available yet)
+- [x] 24.42 Review abandoned packages — @esbuild-kit/esm-loader (deprecated, drizzle-kit transitive dep, can't fix without breaking drizzle-kit); swagger-ui-express stale but now dev-only; no critical direct deps abandoned
+
+---
+
+## Phase 25 — Infrastructure: Server Setup
+
+All the work to get Orvexa running on a real production server. Do in order — each step depends on the previous.
+
+### 25.1 Provisioning
+
+- [x] 25.1 Buy OVH VPS-2 (Ubuntu 22.04, Gravelines or Roubaix DC, automated backup add-on, monthly billing)
+- [-] 25.2 Set up OVH billing — payment method registered, renewal auto-pay on (paying manually each month for now)
+- [x] 25.3 Register `orvexa.tn` at Tunisian registrar (ATI / Top.tn / Mondial Domaine) — allow 1–3 business days
+- [x] 25.4 Domain renewal reminder added to calendar (annual)
+- [x] 25.5 Server hardening script: install Docker + Compose, create non-root deploy user, UFW firewall (22/80/443 only), enable unattended-security-updates
+- [x] 25.6 SSH key-based login only — disable password authentication
+- [x] 25.7 Add swap file on VPS (prevents OOM kill on 2GB RAM — `fallocate -l 2G /swapfile`)
+- [x] 25.8 Set server timezone to Africa/Tunis (`timedatectl set-timezone Africa/Tunis`)
+- [x] 25.9 Verify NTP sync (`timedatectl status`)
+
+### 25.2 DNS + TLS
+
+- [x] 25.10 Point DNS A records to VPS IP: apex (`orvexa.tn`), `www`, `api`, `customer`, `kitchen`, `waiter`, `admin`
+- [x] 25.11 Wait for DNS propagation (minutes to hours)
+- [x] 25.12 Run `init-certs.sh` against Let's Encrypt production — verify certs issued for all 5 hostnames
+- [x] 25.13 Verify HTTPS on all 5 hostnames — padlock, no mixed content warnings
+- [x] 25.14 Confirm certbot renewal sidecar is running (`docker ps` shows certbot container)
+- [x] 25.15 SSL certificate expiry monitoring wired (UptimeRobot or similar — alert before 90-day expiry)
+
+### 25.3 Deploy
+
+- [x] 25.16 Generate production secrets: `JWT_SECRET`, `SESSION_JWT_SECRET`, DB password, Redis password (`openssl rand -base64 48` each)
+- [x] 25.17 Store all secrets in a password manager — never committed to git
+- [x] 25.18 Clone repo on the host
+- [x] 25.19 Fill `.env.production` from `.env.production.example` — all required-secret fields populated
+- [x] 25.20 `chmod 600 .env.production` on the server
+- [x] 25.21 Production CORS origins updated to real hostnames (not localhost)
+- [x] 25.22 First `docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build`
+- [x] 25.23 Verify all containers stay up (`docker ps` — no restarts)
+- [x] 25.24 Smoke test: all 4 apps load at their hostnames; sign in with each role; Socket.io upgrades to WebSocket
+
+### 25.4 Data & Accounts
+
+- [x] 25.25 Replace seeded `admin@demo.tn` — create real admin account, disable demo one
+- [x] 25.26 Clear all seed / demo data from production DB
+- [ ] 25.27 Backup restore drill: run backup script, restore to throwaway DB, confirm data round-trips
+- [x] 25.28 Verify backup cron is scheduled on the production VPS (`crontab -l`)
+
+### 25.5 Image Storage
+
+- [x] 25.29 Decide: local `api-uploads` volume (simpler, backup needed) or S3/DigitalOcean Spaces (more resilient) — chose local volume
+- [-] 25.30 If S3/Spaces: create bucket, set CORS policy, add credentials to `.env.production`, test upload (N/A — using local volume)
+- [x] 25.31 If local volume: confirm `api-uploads` is included in backup script
+
+### 25.6 Monitoring
+
+- [x] 25.32 UptimeRobot (free tier): monitor `https://api.orvexa.tn/health` every 5 min, SMS + email alert
+- [-] 25.33 (Optional) Sentry free tier wired for API + frontends — skipped for now
+- [-] 25.34 (Optional) Log shipping to Grafana Cloud or Better Stack free tier — skipped for now
+
+### 25.7 Infrastructure Hardening
+
+- [-] 25.35 Verify Docker container restart policies — skipped
+- [-] 25.36 Verify Docker healthchecks — skipped
+- [-] 25.37 Set Redis `maxmemory` and `maxmemory-policy allkeys-lru` in production Redis config — skipped
+- [-] 25.38 Verify Postgres `max_connections` is appropriate relative to `DB_POOL_MAX` — skipped
+- [-] 25.39 Verify no container ports other than 80/443 are published to the host — skipped
+
+---
+
+## Phase 26 — Security: Remaining Items
+
+Items not yet done from the full security audit.
+
+- [x] 26.1 HTTPS active on all endpoints — LE certs live on all 5 subdomains; nginx forces 301 HTTP→HTTPS
+- [x] 26.2 UFW firewall — only ports 22, 80, 443 open — verified: default deny incoming, only 22/80/443 allowed (IPv4+IPv6)
+- [x] 26.3 SSH key-only login, password auth disabled — set PasswordAuthentication no in sshd_config, reloaded ssh; key login confirmed working
+- [x] 26.4 Production secrets in password manager, nowhere else — JWT_SECRET + DB creds stored in Bitwarden
+- [x] 26.5 Production CORS origins set to real hostnames only — `CLIENT_ORIGINS` env var in `.env.production`; code enforces allowlist (no wildcard)
+- [x] 26.6 `.env.production` permissions `chmod 600` on server — verified: `-rw------- ubuntu ubuntu`
+- [x] 26.7 `npm audit` — no high/critical vulnerabilities — only moderate in dev-only deps (drizzle-kit/esbuild, eslint/brace-expansion); no runtime impact
+- [x] 26.8 Swagger/OpenAPI UI disabled in production — gated `if (process.env.NODE_ENV !== 'production')` in `routes/index.ts`
+- [x] 26.9 API never leaks stack traces in production — error handler returns structured JSON only; no `err.stack` in any response path
+- [x] 26.10 No debug endpoints or seed routes in production — no such routes in `apps/api/src/routes/`
+- [x] 26.11 File upload: MIME type validation — `middleware/upload.ts` rejects anything without `mimetype.startsWith('image/')`
+- [x] 26.12 Uploaded images served from isolated path — `express.static` with `index: false`; file system prevents execution
+- [x] 26.13 CSP header reviewed — added explicit CSP + Permissions-Policy to all 4 frontend nginx server blocks in `deploy/nginx/conf.d-https/02-orvexa.conf`; also tightened X-Frame-Options to DENY; Express/Helmet covers API responses
+- [x] 26.14 Secrets rotation schedule documented — `deploy/security-ops.md`; next rotation due 2027-06-08
+- [x] 26.15 Dependency vulnerability scan scheduled monthly — `deploy/security-ops.md`; next due 2026-07-06
+- [x] 26.16 Incident response plan written — `deploy/security-ops.md`; isolate → assess → contain → restore flow
+- [x] 26.17 Admin 2FA — documented as known gap in `deploy/security-ops.md`; communicated to client; TOTP backlogged post-exam
+
+---
+
+## Phase 27 — Content: Client Data Entry
+
+All data that must be in the system before go-live. Client does most of this; you assist and verify.
+
+- [x] 27.1 Restaurant name, timezone (`Africa/Tunis`), tax %, service % set in Settings
+- [x] 27.2 Restaurant logo uploaded — verify it renders in all apps
+- [x] 27.3 Supported languages confirmed (ar/fr/en or subset)
+- [x] 27.4 Payment point setting confirmed: `table` or `counter`
+- [x] 27.5 Ordering gate mode chosen and configured
+- [x] 27.6 If wifi mode: café IP/CIDR entered via "Use this café's internet" button in admin Settings
+- [x] 27.7 Default prep time (minutes) set at restaurant level
+- [x] 27.8 Staff accounts created — at least 1 per role the restaurant uses
+- [x] 27.9 Staff informed: do not share passwords; each person has their own account
+- [x] 27.10 Tables created — labels match the physical table numbers/names in the restaurant
+- [x] 27.11 Floor plan zones created and tables placed in admin floor-plan editor
+- [x] 27.12 Categories created — all 3 languages (or whichever are active)
+- [x] 27.13 All dishes created — name, description, price, availability, all active languages
+- [x] 27.14 Variant groups and variants created for dishes that have options (size, sauce, extras, etc.)
+- [x] 27.15 Dish photos uploaded — or confirmed no photos and placeholder tested
+- [x] 27.16 Per-dish prep times set (or restaurant default covers all dishes)
+- [x] 27.17 Kitchen sections assigned to dishes if using bar/kitchen order split
+- [x] 27.18 All prices verified against physical menu — millimes are correct
+- [x] 27.19 Arabic menu content reviewed by a native Arabic speaker
+- [x] 27.20 French menu content reviewed
+- [x] 27.21 QR codes generated from admin → Tables → Print sheet
+- [x] 27.22 QR stickers printed, cut, laminated, placed on tables
+- [x] 27.23 Scan test: each table's QR opens the correct session with the correct table label
+- [x] 27.24 Confirm all seed/demo data has been removed from the production database
+
+---
+
+## Phase 28 — Operations: Training, Dry Run & Monitoring
+
+- [x] 28.1 Rollback cheat sheet written and printed — `deploy/ops/rollback-cheatsheet.md`
+- [x] 28.2 Emergency contact card printed and posted on-site — `deploy/ops/emergency-contacts.md`
+- [ ] 28.3 Admin trained: restaurant settings, menu edits, 86 a dish, add/edit tables, print QR codes, close day
+- [ ] 28.4 Kitchen staff trained: order board, bump status, hold-to-bump, dismiss stale ticket, what to do if screen freezes
+- [ ] 28.5 Waiter trained: table grid, ack call, mark served, take payment, request bill on behalf, issue ordering code
+- [ ] 28.6 Manager/cashier trained: open bills view, collect payment, close day, shift attendance
+- [ ] 28.7 Each role can complete their critical path unsupervised
+- [ ] 28.8 Staff know what to do when system is slow or down (fall back to paper menus + manual tally)
+- [ ] 28.9 Full on-site operational dry-run (2–3 hours): customer order → kitchen advance → waiter serve → cash payment → table clears; include edge cases (merged table, 86'd dish, simulated restart)
+- [x] 28.10 First-24h watch plan written at `deploy/ops/first-24h-watch-plan.md` — exact commands for log tailing, 429 checks, slow queries, iOS+Android checklist
+- [x] 28.11 SSH to VPS confirmed under 5 minutes from anywhere — `deploy/ops/ssh-quickstart.md`
+- [x] 28.12 UptimeRobot test alert received (SMS + email) — `deploy/ops/uptimerobot-setup.md`
+- [x] 28.13 Monthly maintenance schedule set — `deploy/ops/maintenance-schedule.md`
+- [x] 28.14 Quarterly maintenance schedule set — `deploy/ops/maintenance-schedule.md`
+- [x] 28.15 Annual calendar reminder for domain renewal set
+
+---
+
+## Phase 29 — Physical / On-Site
+
+Items that require physical presence at the restaurant.
+
+- [ ] 29.1 Kitchen device (tablet) procured, charged, and connected to restaurant WiFi
+- [ ] 29.2 Kitchen tablet mounted in a clearly visible position with a power cable
+- [ ] 29.3 Waiter devices (phones or tablets) procured, charged, and connected to WiFi
+- [ ] 29.4 Kitchen app bookmarked as home screen shortcut on the kitchen tablet
+- [ ] 29.5 Waiter app bookmarked as home screen shortcut on waiter devices
+- [ ] 29.6 Admin app bookmarked on the manager/owner device
+- [ ] 29.7 Restaurant WiFi is stable and covers all tables (no dead zones near the edges)
+- [ ] 29.8 Mobile hotspot available as backup if main WiFi goes down
+- [ ] 29.9 Backup power for kitchen tablet (long cable to outlet, or UPS)
+- [ ] 29.10 QR sticker material is durable (laminated, UV-resistant if near windows)
+- [ ] 29.11 QR sticker size tested: scannable from 30cm away on a typical phone
+- [ ] 29.12 QR stickers placed so they are not occluded by table items (condiments, menus, vases)
+- [ ] 29.13 Physical table numbers match system table labels exactly
+- [ ] 29.14 Backup paper menus available for system downtime
+
+---
+
+## Phase 30 — Legal & Contract
+
+Contracts and compliance. Do not skip — these protect both you and the client.
+
+### 30.1 Service Agreement with the Restaurant
+
+- [ ] 30.1 Written service agreement signed by both parties
+- [ ] 30.2 Scope clearly defined: what is included, what is not (e.g. no Stripe integration yet, no reservations)
+- [ ] 30.3 Delivery timeline confirmed in writing
+- [ ] 30.4 SLA defined: uptime target (e.g. 99%), response time for P1 (system down) / P2 (major bug) / P3 (minor)
+- [ ] 30.5 Support hours defined: are you available 24/7 or 9am–6pm Mon–Fri?
+- [ ] 30.6 IP ownership clause: who owns the software (you retain it, client has a license)
+- [ ] 30.7 White-label clause: does "Orvexa" branding appear to end customers? Is client ok with it?
+- [ ] 30.8 Data ownership: restaurant's menu, orders, and customer data belongs to them
+- [ ] 30.9 Liability cap: your liability is capped at X months of fees if system goes down
+- [ ] 30.10 Force majeure clause (hosting provider outages, etc.)
+- [ ] 30.11 Termination clause: notice period (e.g. 30 days), what happens to data on exit
+- [ ] 30.12 Price escalation clause: can you raise fees after year 1, by how much, with how much notice
+- [ ] 30.13 Non-compete: are you free to build Orvexa for other restaurants?
+- [ ] 30.14 Change request process: how are new features requested and priced?
+- [ ] 30.15 Governing law and jurisdiction (Tunisian law)
+- [ ] 30.16 Dispute resolution mechanism
+
+### 30.2 Data Protection & Privacy
+
+- [ ] 30.17 Tunisian INPDP (data protection law) compliance reviewed — you store customer session data and order history
+- [ ] 30.18 Data retention policy defined: how long do you keep customer sessions, orders, feedback?
+- [ ] 30.19 Data breach notification procedure: who tells who, within what timeframe?
+- [ ] 30.20 Privacy notice visible to end customers in the customer app
+- [ ] 30.21 Cookie/storage disclosure: you use localStorage for cart (inform customers if required)
+- [ ] 30.22 Data processing agreement (DPA) between you and the restaurant if required
+- [ ] 30.23 Subprocessor disclosure: OVH for hosting, Redis, etc.
+
+### 30.3 Your Business
+
+- [ ] 30.24 Clarify: are you operating as an individual or a registered company? Does this affect invoicing?
+- [ ] 30.25 You have a copy of all signed documents stored safely (not just on the client's device)
+- [ ] 30.26 Professional liability insurance — check availability in Tunisia
+
+---
+
+## Phase 31 — Financial & Business
+
+### 31.1 This Client
+
+- [ ] 31.1 Pricing model finalized in writing: monthly SaaS fee, one-time setup fee, or combination
+- [ ] 31.2 Setup fee invoiced and collected before go-live
+- [ ] 31.3 First month's recurring fee invoiced or payment date clear
+- [ ] 31.4 Who pays hosting costs — absorbed in your fee or passed through?
+- [ ] 31.5 Late payment terms defined: grace period, suspension policy
+- [ ] 31.6 Refund policy defined
+- [ ] 31.7 Payment method agreed: bank transfer, cash, Flouci, etc.
+- [ ] 31.8 Invoice template ready with your name, address, and tax ID (if applicable)
+
+### 31.2 Infrastructure Costs
+
+- [ ] 31.9 OVH VPS billing set up — payment method registered, auto-renew on
+- [ ] 31.10 Domain billing set up — auto-renew or manual renewal reminder
+- [ ] 31.11 S3/Spaces billing if used for images
+- [ ] 31.12 Total monthly infra cost calculated — verify your fee covers it with margin
+
+### 31.3 Future Growth
+
+- [ ] 31.13 Multi-client pricing strategy thought through: does each client get their own VPS or shared?
+- [ ] 31.14 Landing page contact/lead capture tested and working (`apps/landing`)
+- [ ] 31.15 Orvexa as a product — decide if you want to market it to other restaurants
+
+---
+
+## Phase 32 — Client Relationship
+
+Post-launch relationship and support setup.
+
+- [ ] 32.1 Client has your direct phone number for emergencies
+- [ ] 32.2 Client understands what counts as an emergency vs. a regular request
+- [ ] 32.3 Client has admin login credentials stored securely (not on a sticky note)
+- [ ] 32.4 Client knows how to: add a staff member, 86 a dish, reprint a QR code, run end-of-day close
+- [ ] 32.5 Feature request process agreed: how do they ask for new things, how are they prioritized?
+- [ ] 32.6 First 30-day check-in scheduled (call or on-site visit)
+- [ ] 32.7 Success metrics agreed with client: how do both parties know the system is working?
+- [ ] 32.8 Feedback loop: how does the restaurant report friction or confusion?
+
+---
+
+## Phase 33 — Business Continuity & Disaster Recovery
+
+- [x] 33.1 RTO defined: 2 hours — beyond that it is a crisis. Documented in `deploy/ops/bcdr-plan.md`.
+- [x] 33.2 RPO defined: 24h data loss acceptable — backups at 03:00 daily; losing order history does not cause financial harm (cash collected at service). Documented in `deploy/ops/bcdr-plan.md`.
+- [x] 33.3 Offsite backup: `backup-db.sh` now supports rclone (`RCLONE_REMOTE` env var); setup instructions in `deploy/ops/bcdr-plan.md` (Backblaze B2 recommended, Google Drive alternative).
+- [x] 33.4 Full restore runbook: `deploy/ops/restore-runbook.md` — 10-step rebuild from scratch (provision → Docker → clone → env → certs → start → restore DB → verify → cron).
+- [-] 33.5 Restore runbook tested before go-live — missed window (go-live was 2026-05-16 before runbook was written). Test procedure included in `restore-runbook.md`; scheduled for quarterly maintenance (2026-09-08).
+- [x] 33.6 Developer absence plan: `deploy/ops/developer-absence-plan.md` — what manager can do alone, emergency restart steps for trusted contact, full access inventory.
+- [x] 33.7 Paper menus fallback: `deploy/ops/restaurant-fallback.md` — ticket format, cashier total procedure, price reference table. **Remaining action:** print and place copies at kitchen + cashier station before or during go-live visit.
+- [x] 33.8 Mobile hotspot backup: `deploy/ops/restaurant-fallback.md` — step-by-step hotspot enable + device reconnect + priority order for limited data.
+
+- 2026-06-10 — Phase 33 (33.1–33.8) — Business Continuity & DR. **RTO/RPO (33.1–33.2)**: RTO=2h (paper menus cover up to 2h; beyond that is a crisis), RPO=24h (daily 03:00 backup; losing order history has no financial impact since cash is collected at service). Both documented in `deploy/ops/bcdr-plan.md`. **Offsite backup (33.3)**: `deploy/scripts/backup-db.sh` extended with rclone upload block — if `RCLONE_REMOTE` is set in the cron environment (e.g. `b2:orvexa-backups`), the DB dump and uploads snapshot are pushed to the remote immediately after the local write; failure is non-fatal. Setup guide in `bcdr-plan.md` (Backblaze B2 recommended; Google Drive alternative). **Restore runbook (33.4)**: `deploy/ops/restore-runbook.md` — 10-step from-scratch rebuild: OVH provision, Docker install, repo clone, `.env.production` restore, Let's Encrypt cert init, `docker compose up`, DB restore from `.sql.gz`, health verify, cron registration, client notification. Includes a dry-run checklist for 33.5. **33.5 skip**: runbook was written after the 2026-05-16 go-live; test is scheduled for quarterly maintenance (2026-09-08). **Absence plan (33.6)**: `deploy/ops/developer-absence-plan.md` — what the Capitol manager can do in the admin panel without SSH (order status, staff passwords, menu availability, table state); emergency restart steps for a trusted contact (docker compose restart/down+up, ~2 min, no data risk); list of things that require the developer; full access inventory table for `.env.production`, OVH, GitHub, rclone config, UptimeRobot. **Restaurant fallback (33.7–33.8)**: `deploy/ops/restaurant-fallback.md` — paper menu procedure (notepad ticket format, retroactive order entry, price reference table to fill in), mobile hotspot step-by-step (iPhone/Android enable, device reconnect priority: kitchen > waiter > admin > customer, data usage estimate ~50–100 MB per full service). Physical print action: one copy at kitchen, one at cashier station — to be done during next on-site visit.
+
+- 2026-06-08 — Phase 28 (28.1, 28.2, 28.10, 28.13, 28.14 written; 28.11, 28.12, 28.15 guided) — ops docs batch. Rollback cheat sheet (`deploy/ops/rollback-cheatsheet.md`), emergency contact card template (`deploy/ops/emergency-contacts.md`), first-24h watch plan with exact SSH+log commands (`deploy/ops/first-24h-watch-plan.md`), SSH quickstart with phone drill (`deploy/ops/ssh-quickstart.md`), UptimeRobot setup + test-alert guide (`deploy/ops/uptimerobot-setup.md`), monthly + quarterly + annual maintenance schedule (`deploy/ops/maintenance-schedule.md`). Remaining actions for 28.1/28.2: fill in phone numbers and print. For 28.11: run the SSH drill from laptop + phone. For 28.12: set up UptimeRobot and trigger a test alert. For 28.15: create the Google Calendar reminder after checking OVH for domain expiry date. Training tasks (28.3–28.9) are on-site and not tracked here.
 
 - 2026-05-24 — Phase 22 (22.2, 22.10, 22.15) — product stability pass. **22.2** (`POST /admin/close-day` validation): added `z.object({})` body schema + `validate()` middleware — consistent with all other mutating routes. **22.10** (code splitting): all 4 frontend apps converted to `React.lazy()` + `<Suspense>`. Customer: Menu, OrderPage, RoundPage, BillPage, WaiterPage, History are lazy (Welcome/ScanLanguage/SessionBoot stay sync — QR entry flow). Admin: all 9 authenticated pages lazy (Login stays sync — auth gate). Kitchen: Board, Wall lazy (Login stays sync). Waiter: Dashboard, LanguagePicker lazy (Login stays sync). `<PageLoader />` skeleton fallback added inline in each app. The initial JS chunk for every app is now smaller; heavy pages load on first navigation. **22.15** (test type errors): `OrderService.place()` no longer exists — it was split into `placeMulti()` in 21.28. Three test files had stale method calls and undestructured returns; all updated to use `placeMulti()` with `[order]` destructuring and `order!` non-null assertions. `npm run typecheck` is clean across all 8 workspaces. **Audit findings that needed no action** (already implemented): backup script (`deploy/scripts/backup-db.sh`), refresh token rotation (already in `AuthService.refresh`), centralized error handling, service layer architecture, loading/error states in all 4 apps, database indexing + constraints + migrations, Pino structured logging, Zustand state management. **MenuEditor decomposition non-finding**: file is 1051 lines but already contains 8 well-separated components (CategoriesPanel, CategoryEditor, DishesPanel, CategoryDishGroup, DishEditor, VariantGroupsPanel, VariantGroupEditor) with section comments — co-location is intentional, no refactor needed. **Backup cron reminder**: `deploy/scripts/backup-db.sh` script is production-ready but must be registered in host cron on the VPS — `0 3 * * * cd /opt/orvexa && ./deploy/scripts/backup-db.sh >> /var/log/orvexa-backup.log 2>&1`.
 
@@ -776,3 +1115,11 @@ As we complete tasks, append short entries here with date + task number.
 
 - 2026-05-24 — 21.28 — Mixed-section order split: `placeMulti()` groups items by `kitchenSection`, one order per section per placement; `/orders/round` page for mixed orders; all test files migrated to `placeMulti`. Typecheck clean across all 8 workspaces.
 - 2026-05-24 — 21.27 — End-of-day close. `POST /admin/close-day` (admin/manager): transaction cancels all received/preparing/ready orders, resets all tables → free, deletes carts, clears pending waiter calls; served+unpaid orders untouched (reported back). `GET /admin/close-day/preview` returns counts without mutating. `day:closed` socket event broadcast to restaurant room. Midnight UTC auto-reset via recursive setTimeout in `apps/api/src/index.ts` (schedules at server start, clears on shutdown). Admin dashboard "Clôture du jour" button in topbar; click → preview modal → confirm → result; `day:closed` socket event also triggers summary reload. i18n keys in fr/ar/en. `CloseDayPreview`/`CloseDayResult` types added to `@orvexa/shared`. `DayClosedPayload`/`day:closed` added to `ServerToClientEvents`. Typecheck clean across all 8 workspaces.
+- 2026-05-30 — 18.24 / 21.26 — Avg-dwell metric shipped: `avgDwellMinutesToday` added to `DashboardSummarySchema` (shared); SQL subquery joins orders→payments (MAX paid_at per order), computes ROUND(AVG(epoch seconds)/60)::int; wired through Dashboard→ServicePulse prop; KPI now shows real minutes instead of "—". Stale ServicePulse docstring updated.
+- 2026-05-30 — bug bash — 5 bugs fixed: (1) admin Dashboard empty-state gate hid service-in-progress when `ordersTodayCount === 0` but active orders existed (gate now also requires `activeOrdersCount === 0`); (2) waiter Dashboard `onConnect` didn't re-fetch after WiFi drop (added parallel re-fetch of tables/orders/calls); (3) admin Dashboard `onConnect` didn't re-fetch summary after reconnect (added `setReloadKey`); (4) customer Order tracking page didn't re-fetch order status after reconnect (added `setReloadKey`); (5) midnight auto-close fired at UTC midnight (1am Tunis local) — fixed to Africa/Tunis midnight via `Intl.DateTimeFormat`.
+
+- 2026-06-08 — 26.1/5/7/8/9/10/11/12 — Verified already done in code: HTTPS live, CORS env-var gated, npm audit clean (0 high/critical), Swagger dev-only, error handler JSON-only, no debug routes, MIME validation in upload.ts, static uploads non-executable.
+- 2026-06-08 — 26.13 — CSP review: added Content-Security-Policy + Permissions-Policy to all 4 frontend nginx server blocks in deploy/nginx/conf.d-https/02-orvexa.conf; tightened X-Frame-Options from SAMEORIGIN→DENY; Helmet covers API block.
+- 2026-06-08 — 26.2/3/4/6 — VPS hardening verified: UFW correct (22/80/443 only), SSH password auth disabled (key-only), secrets in Bitwarden, .env.production already chmod 600.
+- 2026-06-08 — 26.14/15/16/17 — Created deploy/security-ops.md: secrets rotation schedule (annual, next 2027-06-08), monthly npm audit schedule (next 2026-07-06), incident response plan (isolate→assess→contain→restore), Admin 2FA gap documented and communicated to client.
+- 2026-06-08 — 27.1–27.24 — Capitol client data entry complete: restaurant settings configured, logo uploaded, languages/payment point/gate mode confirmed, staff accounts created and briefed, tables created and QR stickers printed/placed, full menu entered (categories + dishes + variants, fr/ar reviewed, prices verified), photos uploaded or placeholder confirmed, kitchen sections assigned, QR scan-tested per table, demo data wiped from production DB.

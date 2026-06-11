@@ -22,16 +22,24 @@ httpServer.listen(config.port, () => {
 
 let midnightTimer: ReturnType<typeof setTimeout> | null = null;
 
-function msUntilNextUtcMidnight(): number {
+function msUntilNextTunisMidnight(): number {
+  // Africa/Tunis is UTC+1 (no DST). We compute the next midnight in that tz
+  // so day-close fires at the right wall-clock time for Tunisian restaurants.
   const now = new Date();
-  const next = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 30),
-  );
-  return next.getTime() - now.getTime();
+  const tunisFmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Tunis',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  const [year, month, day] = tunisFmt.format(now).split('-').map(Number) as [number, number, number];
+  // Next calendar day at 00:00:30 Africa/Tunis = next day 23:00:30 UTC (UTC+1 offset)
+  const nextMidnightUtcMs = Date.UTC(year, month - 1, day + 1, -1, 0, 30); // -1h offset for UTC+1
+  return nextMidnightUtcMs - now.getTime();
 }
 
 function scheduleMidnightReset(): void {
-  const delay = msUntilNextUtcMidnight();
+  const delay = msUntilNextTunisMidnight();
   midnightTimer = setTimeout(() => {
     void runMidnightReset().finally(() => scheduleMidnightReset());
   }, delay);

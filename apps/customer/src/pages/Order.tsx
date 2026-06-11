@@ -88,7 +88,12 @@ export function OrderPage() {
         prev.map((s) => (s.id === payload.orderId ? { ...s, status: payload.status } : s)),
       );
     };
-    const onConnect = () => setConnected(true);
+    const onConnect = () => {
+      setConnected(true);
+      // Re-fetch order status on reconnect — status may have changed while disconnected
+      // and socket events from that window won't replay.
+      setReloadKey((k) => k + 1);
+    };
     const onDisconnect = () => setConnected(false);
     socket.on('order:status', onStatus);
     socket.on('connect', onConnect);
