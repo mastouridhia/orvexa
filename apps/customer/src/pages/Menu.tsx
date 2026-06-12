@@ -356,7 +356,7 @@ export function Menu() {
                   dish={d}
                   lang={lang}
                   unavailableLabel={t('menu.unavailable')}
-                  onOpen={() => d.available && setOpenDish(d)}
+                  onOpen={isPlan1 ? null : () => d.available && setOpenDish(d)}
                 />
               ))}
             </div>
@@ -364,7 +364,7 @@ export function Menu() {
         ) : null}
       </div>
 
-      {openDish ? (
+      {!isPlan1 && openDish ? (
         <ItemDetailModal dish={openDish} lang={lang} onClose={() => setOpenDish(null)} />
       ) : null}
       {!isPlan1 && openCart ? <CartDrawer lang={lang} onClose={() => setOpenCart(false)} /> : null}
@@ -401,16 +401,11 @@ function DishRow({
 }: {
   dish: Dish;
   lang: LanguageCode;
-  onOpen: () => void;
+  onOpen: (() => void) | null;
   unavailableLabel: string;
 }) {
-  return (
-    <button
-      type="button"
-      className={`tf-row${dish.available ? '' : ' is-unavailable'}`}
-      onClick={onOpen}
-      aria-label={pickLang(dish.name, lang)}
-    >
+  const inner = (
+    <>
       <div className="tf-row__body">
         <div className="tf-row__title">
           <h3 className="tf-row__name">{pickLang(dish.name, lang)}</h3>
@@ -433,6 +428,25 @@ function DishRow({
           />
         );
       })()}
+    </>
+  );
+
+  if (!onOpen) {
+    return (
+      <div className={`tf-row${dish.available ? '' : ' is-unavailable'}`}>
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={`tf-row${dish.available ? '' : ' is-unavailable'}`}
+      onClick={onOpen}
+      aria-label={pickLang(dish.name, lang)}
+    >
+      {inner}
     </button>
   );
 }

@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/auth.js';
 import type { StaffRole } from '@orvexa/shared';
+import { isPlan1 } from '../utils/plan.js';
 import {
   IconBolt,
   IconLeaf,
@@ -33,8 +34,8 @@ const NAV: { to: string; key: string; icon: IconCmp; roles?: StaffRole[] }[] = [
   { to: '/settings', key: 'settings', icon: IconSettings },
 ];
 
-// Cashier only needs the open-bills view (and a way to sign out via Settings).
 const CASHIER_NAV_KEYS = new Set(['openBills', 'settings']);
+const PLAN1_NAV_KEYS = new Set(['dashboard', 'menu', 'settings']);
 
 export function AppShell() {
   const { t } = useTranslation();
@@ -43,6 +44,7 @@ export function AppShell() {
   const closeNav = () => setNavOpen(false);
   const userName = user?.email ? user.email.split('@')[0] : t('shell.defaultUser');
   const visibleNav = NAV.filter((n) => {
+    if (isPlan1) return PLAN1_NAV_KEYS.has(n.key);
     if (user?.role === 'cashier') return CASHIER_NAV_KEYS.has(n.key);
     if (n.roles && (!user?.role || !n.roles.includes(user.role))) return false;
     return true;

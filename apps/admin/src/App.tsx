@@ -7,6 +7,7 @@ import { setDocumentLocale, ErrorBoundary } from '@orvexa/ui';
 import { Login } from './pages/Login.js';
 import { AppShell } from './components/AppShell.js';
 import { useAuthStore } from './store/auth.js';
+import { isPlan1 } from './utils/plan.js';
 // All authenticated pages are code-split — they load only after login
 const Dashboard = lazy(() =>
   import('./pages/Dashboard.js').then((m) => ({ default: m.Dashboard })),
@@ -77,6 +78,23 @@ export default function App() {
               <Route path="/open-bills" element={<OpenBills />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Navigate to="/open-bills" replace />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  if (isPlan1) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route element={<AppShell />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/menu" element={<MenuEditor />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
         </Suspense>
