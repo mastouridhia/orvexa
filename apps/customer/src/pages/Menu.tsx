@@ -437,7 +437,12 @@ function DishRow({
           if (active.length === 0) return null;
           return (
             <p key={g.id} className="tf-row__variants">
-              {active.map((v) => pickLang(v.name, lang)).join(' · ')}
+              {active
+                .map((v) => {
+                  const price = dish.priceMillimes + v.priceDeltaMillimes;
+                  return `${pickLang(v.name, lang)} ${formatMillimes(price)}`;
+                })
+                .join(' · ')}
             </p>
           );
         })}
