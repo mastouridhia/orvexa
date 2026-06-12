@@ -91,11 +91,10 @@ export default function App() {
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route element={<AppShell />}>
-              <Route path="/" element={<Dashboard />} />
               <Route path="/menu" element={<MenuEditor />} />
               <Route path="/tables" element={<TablesManager />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/menu" replace />} />
             </Route>
           </Routes>
         </Suspense>

@@ -250,7 +250,7 @@ export function Menu() {
             </>
           ) : null}
         </h1>
-        <p className="tf-menu__sub">{t('menu.serviceHours')}</p>
+        {!isPlan1 && <p className="tf-menu__sub">{t('menu.serviceHours')}</p>}
         <div className="tf-menu__search">
           <div className="tf-search">
             <IconSearch />
