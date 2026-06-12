@@ -4,16 +4,16 @@
 -- safe to apply on the live database with zero downtime.
 
 ALTER TABLE "restaurants"
-  ADD COLUMN "order_gate_mode" text NOT NULL DEFAULT 'off';
+  ADD COLUMN IF NOT EXISTS "order_gate_mode" text NOT NULL DEFAULT 'off';
 --> statement-breakpoint
 ALTER TABLE "restaurants"
-  ADD COLUMN "allowed_networks" text[] NOT NULL DEFAULT '{}';
+  ADD COLUMN IF NOT EXISTS "allowed_networks" text[] NOT NULL DEFAULT '{}';
 --> statement-breakpoint
 ALTER TABLE "tables"
-  ADD COLUMN "ordering_code" text;
+  ADD COLUMN IF NOT EXISTS "ordering_code" text;
 --> statement-breakpoint
 ALTER TABLE "tables"
-  ADD COLUMN "ordering_code_expires_at" timestamptz;
+  ADD COLUMN IF NOT EXISTS "ordering_code_expires_at" timestamptz;
 --> statement-breakpoint
 ALTER TABLE "customer_sessions"
-  ADD COLUMN "presence_verified_at" timestamptz;
+  ADD COLUMN IF NOT EXISTS "presence_verified_at" timestamptz;
