@@ -48,6 +48,7 @@ export const DishSchema = z.object({
   priceMillimes: z.number().int().nonnegative(),
   prepTimeMinutes: z.number().int().min(1).max(120).nullable(),
   available: z.boolean(),
+  isPlatDuJour: z.boolean().default(false),
   sortOrder: z.number().int(),
   variantGroups: z.array(VariantGroupSchema).optional(),
 });
@@ -109,6 +110,7 @@ export const UpdateDishRequestSchema = z
     prepTimeMinutes: z.number().int().min(1).max(120).nullable(),
     imageUrl: z.url().nullable(),
     available: z.boolean(),
+    isPlatDuJour: z.boolean(),
     sortOrder: z.number().int().nonnegative(),
   })
   .partial();

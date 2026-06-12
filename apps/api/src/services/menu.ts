@@ -86,6 +86,7 @@ export function rowToDish(row: DishRow, groups: VariantGroup[] = []): Dish {
     priceMillimes: row.priceMillimes,
     prepTimeMinutes: row.prepTimeMinutes ?? null,
     available: row.available,
+    isPlatDuJour: row.isPlatDuJour,
     sortOrder: row.sortOrder,
     variantGroups: groups,
   };
@@ -323,6 +324,7 @@ export class MenuService {
     if (input.prepTimeMinutes !== undefined) patch.prepTimeMinutes = input.prepTimeMinutes;
     if (input.imageUrl !== undefined) patch.imageUrl = input.imageUrl;
     if (input.available !== undefined) patch.available = input.available;
+    if (input.isPlatDuJour !== undefined) patch.isPlatDuJour = input.isPlatDuJour;
     if (input.sortOrder !== undefined) patch.sortOrder = input.sortOrder;
     const row = await this.dishRepo.update(id, patch);
     if (!row) throw new NotFoundError('Dish not found');

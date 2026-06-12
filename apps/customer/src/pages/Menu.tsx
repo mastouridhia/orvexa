@@ -169,6 +169,10 @@ export function Menu() {
   }, [lineCount, t]);
 
   const visibleCategories = useMemo(() => (tree ?? []).filter((c) => c.dishes.length > 0), [tree]);
+  const platDuJourDishes = useMemo(
+    () => (tree ?? []).flatMap((c) => c.dishes).filter((d) => d.isPlatDuJour && d.available),
+    [tree],
+  );
 
   // Default to first category once tree loads
   useEffect(() => {
@@ -331,6 +335,40 @@ export function Menu() {
 
         {!isLoading && visibleCategories.length === 0 && tree !== null ? (
           <div className="empty-state">{t('menu.empty')}</div>
+        ) : null}
+
+        {!isSearching && platDuJourDishes.length > 0 ? (
+          <div
+            style={{
+              margin: '8px 16px 0',
+              border: '2px solid #c8972a',
+              borderRadius: 14,
+              padding: '12px 14px',
+              background: 'rgba(200,151,42,0.07)',
+            }}
+          >
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: '#c8972a',
+                marginBottom: 8,
+              }}
+            >
+              ⭐ {t('menu.platDuJour', { defaultValue: 'Plat du Jour' })}
+            </div>
+            {platDuJourDishes.map((d) => (
+              <DishRow
+                key={d.id}
+                dish={d}
+                lang={lang}
+                unavailableLabel={t('menu.unavailable')}
+                onOpen={isPlan1 ? null : () => d.available && setOpenDish(d)}
+              />
+            ))}
+          </div>
         ) : null}
 
         {!isLoading && tree !== null ? (

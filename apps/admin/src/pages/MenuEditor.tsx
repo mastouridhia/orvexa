@@ -158,21 +158,13 @@ function CategoriesPanel({
 }) {
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
-  // sortOrder=0 is the dedicated "Plat du Jour" slot — always shown first, never draggable.
-  const [platDuJour, setPlatDuJour] = useState<Category | null>(
-    () => categories.find((c) => c.sortOrder === 0) ?? null,
-  );
-  const [ordered, setOrdered] = useState<Category[]>(() =>
-    categories.filter((c) => c.sortOrder !== 0),
-  );
+  const [ordered, setOrdered] = useState<Category[]>(categories);
   const [savingOrder, setSavingOrder] = useState(false);
-  const [creating, setCreating] = useState(false);
   const dragSrc = useRef<number | null>(null);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    setPlatDuJour(categories.find((c) => c.sortOrder === 0) ?? null);
-    setOrdered(categories.filter((c) => c.sortOrder !== 0));
+    setOrdered(categories);
   }, [categories]);
 
   const onDragOver = (e: React.DragEvent, targetIdx: number) => {
@@ -219,140 +211,8 @@ function CategoriesPanel({
     }
   };
 
-  const createPlatDuJour = async () => {
-    setCreating(true);
-    try {
-      const cat = await authedFetch((tk) =>
-        api.createCategory(tk, {
-          name: { fr: 'Plat du Jour', ar: 'طبق اليوم', en: 'Dish of the Day' },
-          isActive: true,
-          kitchenSection: 'kitchen',
-          sortOrder: 0,
-        }),
-      );
-      setPlatDuJour(cat);
-    } catch {
-      // non-critical — user can retry
-    } finally {
-      setCreating(false);
-    }
-  };
-
   return (
     <div className="stack">
-      {/* ── Plat du Jour slot ── */}
-      <div
-        style={{
-          border: '2px solid var(--saffron, #D97A2C)',
-          borderRadius: 'var(--radius-sm)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            background: 'rgba(217,122,44,0.10)',
-            padding: '0.4rem 0.75rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderBottom: '1px solid rgba(217,122,44,0.25)',
-          }}
-        >
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: '0.75rem',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: 'var(--saffron, #D97A2C)',
-            }}
-          >
-            ⭐ Plat du Jour
-          </span>
-          <span style={{ fontSize: '0.72rem', opacity: 0.55 }}>
-            Toujours affiché en premier
-          </span>
-        </div>
-        {platDuJour ? (
-          <table className="dt" style={{ margin: 0 }}>
-            <tbody>
-              <tr>
-                <td style={{ width: 24, color: 'var(--saffron, #D97A2C)', textAlign: 'center', opacity: 0.5 }}>
-                  ⭐
-                </td>
-                <td style={{ fontWeight: 500 }}>{pickLang(platDuJour.name, lang)}</td>
-                <td style={{ textAlign: 'center' }}>
-                  <input
-                    type="checkbox"
-                    checked={platDuJour.isActive}
-                    onChange={async (e) => {
-                      const next = e.target.checked;
-                      setPlatDuJour((prev) => (prev ? { ...prev, isActive: next } : null));
-                      try {
-                        await authedFetch((tk) =>
-                          api.updateCategory(tk, platDuJour.id, { isActive: next }),
-                        );
-                      } catch {
-                        setPlatDuJour((prev) => (prev ? { ...prev, isActive: !next } : null));
-                      }
-                    }}
-                  />
-                </td>
-                {!isPlan1 && (
-                  <td>
-                    <span className={`section-badge section-badge--${platDuJour.kitchenSection}`}>
-                      {t(
-                        `menu.section${platDuJour.kitchenSection.charAt(0).toUpperCase()}${platDuJour.kitchenSection.slice(1)}`,
-                        { defaultValue: platDuJour.kitchenSection },
-                      )}
-                    </span>
-                  </td>
-                )}
-                <td className="right">
-                  <button
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => onEdit(platDuJour)}
-                  >
-                    {t('menu.edit')}
-                  </button>{' '}
-                  <button
-                    type="button"
-                    className="btn btn-sm btn-danger"
-                    onClick={() => onDelete(platDuJour)}
-                  >
-                    {t('menu.delete')}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        ) : (
-          <div
-            style={{
-              padding: '0.65rem 0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-            }}
-          >
-            <button
-              type="button"
-              className="btn btn-sm"
-              style={{ borderColor: 'var(--saffron, #D97A2C)', color: 'var(--saffron, #D97A2C)', whiteSpace: 'nowrap' }}
-              disabled={creating}
-              onClick={() => void createPlatDuJour()}
-            >
-              {creating ? '…' : '+ Créer le Plat du Jour'}
-            </button>
-            <span style={{ fontSize: '0.8rem', opacity: 0.55 }}>
-              Le chef y ajoute chaque matin les plats disponibles du jour.
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* ── Regular categories ── */}
       <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-primary" onClick={onNew}>
           + {t('menu.newCategory')}
@@ -574,8 +434,67 @@ function DishesPanel({
     return map;
   }, [dishes, categories]);
 
+  const platDuJourDishes = useMemo(() => dishes.filter((d) => d.isPlatDuJour), [dishes]);
+
   return (
     <div className="stack">
+      {/* ── Plat du Jour ── */}
+      <div
+        style={{
+          border: '2px solid var(--saffron, #D97A2C)',
+          borderRadius: 'var(--radius-sm)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            background: 'rgba(217,122,44,0.10)',
+            padding: '0.4rem 0.75rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid rgba(217,122,44,0.25)',
+          }}
+        >
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--saffron, #D97A2C)',
+            }}
+          >
+            ⭐ Plat du Jour
+          </span>
+          <span style={{ fontSize: '0.72rem', opacity: 0.55 }}>
+            Affiché en premier — cliquez ⭐ sur un plat pour l'ajouter
+          </span>
+        </div>
+        {platDuJourDishes.length === 0 ? (
+          <div style={{ padding: '0.6rem 0.75rem', fontSize: '0.82rem', opacity: 0.5 }}>
+            Aucun plat sélectionné. Cliquez ⭐ sur un plat ci-dessous pour l'afficher ici.
+          </div>
+        ) : (
+          <table className="dt" style={{ margin: 0 }}>
+            <tbody>
+              {platDuJourDishes.map((d) => (
+                <tr key={d.id}>
+                  <td style={{ width: 24, textAlign: 'center', color: 'var(--saffron, #D97A2C)' }}>⭐</td>
+                  <td style={{ fontWeight: 500 }}>{pickLang(d.name, lang)}</td>
+                  <td className="right">{formatMillimes(d.priceMillimes)}</td>
+                  <td className="right">
+                    <button type="button" className="btn btn-sm" onClick={() => onEdit(d)}>
+                      {t('menu.edit')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
       <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-primary" onClick={onNew}>
           + {t('menu.newDish')}
@@ -720,6 +639,40 @@ function CategoryDishGroup({
               </td>
               <td>{pickLang(d.name, lang)}</td>
               <td className="right">{formatMillimes(d.priceMillimes)}</td>
+              <td
+                style={{ textAlign: 'center', width: 32 }}
+                onClick={(e) => e.stopPropagation()}
+                title="Plat du Jour"
+              >
+                <button
+                  type="button"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    opacity: d.isPlatDuJour ? 1 : 0.2,
+                    padding: '0 2px',
+                  }}
+                  onClick={async () => {
+                    const next = !d.isPlatDuJour;
+                    setOrdered((prev) =>
+                      prev.map((x) => (x.id === d.id ? { ...x, isPlatDuJour: next } : x)),
+                    );
+                    try {
+                      await authedFetch((tk) =>
+                        api.updateDish(tk, d.id, { isPlatDuJour: next }),
+                      );
+                    } catch {
+                      setOrdered((prev) =>
+                        prev.map((x) => (x.id === d.id ? { ...x, isPlatDuJour: !next } : x)),
+                      );
+                    }
+                  }}
+                >
+                  ⭐
+                </button>
+              </td>
               <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                 <input
                   type="checkbox"

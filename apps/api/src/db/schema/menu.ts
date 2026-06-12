@@ -41,6 +41,7 @@ export const dishes = pgTable(
     priceMillimes: integer('price_millimes').notNull(),
     prepTimeMinutes: integer('prep_time_minutes'),
     available: boolean('available').notNull().default(true),
+    isPlatDuJour: boolean('is_plat_du_jour').notNull().default(false),
     sortOrder: integer('sort_order').notNull().default(0),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
