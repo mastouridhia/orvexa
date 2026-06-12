@@ -187,9 +187,12 @@ export function Menu() {
   const lower = search.trim().toLowerCase();
   const isSearching = lower.length > 0;
   const filtered = useMemo(() => {
-    if (!tree) return [] as Dish[];
-    if (!isSearching && activeCat === PLAT_DU_JOUR_ID) return platDuJourDishes;
-    const all = tree.flatMap((c) => c.dishes.map((d) => ({ ...d, _cat: c.id })));
+    if (!tree) return [] as (Dish & { _cat?: string; _catActive: boolean })[];
+    if (!isSearching && activeCat === PLAT_DU_JOUR_ID)
+      return platDuJourDishes.map((d) => ({ ...d, _catActive: true }));
+    const all = tree.flatMap((c) =>
+      c.dishes.map((d) => ({ ...d, _cat: c.id, _catActive: c.isActive })),
+    );
     return all.filter((d) => {
       // When searching, span all categories; otherwise restrict to active pill
       if (!isSearching && activeCat && d._cat !== activeCat) return false;
@@ -374,7 +377,8 @@ export function Menu() {
                   dish={d}
                   lang={lang}
                   unavailableLabel={t('menu.unavailable')}
-                  onOpen={isPlan1 ? null : () => d.available && setOpenDish(d)}
+                  categoryInactive={!d._catActive}
+                  onOpen={isPlan1 || !d._catActive ? null : () => d.available && setOpenDish(d)}
                 />
               ))}
             </div>
@@ -416,11 +420,13 @@ function DishRow({
   lang,
   onOpen,
   unavailableLabel,
+  categoryInactive = false,
 }: {
   dish: Dish;
   lang: LanguageCode;
   onOpen: (() => void) | null;
   unavailableLabel: string;
+  categoryInactive?: boolean;
 }) {
   const inner = (
     <>
@@ -463,18 +469,16 @@ function DishRow({
     </>
   );
 
+  const rowClass = `tf-row${dish.available ? '' : ' is-unavailable'}${categoryInactive ? ' is-cat-inactive' : ''}`;
+
   if (!onOpen) {
-    return (
-      <div className={`tf-row${dish.available ? '' : ' is-unavailable'}`}>
-        {inner}
-      </div>
-    );
+    return <div className={rowClass}>{inner}</div>;
   }
 
   return (
     <button
       type="button"
-      className={`tf-row${dish.available ? '' : ' is-unavailable'}`}
+      className={rowClass}
       onClick={onOpen}
       aria-label={pickLang(dish.name, lang)}
     >

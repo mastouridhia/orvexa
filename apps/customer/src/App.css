@@ -463,6 +463,12 @@
 .tf-row.is-unavailable {
   opacity: 0.5;
 }
+.tf-row.is-cat-inactive {
+  filter: blur(3px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
 .tf-row__body {
   flex: 1;
   min-width: 0;

@@ -217,6 +217,11 @@ export const CAPITOL_MENU: CategoryDef[] = [
     nameEn: 'Salads',
     dishes: [
       { nameAr: 'شمنكة علوش', nameFr: 'Chminka Agneau', nameEn: 'Lamb Chminka', priceMillimes: 10000 },
+      { nameAr: 'سلطة مشوية', nameFr: 'Salade Grillée', nameEn: 'Grilled Salad', priceMillimes: 3000 },
+      { nameAr: 'سلطة خضراء', nameFr: 'Salade Verte', nameEn: 'Green Salad', priceMillimes: 3000 },
+      { nameAr: 'سلطة رويال', nameFr: 'Salade Royale', nameEn: 'Royal Salad', priceMillimes: 5000 },
+      { nameAr: 'سلطة كابيتول', nameFr: 'Salade Capitol', nameEn: 'Capitol Salad', priceMillimes: 5000 },
+      { nameAr: 'سلطة خضراء ملكية', nameFr: 'Salade Verte Royale', nameEn: 'Royal Green Salad', priceMillimes: 5000 },
     ],
   },
 
@@ -257,6 +262,66 @@ export const CAPITOL_MENU: CategoryDef[] = [
       { nameAr: 'مصلي راس علوش', nameFr: 'Mosli Rass Alouch', nameEn: 'Fried Lamb Head', priceMillimes: 20000 },
       { nameAr: 'صحن تونسي', nameFr: 'Plat Tunisien', nameEn: 'Tunisian Plate', priceMillimes: 7000 },
       { nameAr: 'صحن بارك كابيتول', nameFr: 'Plat Parc Capitol', nameEn: 'Capitol Park Plate', priceMillimes: 15000 },
+    ],
+  },
+
+  {
+    nameAr: 'أطباق صحن',
+    nameFr: 'Plats en Assiette',
+    nameEn: 'Plate Dishes',
+    dishes: [
+      { nameAr: 'صحن تونسي', nameFr: 'Assiette Tunisienne', nameEn: 'Tunisian Plate', priceMillimes: 7000 },
+      { nameAr: 'صحن سكالوب', nameFr: 'Assiette Escalope', nameEn: 'Escalope Plate', priceMillimes: 10000 },
+      { nameAr: 'صحن بارك كابيتول', nameFr: 'Assiette Parc Capitol', nameEn: 'Capitol Park Plate', priceMillimes: 15000 },
+      { nameAr: 'صحن مشوي مرقز', nameFr: 'Assiette Mechoui Merguez', nameEn: 'Grilled Merguez Plate', priceMillimes: 12000 },
+    ],
+  },
+
+  {
+    nameAr: 'مشاوي',
+    nameFr: 'Grillades',
+    nameEn: 'Grills',
+    dishes: [
+      { nameAr: 'مشوي دجاج', nameFr: 'Mechoui Poulet', nameEn: 'Grilled Chicken', priceMillimes: 12000 },
+    ],
+  },
+
+  {
+    nameAr: 'طواجن',
+    nameFr: 'Tajines',
+    nameEn: 'Tajines',
+    dishes: [
+      { nameAr: 'تاجين الباي', nameFr: 'Tajine du Bey', nameEn: 'Bey Tajine', priceMillimes: 10000 },
+    ],
+  },
+
+  {
+    nameAr: 'موسلي',
+    nameFr: 'Mosli',
+    nameEn: 'Mosli',
+    dishes: [
+      { nameAr: 'موسلي دجاج / حوت', nameFr: 'Mosli Poulet / Poisson', nameEn: 'Mosli Chicken / Fish', priceMillimes: 15000 },
+      { nameAr: 'موسلي رأس علوش', nameFr: 'Mosli Rass Alouch', nameEn: 'Mosli Lamb Head', priceMillimes: 20000 },
+    ],
+  },
+
+  {
+    nameAr: 'أطباق لحم',
+    nameFr: 'Plats Viande',
+    nameEn: 'Meat Dishes',
+    dishes: [
+      { nameAr: 'لحم في القلة', nameFr: 'Kolla Viande', nameEn: 'Meat in Clay Jar', priceMillimes: 22000 },
+      { nameAr: 'زاوش شوابي', nameFr: 'Zawech Chwabi', nameEn: 'Small Game Birds Chwabi', priceMillimes: 15000 },
+    ],
+  },
+
+  {
+    nameAr: 'أطباق دجاج',
+    nameFr: 'Plats Poulet',
+    nameEn: 'Chicken Dishes',
+    dishes: [
+      { nameAr: 'دجاج مفور', nameFr: 'Poulet Mfawer', nameEn: 'Steamed Chicken', priceMillimes: 15000 },
+      { nameAr: 'دجاج في الكوشة', nameFr: 'Poulet Koucha', nameEn: 'Roast Chicken', priceMillimes: 12000 },
     ],
   },
 
