@@ -88,6 +88,7 @@ describe('makeLine', () => {
     priceMillimes: 4500,
     prepTimeMinutes: null,
     available: true,
+    isPlatDuJour: false,
     sortOrder: 0,
     variantGroups: [],
   };
