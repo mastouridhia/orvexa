@@ -54,11 +54,11 @@ export const DishSchema = z.object({
 });
 export type Dish = z.infer<typeof DishSchema>;
 
-const TriLangNameSchema = z.object({
-  ar: z.string().min(1),
-  fr: z.string().min(1),
-  en: z.string().min(1),
-});
+const TriLangNameSchema = z
+  .object({ ar: z.string(), fr: z.string(), en: z.string() })
+  .refine((v) => [v.ar, v.fr, v.en].some((s) => s.trim().length > 0), {
+    message: 'At least one language name is required',
+  });
 
 const TriLangDescriptionSchema = z.object({
   ar: z.string(),
