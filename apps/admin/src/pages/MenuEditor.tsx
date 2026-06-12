@@ -1154,7 +1154,7 @@ function VariantGroupEditor({
 
   return (
     <Modal
-      title={initial ? initial.name.fr : t('menu.newVariantGroup')}
+      title={initial ? (initial.name.fr || t('menu.newVariantGroup')) : t('menu.newVariantGroup')}
       onClose={onClose}
       footer={
         <>
@@ -1167,120 +1167,125 @@ function VariantGroupEditor({
         </>
       }
     >
-      <TriLangInput value={name} onChange={setName} label={t('menu.namePerLang', { lang: '' })} />
-      <div className="row-gap row-wrap">
-        <label style={{ flex: 1 }}>
-          {t('menu.selectionType')}
-          <select
-            value={selectionType}
-            onChange={(e) => {
-              const next = e.target.value as 'single' | 'multi';
-              setSelectionType(next);
-              if (next === 'single') {
-                setMax(1);
-                setMin((m) => Math.min(m, 1));
-              } else {
-                setMax((m) => Math.max(m, 2));
-              }
-            }}
-          >
-            <option value="single">{t('menu.single')}</option>
-            <option value="multi">{t('menu.multi')}</option>
-          </select>
-        </label>
+      {/* Group name: FR + AR side by side */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
         <label>
+          Nom (FR)
           <input
-            type="checkbox"
-            checked={required}
-            onChange={(e) => setRequired(e.target.checked)}
-            style={{ width: 'auto', marginInlineEnd: '0.5rem' }}
-          />
-          {t('menu.required')}
-        </label>
-        <label>
-          {t('menu.min')}
-          <input
-            type="number"
-            min={0}
-            value={min}
-            onChange={(e) => setMin(Number(e.target.value))}
+            type="text"
+            placeholder="ex: Garniture"
+            value={name.fr ?? ''}
+            onChange={(e) => setName({ ...name, fr: e.target.value })}
           />
         </label>
         <label>
-          {t('menu.max')}
+          الاسم (AR)
           <input
-            type="number"
-            min={1}
-            value={max}
-            onChange={(e) => setMax(Number(e.target.value))}
+            type="text"
+            placeholder="مثال: الحشوة"
+            dir="rtl"
+            value={name.ar ?? ''}
+            onChange={(e) => setName({ ...name, ar: e.target.value })}
           />
         </label>
       </div>
+
+      {/* Selection type simplified */}
+      <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', width: 'auto' }}>
+          <input
+            type="radio"
+            name="selType"
+            checked={selectionType === 'single'}
+            style={{ width: 'auto' }}
+            onChange={() => { setSelectionType('single'); setMin(1); setMax(1); setRequired(true); }}
+          />
+          Un seul choix
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', width: 'auto' }}>
+          <input
+            type="radio"
+            name="selType"
+            checked={selectionType === 'multi'}
+            style={{ width: 'auto' }}
+            onChange={() => { setSelectionType('multi'); setMin(0); setMax((m) => Math.max(m, 2)); setRequired(false); }}
+          />
+          Plusieurs choix
+        </label>
+        {selectionType === 'multi' && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', width: 'auto' }}>
+            Max :
+            <input
+              type="number"
+              min={1}
+              value={max}
+              style={{ width: 56 }}
+              onChange={(e) => setMax(Number(e.target.value))}
+            />
+          </label>
+        )}
+      </div>
+
+      {/* Variants table */}
       <div>
-        <div className="row-gap" style={{ justifyContent: 'space-between' }}>
-          <strong>{t('menu.variants')}</strong>
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() =>
-              setVariants((v) => [
-                ...v,
-                { name: { ...EMPTY_L10N }, priceDeltaMillimes: 0, isActive: true },
-              ])
-            }
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 90px 32px', gap: '0.4rem 0.5rem', alignItems: 'center', marginBottom: '0.35rem' }}>
+          <span className="faint" style={{ fontSize: '0.78rem' }}>Nom FR</span>
+          <span className="faint" style={{ fontSize: '0.78rem' }}>الاسم AR</span>
+          <span className="faint" style={{ fontSize: '0.78rem' }}>Prix TND</span>
+          <span />
+        </div>
+        {variants.map((v, idx) => (
+          <div
+            key={v.id ?? `new-${idx}`}
+            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 90px 32px', gap: '0.4rem 0.5rem', alignItems: 'center', marginBottom: '0.3rem' }}
           >
-            {t('menu.addVariant')}
-          </button>
-        </div>
-        <div className="stack" style={{ marginTop: '0.5rem' }}>
-          {variants.map((v, idx) => (
-            <div
-              key={v.id ?? `new-${idx}`}
-              style={{
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '0.5rem 0.65rem',
-              }}
+            <input
+              type="text"
+              placeholder="Escalope…"
+              value={v.name.fr ?? ''}
+              onChange={(e) => setVariant(idx, { name: { ...v.name, fr: e.target.value } })}
+            />
+            <input
+              type="text"
+              placeholder="اسكالوب…"
+              dir="rtl"
+              value={v.name.ar ?? ''}
+              onChange={(e) => setVariant(idx, { name: { ...v.name, ar: e.target.value } })}
+            />
+            <input
+              type="number"
+              step="any"
+              placeholder="0.000"
+              value={(v.priceDeltaMillimes / 1000) || ''}
+              onChange={(e) =>
+                setVariant(idx, {
+                  priceDeltaMillimes: Math.round(Number(e.target.value) * 1000),
+                })
+              }
+            />
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              style={{ padding: '0 0.4rem' }}
+              onClick={() => setVariants((prev) => prev.filter((_, i) => i !== idx))}
             >
-              <TriLangInput
-                value={v.name}
-                onChange={(n) => setVariant(idx, { name: n })}
-                label={t('menu.variantName')}
-              />
-              <div className="row-gap row-wrap" style={{ marginTop: '0.4rem' }}>
-                <label style={{ flex: 1 }}>
-                  {t('menu.priceDelta')}
-                  <input
-                    type="number"
-                    step="any"
-                    value={(v.priceDeltaMillimes / 1000).toString()}
-                    onChange={(e) =>
-                      setVariant(idx, {
-                        priceDeltaMillimes: Math.round(Number(e.target.value) * 1000),
-                      })
-                    }
-                  />
-                </label>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={v.isActive}
-                    onChange={(e) => setVariant(idx, { isActive: e.target.checked })}
-                    style={{ width: 'auto', marginInlineEnd: '0.5rem' }}
-                  />
-                  {t('menu.active')}
-                </label>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-danger"
-                  onClick={() => setVariants((prev) => prev.filter((_, i) => i !== idx))}
-                >
-                  {t('menu.delete')}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+              ×
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn btn-sm"
+          style={{ marginTop: '0.4rem' }}
+          onClick={() =>
+            setVariants((v) => [
+              ...v,
+              { name: { ...EMPTY_L10N }, priceDeltaMillimes: 0, isActive: true },
+            ])
+          }
+        >
+          + {t('menu.addVariant')}
+        </button>
       </div>
     </Modal>
   );
