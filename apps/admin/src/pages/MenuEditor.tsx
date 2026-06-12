@@ -196,6 +196,21 @@ function CategoriesPanel({
     }
   };
 
+  const pinToTop = async (c: Category) => {
+    const idx = ordered.findIndex((x) => x.id === c.id);
+    if (idx === 0) return;
+    const next = [c, ...ordered.filter((x) => x.id !== c.id)];
+    setOrdered(next);
+    setSavingOrder(true);
+    try {
+      await Promise.all(
+        next.map((cat, i) => authedFetch((tk) => api.updateCategory(tk, cat.id, { sortOrder: i + 1 }))),
+      );
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
   return (
     <div className="stack">
       <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
@@ -237,7 +252,23 @@ function CategoriesPanel({
                 >
                   ⠿
                 </td>
-                <td>{pickLang(c.name, lang)}</td>
+                <td>
+                  {idx === 0 && (
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 600,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: 'var(--saffron, #D97A2C)',
+                        marginInlineEnd: '0.4rem',
+                      }}
+                    >
+                      📌
+                    </span>
+                  )}
+                  {pickLang(c.name, lang)}
+                </td>
                 <td style={{ textAlign: 'center' }}>
                   <input
                     type="checkbox"
@@ -267,6 +298,17 @@ function CategoriesPanel({
                   </td>
                 )}
                 <td className="right">
+                  {idx !== 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      title={t('menu.pinToTop', { defaultValue: 'Mettre en premier' })}
+                      onClick={() => void pinToTop(c)}
+                      style={{ marginInlineEnd: '0.25rem' }}
+                    >
+                      ⬆
+                    </button>
+                  )}
                   <button type="button" className="btn btn-sm" onClick={() => onEdit(c)}>
                     {t('menu.edit')}
                   </button>{' '}
@@ -551,7 +593,26 @@ function CategoryDishGroup({
               </td>
               <td>{pickLang(d.name, lang)}</td>
               <td className="right">{formatMillimes(d.priceMillimes)}</td>
-              <td>{d.available ? '✓' : '—'}</td>
+              <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                <input
+                  type="checkbox"
+                  checked={d.available}
+                  style={{ width: 'auto' }}
+                  onChange={async (e) => {
+                    const next = e.target.checked;
+                    setOrdered((prev) =>
+                      prev.map((x) => (x.id === d.id ? { ...x, available: next } : x)),
+                    );
+                    try {
+                      await authedFetch((tk) => api.updateDish(tk, d.id, { available: next }));
+                    } catch {
+                      setOrdered((prev) =>
+                        prev.map((x) => (x.id === d.id ? { ...x, available: !next } : x)),
+                      );
+                    }
+                  }}
+                />
+              </td>
               <td className="right">
                 <button
                   type="button"

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, TableWithDerived } from '@orvexa/shared';
+import { isPlan1 } from '../utils/plan.js';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { apiBaseUrl } from '../api/client.js';
@@ -74,15 +75,17 @@ export function TablesManager() {
           >
             {t('tables.tabList')}
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={tab === 'floorPlan'}
-            className={tab === 'floorPlan' ? 'is-active' : ''}
-            onClick={() => setTab('floorPlan')}
-          >
-            {t('tables.tabFloorPlan')}
-          </button>
+          {!isPlan1 && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'floorPlan'}
+              className={tab === 'floorPlan' ? 'is-active' : ''}
+              onClick={() => setTab('floorPlan')}
+            >
+              {t('tables.tabFloorPlan')}
+            </button>
+          )}
         </div>
         {tab === 'list' ? (
           <div className="row-gap">
