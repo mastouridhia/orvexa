@@ -11,6 +11,7 @@ type AuthState = {
   loginError: string | null;
   logout: () => void;
   login: (email: string, password: string, restaurantSlug?: string) => Promise<boolean>;
+  setSession: (accessToken: string, refreshToken: string, user: StaffUser) => void;
   authedFetch: <T>(call: (token: string) => Promise<T>) => Promise<T>;
 };
 
@@ -25,6 +26,9 @@ export const useAuthStore = create<AuthState>()(
         const { refreshToken } = get();
         if (refreshToken) void api.logout(refreshToken).catch(() => undefined);
         set({ accessToken: null, refreshToken: null, user: null });
+      },
+      setSession(accessToken, refreshToken, user) {
+        set({ accessToken, refreshToken, user, loginError: null });
       },
       async login(email, password, restaurantSlug) {
         try {

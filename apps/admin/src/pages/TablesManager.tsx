@@ -133,9 +133,9 @@ export function TablesManager() {
           <thead>
             <tr>
               <th>{t('tables.label')}</th>
-              <th className="right">{t('tables.seats')}</th>
-              <th>{t('tables.derivedStatus')}</th>
-              <th>{t('tables.merged')}</th>
+              {!isPlan1 && <th className="right">{t('tables.seats')}</th>}
+              {!isPlan1 && <th>{t('tables.derivedStatus')}</th>}
+              {!isPlan1 && <th>{t('tables.merged')}</th>}
               <th />
             </tr>
           </thead>
@@ -152,23 +152,25 @@ export function TablesManager() {
                   <td>
                     <strong>{tb.label}</strong>
                   </td>
-                  <td className="right">{tb.seats}</td>
-                  <td>{tb.derivedStatus}</td>
-                  <td>
-                    {isLeader ? (
-                      <span className="faint">
-                        {t('tables.mergedLeader', { count: mergedCount })}
-                      </span>
-                    ) : isMember ? (
-                      <span className="faint">
-                        {t('tables.mergedMember', { label: leaderLabel ?? '' })}
-                      </span>
-                    ) : (
-                      <span className="muted">—</span>
-                    )}
-                  </td>
+                  {!isPlan1 && <td className="right">{tb.seats}</td>}
+                  {!isPlan1 && <td>{tb.derivedStatus}</td>}
+                  {!isPlan1 && (
+                    <td>
+                      {isLeader ? (
+                        <span className="faint">
+                          {t('tables.mergedLeader', { count: mergedCount })}
+                        </span>
+                      ) : isMember ? (
+                        <span className="faint">
+                          {t('tables.mergedMember', { label: leaderLabel ?? '' })}
+                        </span>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </td>
+                  )}
                   <td className="right">
-                    {isMember ? (
+                    {isPlan1 ? null : isMember ? (
                       <button
                         type="button"
                         className="btn btn-sm"
@@ -311,15 +313,17 @@ function TableEditor({
         {t('tables.label')}
         <input type="text" required value={label} onChange={(e) => setLabel(e.target.value)} />
       </label>
-      <label>
-        {t('tables.seats')}
-        <input
-          type="number"
-          min={1}
-          value={seats}
-          onChange={(e) => setSeats(Math.max(1, Number(e.target.value)))}
-        />
-      </label>
+      {!isPlan1 && (
+        <label>
+          {t('tables.seats')}
+          <input
+            type="number"
+            min={1}
+            value={seats}
+            onChange={(e) => setSeats(Math.max(1, Number(e.target.value)))}
+          />
+        </label>
+      )}
     </Modal>
   );
 }

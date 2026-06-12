@@ -18,6 +18,8 @@ import { feedbackRouter } from './feedback.js';
 import { staffRouter } from './staff.js';
 import { reportsRouter } from './reports.js';
 import { closeDayRouter } from './close-day.js';
+import { invitationsRouter } from './invitations.js';
+import { platformRouter } from './platform.js';
 
 export const apiRouter = Router();
 
@@ -40,3 +42,5 @@ apiRouter.use(feedbackRouter);
 apiRouter.use(staffRouter);
 apiRouter.use(reportsRouter);
 apiRouter.use(closeDayRouter);
+apiRouter.use(invitationsRouter);
+apiRouter.use(platformRouter);

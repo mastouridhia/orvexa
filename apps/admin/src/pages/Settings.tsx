@@ -488,7 +488,7 @@ export function Settings() {
         </section>
 
         {/* ── Danger zone ── */}
-        <section className="tf-a-settings__section tf-a-settings__section--danger">
+        {!isPlan1 && <section className="tf-a-settings__section tf-a-settings__section--danger">
           <div className="tf-a-settings__section-head">
             <span className="tf-a-settings__section-icon tf-a-settings__section-icon--danger">⚠</span>
             <div>
@@ -505,7 +505,7 @@ export function Settings() {
               {t('settings.dangerZone.resetButton')}
             </button>
           </div>
-        </section>
+        </section>}
 
         {/* ── Sign out ── */}
         <section className="tf-a-settings__section">

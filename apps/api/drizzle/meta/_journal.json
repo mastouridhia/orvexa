@@ -148,6 +148,20 @@
       "when": 1748000600000,
       "tag": "0020_order_ceiling",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1748000700000,
+      "tag": "0021_dishes_plat_du_jour",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1748000800000,
+      "tag": "0022_invitations",
+      "breakpoints": true
     }
   ]
 }

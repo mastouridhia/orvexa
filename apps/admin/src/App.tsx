@@ -5,6 +5,8 @@ import type { LanguageCode } from '@orvexa/shared';
 import { setDocumentLocale, ErrorBoundary } from '@orvexa/ui';
 // Login stays synchronous — must render immediately before auth check
 import { Login } from './pages/Login.js';
+import { Setup } from './pages/Setup.js';
+import { PlatformAdmin } from './pages/PlatformAdmin.js';
 import { AppShell } from './components/AppShell.js';
 import { useAuthStore } from './store/auth.js';
 import { isPlan1 } from './utils/plan.js';
@@ -66,7 +68,13 @@ export default function App() {
     };
   }, [i18n]);
 
-  if (!accessToken) return <Login />;
+  // Public routes — accessible without auth
+  if (!accessToken) {
+    const path = window.location.pathname;
+    if (path === '/setup') return <Setup />;
+    if (path === '/platform') return <PlatformAdmin />;
+    return <Login />;
+  }
 
   // Cashiers get a stripped-down app: only open bills + settings, with /open-bills as home.
   if (role === 'cashier') {
