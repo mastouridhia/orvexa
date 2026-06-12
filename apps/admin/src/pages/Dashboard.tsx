@@ -15,6 +15,7 @@ import type {
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
+import { isPlan1 } from '../utils/plan.js';
 import { connectAdminSocket } from '../socket/client.js';
 import { FirstRunChecklist } from '../components/FirstRunChecklist.js';
 import { ServicePulse } from '../components/ServicePulse.js';
@@ -55,7 +56,55 @@ type CloseDayModal =
   | { phase: 'success'; result: CloseDayResult }
   | { phase: 'error'; message: string };
 
+function Plan1Dashboard() {
+  const { t, i18n } = useTranslation();
+  const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
+  const user = useAuthStore((s) => s.user);
+  const now = Date.now();
+  const dateNow = new Date(now);
+  const dateLabel = dateNow.toLocaleDateString(lang, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+  const userName = user?.email ? user.email.split('@')[0] : t('dashboard.defaultUser');
+  const h = dateNow.getHours();
+  const greeting =
+    h < 12 ? t('dashboard.greet.morning') : h < 18 ? t('dashboard.greet.afternoon') : t('dashboard.greet.evening');
+
+  return (
+    <div className="tf-a-dash">
+      <header className="tf-a-dash__topbar">
+        <div>
+          <div className="tf-caption">{dateLabel}</div>
+          <h1 className="tf-a-dash__title">
+            {greeting}, <span className="tf-display">{userName}</span>.
+          </h1>
+        </div>
+      </header>
+      <FirstRunChecklist />
+      <div
+        className="tf-a-card"
+        style={{ padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 480 }}
+      >
+        <div className="tf-caption">{t('dashboard.plan1.caption', { defaultValue: 'MENU EN LIGNE' })}</div>
+        <div className="tf-a-card__title" style={{ fontSize: '1.25rem' }}>
+          {t('dashboard.plan1.title', { defaultValue: 'Votre menu est en ligne.' })}
+        </div>
+        <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.65, lineHeight: 1.6 }}>
+          {t('dashboard.plan1.sub', {
+            defaultValue:
+              'Les clients peuvent scanner les QR codes des tables pour consulter le menu. Pour activer la prise de commande, passez au plan Plus.',
+          })}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard() {
+  if (isPlan1) return <Plan1Dashboard />;
+
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
   const accessToken = useAuthStore((s) => s.accessToken);

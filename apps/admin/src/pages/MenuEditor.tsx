@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/auth.js';
 import { Modal } from '@orvexa/ui';
 import { TriLangInput } from '../components/TriLangInput.js';
 import { formatMillimes, parseMillimes, pickLang } from '../utils/format.js';
+import { isPlan1 } from '../utils/plan.js';
 
 type Tab = 'categories' | 'dishes';
 
@@ -211,7 +212,7 @@ function CategoriesPanel({
               <th style={{ width: 24 }} />
               <th>{t('menu.tabs.categories')}</th>
               <th>{t('menu.active')}</th>
-              <th>{t('menu.section')}</th>
+              {!isPlan1 && <th>{t('menu.section')}</th>}
               <th />
             </tr>
           </thead>
@@ -258,11 +259,13 @@ function CategoriesPanel({
                     }}
                   />
                 </td>
-                <td>
-                  <span className={`section-badge section-badge--${c.kitchenSection}`}>
-                    {t(`menu.section${c.kitchenSection.charAt(0).toUpperCase()}${c.kitchenSection.slice(1)}`, { defaultValue: c.kitchenSection })}
-                  </span>
-                </td>
+                {!isPlan1 && (
+                  <td>
+                    <span className={`section-badge section-badge--${c.kitchenSection}`}>
+                      {t(`menu.section${c.kitchenSection.charAt(0).toUpperCase()}${c.kitchenSection.slice(1)}`, { defaultValue: c.kitchenSection })}
+                    </span>
+                  </td>
+                )}
                 <td className="right">
                   <button type="button" className="btn btn-sm" onClick={() => onEdit(c)}>
                     {t('menu.edit')}
@@ -352,19 +355,21 @@ function CategoryEditor({
           style={{ width: 'auto' }}
         />
       </label>
-      <label>
-        {t('menu.section')}
-        <select
-          value={kitchenSection}
-          onChange={(e) => setKitchenSection(e.target.value as KitchenSection)}
-        >
-          <option value="kitchen">{t('menu.sectionKitchen')}</option>
-          <option value="bar">{t('menu.sectionBar')}</option>
-          <option value="restaurant">{t('menu.sectionRestaurant')}</option>
-          <option value="cafe">{t('menu.sectionCafe')}</option>
-          <option value="pizzeria">{t('menu.sectionPizzeria')}</option>
-        </select>
-      </label>
+      {!isPlan1 && (
+        <label>
+          {t('menu.section')}
+          <select
+            value={kitchenSection}
+            onChange={(e) => setKitchenSection(e.target.value as KitchenSection)}
+          >
+            <option value="kitchen">{t('menu.sectionKitchen')}</option>
+            <option value="bar">{t('menu.sectionBar')}</option>
+            <option value="restaurant">{t('menu.sectionRestaurant')}</option>
+            <option value="cafe">{t('menu.sectionCafe')}</option>
+            <option value="pizzeria">{t('menu.sectionPizzeria')}</option>
+          </select>
+        </label>
+      )}
     </Modal>
   );
 }

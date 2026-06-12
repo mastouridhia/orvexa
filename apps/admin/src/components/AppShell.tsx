@@ -35,7 +35,7 @@ const NAV: { to: string; key: string; icon: IconCmp; roles?: StaffRole[] }[] = [
 ];
 
 const CASHIER_NAV_KEYS = new Set(['openBills', 'settings']);
-const PLAN1_NAV_KEYS = new Set(['dashboard', 'menu', 'settings']);
+const PLAN1_NAV_KEYS = new Set(['dashboard', 'menu', 'tables', 'settings']);
 
 export function AppShell() {
   const { t } = useTranslation();

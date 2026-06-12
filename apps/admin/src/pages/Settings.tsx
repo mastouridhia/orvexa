@@ -5,6 +5,7 @@ import { LanguageSelector } from '@orvexa/ui';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
+import { isPlan1 } from '../utils/plan.js';
 import {
   IconGlobe,
   IconHome,
@@ -276,7 +277,7 @@ export function Settings() {
         </section>
 
         {/* ── Pricing ── */}
-        <section className="tf-a-settings__section">
+        {!isPlan1 && <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
             <span className="tf-a-settings__section-icon">
               <IconReceipt />
@@ -345,10 +346,10 @@ export function Settings() {
               </select>
             </label>
           </div>
-        </section>
+        </section>}
 
         {/* ── Ordering access ── */}
-        <section className="tf-a-settings__section">
+        {!isPlan1 && <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
             <span className="tf-a-settings__section-icon">
               <IconShield />
@@ -468,7 +469,7 @@ export function Settings() {
               </p>
             </label>
           </div>
-        </section>
+        </section>}
 
         {/* ── Interface ── */}
         <section className="tf-a-settings__section">
