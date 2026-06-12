@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { Outlet, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { LanguageCode } from '@orvexa/shared';
 import { ErrorBoundary, setDocumentLocale } from '@orvexa/ui';
@@ -19,6 +19,7 @@ const WaiterPage = lazy(() => import('./pages/Waiter.js').then((m) => ({ default
 const History = lazy(() => import('./pages/History.js').then((m) => ({ default: m.History })));
 import { useSessionStore } from './store/session.js';
 import { connectCustomerSocket, disconnectCustomerSocket } from './socket/client.js';
+import { isPlan1 } from './utils/plan.js';
 import { useCartSync } from './hooks/useCartSync.js';
 import { useSessionRenewal } from './hooks/useSessionRenewal.js';
 import './App.css';
@@ -45,7 +46,7 @@ function Layout() {
     <div className="app-shell">
       <Header />
       <OfflineBanner />
-      <WaiterCallBanner />
+      {!isPlan1 && <WaiterCallBanner />}
       <main className="main">
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
@@ -90,11 +91,11 @@ export default function App() {
         <Route path="/t/:token" element={<ScanLanguage />} />
         <Route path="/t/:token/open" element={<SessionBoot />} />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/orders/round" element={<RoundPage />} />
-        <Route path="/orders/:id" element={<OrderPage />} />
-        <Route path="/waiter" element={<WaiterPage />} />
-        <Route path="/bill" element={<BillPage />} />
-        <Route path="/history" element={<History />} />
+        <Route path="/orders/round" element={isPlan1 ? <Navigate to="/menu" replace /> : <RoundPage />} />
+        <Route path="/orders/:id" element={isPlan1 ? <Navigate to="/menu" replace /> : <OrderPage />} />
+        <Route path="/waiter" element={isPlan1 ? <Navigate to="/menu" replace /> : <WaiterPage />} />
+        <Route path="/bill" element={isPlan1 ? <Navigate to="/menu" replace /> : <BillPage />} />
+        <Route path="/history" element={isPlan1 ? <Navigate to="/menu" replace /> : <History />} />
         <Route path="*" element={<Welcome />} />
       </Route>
     </Routes>

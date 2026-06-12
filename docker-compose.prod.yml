@@ -86,6 +86,7 @@ services:
         APP_NAME: customer
         VITE_API_URL: ${VITE_API_URL}
         VITE_SOCKET_URL: ${VITE_SOCKET_URL}
+        VITE_PLAN: ${VITE_PLAN:-3}
     restart: unless-stopped
     networks: [internal]
 

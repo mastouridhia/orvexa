@@ -16,6 +16,7 @@ FROM node:${NODE_VERSION} AS build
 ARG APP_NAME
 ARG VITE_API_URL=http://localhost:4000
 ARG VITE_SOCKET_URL=http://localhost:4000
+ARG VITE_PLAN=3
 WORKDIR /app
 
 RUN test -n "$APP_NAME" || (echo "APP_NAME build arg is required" && exit 1)
@@ -49,7 +50,7 @@ RUN npm run build --workspace @orvexa/shared \
  && npm run build --workspace @orvexa/api-client \
  && npm run build --workspace @orvexa/ui \
  && VITE_API_URL=$VITE_API_URL VITE_SOCKET_URL=$VITE_SOCKET_URL \
-    npm run build --workspace ${APP_NAME}
+    VITE_PLAN=$VITE_PLAN npm run build --workspace ${APP_NAME}
 
 # ── Runtime ─────────────────────────────────────────────────────────
 FROM nginx:${NGINX_VERSION} AS runtime

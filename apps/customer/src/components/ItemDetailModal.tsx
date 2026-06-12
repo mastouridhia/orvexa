@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Dish, LanguageCode, Variant, VariantGroup } from '@orvexa/shared';
 import { useEscapeKey, useFocusTrap } from '@orvexa/ui';
 import { useCartStore, makeLine } from '../store/cart.js';
+import { isPlan1 } from '../utils/plan.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
 import { IconChevronDown, IconMinus, IconPlus } from './tf-icons.js';
 
@@ -241,48 +242,52 @@ export function ItemDetailModal({
             </>
           ) : null}
 
-          <div className="tf-notes">
-            <div className="tf-vgroup__hint" style={{ marginBottom: 8 }}>
-              {t('dish.notes')}
+          {!isPlan1 && (
+            <div className="tf-notes">
+              <div className="tf-vgroup__hint" style={{ marginBottom: 8 }}>
+                {t('dish.notes')}
+              </div>
+              <textarea
+                className="tf-notes__field"
+                maxLength={500}
+                placeholder={t('dish.notesPlaceholder')}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </div>
-            <textarea
-              className="tf-notes__field"
-              maxLength={500}
-              placeholder={t('dish.notesPlaceholder')}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
+          )}
         </div>
       </div>
 
-      <div className="tf-sheet__bar">
-        <div className="tf-stepper" aria-label={t('dish.quantity')}>
-          <button
-            type="button"
-            className="tf-stepper__btn"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            aria-label="-"
-          >
-            <IconMinus size={18} />
-          </button>
-          <span className="tf-stepper__val" aria-live="polite">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            className="tf-stepper__btn"
-            onClick={() => setQuantity((q) => Math.min(99, q + 1))}
-            aria-label="+"
-          >
-            <IconPlus size={18} />
+      {!isPlan1 && (
+        <div className="tf-sheet__bar">
+          <div className="tf-stepper" aria-label={t('dish.quantity')}>
+            <button
+              type="button"
+              className="tf-stepper__btn"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+              aria-label="-"
+            >
+              <IconMinus size={18} />
+            </button>
+            <span className="tf-stepper__val" aria-live="polite">
+              {quantity}
+            </span>
+            <button
+              type="button"
+              className="tf-stepper__btn"
+              onClick={() => setQuantity((q) => Math.min(99, q + 1))}
+              aria-label="+"
+            >
+              <IconPlus size={18} />
+            </button>
+          </div>
+          <button type="button" className="tf-add-cta" disabled={!allValid} onClick={add}>
+            <span>{t('dish.addToCart')}</span>
+            <span className="tf-tabular">{formatMillimes(lineTotal)}</span>
           </button>
         </div>
-        <button type="button" className="tf-add-cta" disabled={!allValid} onClick={add}>
-          <span>{t('dish.addToCart')}</span>
-          <span className="tf-tabular">{formatMillimes(lineTotal)}</span>
-        </button>
-      </div>
+      )}
     </div>
   );
 }

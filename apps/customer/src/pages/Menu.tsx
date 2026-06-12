@@ -15,6 +15,7 @@ import { ExtrasSheet } from '../components/ExtrasSheet.js';
 import { ItemDetailModal } from '../components/ItemDetailModal.js';
 import { IconArrowRight, IconSearch } from '../components/tf-icons.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
+import { isPlan1 } from '../utils/plan.js';
 
 export function Menu() {
   const { t, i18n } = useTranslation();
@@ -205,7 +206,7 @@ export function Menu() {
 
   return (
     <div className="tf-menu">
-      {activeOrders.length > 0 ? (
+      {!isPlan1 && activeOrders.length > 0 ? (
         <div className="tf-active-order-stack">
           {activeOrders.length > 1 ? (
             <div className="tf-active-order-stack__head">
@@ -262,9 +263,11 @@ export function Menu() {
             />
           </div>
         </div>
-        <button type="button" className="tf-menu__extras" onClick={() => setOpenExtras(true)}>
-          {t('extras.openCta')}
-        </button>
+        {!isPlan1 && (
+          <button type="button" className="tf-menu__extras" onClick={() => setOpenExtras(true)}>
+            {t('extras.openCta')}
+          </button>
+        )}
       </div>
 
       {/* Category strip */}
@@ -364,10 +367,10 @@ export function Menu() {
       {openDish ? (
         <ItemDetailModal dish={openDish} lang={lang} onClose={() => setOpenDish(null)} />
       ) : null}
-      {openCart ? <CartDrawer lang={lang} onClose={() => setOpenCart(false)} /> : null}
-      {openExtras ? <ExtrasSheet onClose={() => setOpenExtras(false)} /> : null}
+      {!isPlan1 && openCart ? <CartDrawer lang={lang} onClose={() => setOpenCart(false)} /> : null}
+      {!isPlan1 && openExtras ? <ExtrasSheet onClose={() => setOpenExtras(false)} /> : null}
 
-      {!openCart && !openDish ? (
+      {!isPlan1 && !openCart && !openDish ? (
         <button
           type="button"
           className={`tf-cart-fab${pulse ? ' is-pulsing' : ''}`}
@@ -385,7 +388,7 @@ export function Menu() {
         </button>
       ) : null}
 
-      {addedToast ? <Toast message={addedToast} onDone={() => setAddedToast(null)} /> : null}
+      {!isPlan1 && addedToast ? <Toast message={addedToast} onDone={() => setAddedToast(null)} /> : null}
     </div>
   );
 }
