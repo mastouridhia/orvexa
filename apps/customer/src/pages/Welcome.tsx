@@ -4,6 +4,7 @@ import { LanguageSelector } from '@orvexa/ui';
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
 import { IconQR } from '../components/tf-icons.js';
+import { isPlan1 } from '../utils/plan.js';
 
 export function Welcome() {
   const { t } = useTranslation();
@@ -47,7 +48,7 @@ export function Welcome() {
             <Link to="/menu" className="btn btn-primary btn-lg">
               {t('welcome.browseMenu')}
             </Link>
-            {orderIds.length ? (
+            {!isPlan1 && orderIds.length ? (
               <Link to="/history" className="btn btn-pill">
                 {t('order.history')}
               </Link>

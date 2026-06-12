@@ -25,7 +25,7 @@ function PlanUnavailable() {
     >
       <div style={{ fontSize: 36 }}>🛎️</div>
       <div style={{ fontWeight: 600 }}>Waiter app not active</div>
-      <div style={{ fontSize: 13, opacity: 0.7 }}>Upgrade to Plan 2 or higher to enable staff ordering.</div>
+      <div style={{ fontSize: 13, opacity: 0.7 }}>Upgrade to Orvexa Plus or higher to enable staff ordering.</div>
     </div>
   );
 }

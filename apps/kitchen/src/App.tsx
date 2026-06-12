@@ -28,7 +28,7 @@ function PlanUnavailable() {
     >
       <div style={{ fontSize: 36 }}>🍽️</div>
       <div style={{ fontWeight: 600 }}>Kitchen display not active</div>
-      <div style={{ fontSize: 13, opacity: 0.7 }}>Upgrade to Plan 3 to enable the kitchen screen.</div>
+      <div style={{ fontSize: 13, opacity: 0.7 }}>Upgrade to Orvexa Pro to enable the kitchen screen.</div>
     </div>
   );
 }
