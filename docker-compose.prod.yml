@@ -16,6 +16,7 @@ x-frontend-build: &frontend-build
   args:
     VITE_API_URL: ${VITE_API_URL:?VITE_API_URL must be set}
     VITE_SOCKET_URL: ${VITE_SOCKET_URL:?VITE_SOCKET_URL must be set}
+    VITE_PLAN: ${VITE_PLAN:-3}
 
 services:
   db:
@@ -86,7 +87,6 @@ services:
         APP_NAME: customer
         VITE_API_URL: ${VITE_API_URL}
         VITE_SOCKET_URL: ${VITE_SOCKET_URL}
-        VITE_PLAN: ${VITE_PLAN:-3}
     restart: unless-stopped
     networks: [internal]
 
