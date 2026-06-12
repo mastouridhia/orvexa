@@ -45,12 +45,17 @@ COPY packages/ui packages/ui
 COPY packages/api-client packages/api-client
 COPY apps/${APP_NAME} apps/${APP_NAME}
 
+# Write build args into a .env file at the monorepo root so Vite picks them
+# up via envDir: '../..' in each app's vite.config.ts.  Without this file,
+# import.meta.env.VITE_* is always undefined inside the Docker build.
+RUN printf 'VITE_API_URL=%s\nVITE_SOCKET_URL=%s\nVITE_PLAN=%s\n' \
+    "$VITE_API_URL" "$VITE_SOCKET_URL" "$VITE_PLAN" > .env
+
 # Build workspace packages in dep order, then the app.
 RUN npm run build --workspace @orvexa/shared \
  && npm run build --workspace @orvexa/api-client \
  && npm run build --workspace @orvexa/ui \
- && VITE_API_URL=$VITE_API_URL VITE_SOCKET_URL=$VITE_SOCKET_URL \
-    VITE_PLAN=$VITE_PLAN npm run build --workspace ${APP_NAME}
+ && npm run build --workspace ${APP_NAME}
 
 # ── Runtime ─────────────────────────────────────────────────────────
 FROM nginx:${NGINX_VERSION} AS runtime
