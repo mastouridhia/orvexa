@@ -432,6 +432,15 @@ function DishRow({
         {dish.description ? (
           <p className="tf-row__desc">{pickLang(dish.description, lang)}</p>
         ) : null}
+        {(dish.variantGroups ?? []).map((g) => {
+          const active = (g.variants ?? []).filter((v) => v.isActive);
+          if (active.length === 0) return null;
+          return (
+            <p key={g.id} className="tf-row__variants">
+              {active.map((v) => pickLang(v.name, lang)).join(' · ')}
+            </p>
+          );
+        })}
         <div className="tf-row__meta">
           <span className="tf-row__price">{formatMillimes(dish.priceMillimes)}</span>
         </div>
