@@ -168,24 +168,27 @@ export function Menu() {
     return undefined;
   }, [lineCount, t]);
 
+  const PLAT_DU_JOUR_ID = 'plat-du-jour';
+
   const visibleCategories = useMemo(() => (tree ?? []).filter((c) => c.dishes.length > 0), [tree]);
   const platDuJourDishes = useMemo(
     () => (tree ?? []).flatMap((c) => c.dishes).filter((d) => d.isPlatDuJour && d.available),
     [tree],
   );
 
-  // Default to first category once tree loads
+  // Default to first category once tree loads (Plat du Jour takes priority)
   useEffect(() => {
-    if (activeCat === null && visibleCategories.length > 0) {
+    if (activeCat === null && (platDuJourDishes.length > 0 || visibleCategories.length > 0)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveCat(visibleCategories[0].id);
+      setActiveCat(platDuJourDishes.length > 0 ? PLAT_DU_JOUR_ID : visibleCategories[0].id);
     }
-  }, [activeCat, visibleCategories]);
+  }, [activeCat, visibleCategories, platDuJourDishes]);
 
   const lower = search.trim().toLowerCase();
   const isSearching = lower.length > 0;
   const filtered = useMemo(() => {
     if (!tree) return [] as Dish[];
+    if (!isSearching && activeCat === PLAT_DU_JOUR_ID) return platDuJourDishes;
     const all = tree.flatMap((c) => c.dishes.map((d) => ({ ...d, _cat: c.id })));
     return all.filter((d) => {
       // When searching, span all categories; otherwise restrict to active pill
@@ -196,7 +199,7 @@ export function Menu() {
         (d.description && pickLang(d.description, lang).toLowerCase().includes(lower))
       );
     });
-  }, [tree, activeCat, lower, isSearching, lang]);
+  }, [tree, activeCat, lower, isSearching, lang, platDuJourDishes]);
 
   const isLoading = tree === null && error === null;
 
@@ -275,12 +278,23 @@ export function Menu() {
       </div>
 
       {/* Category strip */}
-      {tree !== null && visibleCategories.length > 0 ? (
+      {tree !== null && (platDuJourDishes.length > 0 || visibleCategories.length > 0) ? (
         <nav
           className="tf-cat-strip"
           aria-label={t('menu.categories', { defaultValue: 'Categories' })}
         >
           <div className="tf-cat-strip__inner">
+            {platDuJourDishes.length > 0 && (
+              <button
+                key={PLAT_DU_JOUR_ID}
+                type="button"
+                className="tf-cat-pill"
+                aria-pressed={activeCat === PLAT_DU_JOUR_ID}
+                onClick={() => setActiveCat(PLAT_DU_JOUR_ID)}
+              >
+                ⭐ {t('menu.platDuJour', { defaultValue: 'Plat du Jour' })}
+              </button>
+            )}
             {visibleCategories.map((c) => (
               <button
                 key={c.id}
@@ -335,40 +349,6 @@ export function Menu() {
 
         {!isLoading && visibleCategories.length === 0 && tree !== null ? (
           <div className="empty-state">{t('menu.empty')}</div>
-        ) : null}
-
-        {!isSearching && platDuJourDishes.length > 0 ? (
-          <div
-            style={{
-              margin: '8px 16px 0',
-              border: '2px solid #c8972a',
-              borderRadius: 14,
-              padding: '12px 14px',
-              background: 'rgba(200,151,42,0.07)',
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                color: '#c8972a',
-                marginBottom: 8,
-              }}
-            >
-              ⭐ {t('menu.platDuJour', { defaultValue: 'Plat du Jour' })}
-            </div>
-            {platDuJourDishes.map((d) => (
-              <DishRow
-                key={d.id}
-                dish={d}
-                lang={lang}
-                unavailableLabel={t('menu.unavailable')}
-                onOpen={isPlan1 ? null : () => d.available && setOpenDish(d)}
-              />
-            ))}
-          </div>
         ) : null}
 
         {!isLoading && tree !== null ? (

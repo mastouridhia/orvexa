@@ -468,12 +468,12 @@ function DishesPanel({
             ⭐ Plat du Jour
           </span>
           <span style={{ fontSize: '0.72rem', opacity: 0.55 }}>
-            Affiché en premier — cliquez ⭐ sur un plat pour l'ajouter
+            Affiché en premier — activez via Modifier un plat
           </span>
         </div>
         {platDuJourDishes.length === 0 ? (
           <div style={{ padding: '0.6rem 0.75rem', fontSize: '0.82rem', opacity: 0.5 }}>
-            Aucun plat sélectionné. Cliquez ⭐ sur un plat ci-dessous pour l'afficher ici.
+            Aucun plat sélectionné. Modifiez un plat et cochez "⭐ Plat du Jour".
           </div>
         ) : (
           <table className="dt" style={{ margin: 0 }}>
@@ -637,42 +637,11 @@ function CategoryDishGroup({
               >
                 ⠿
               </td>
-              <td>{pickLang(d.name, lang)}</td>
-              <td className="right">{formatMillimes(d.priceMillimes)}</td>
-              <td
-                style={{ textAlign: 'center', width: 32 }}
-                onClick={(e) => e.stopPropagation()}
-                title="Plat du Jour"
-              >
-                <button
-                  type="button"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    opacity: d.isPlatDuJour ? 1 : 0.2,
-                    padding: '0 2px',
-                  }}
-                  onClick={async () => {
-                    const next = !d.isPlatDuJour;
-                    setOrdered((prev) =>
-                      prev.map((x) => (x.id === d.id ? { ...x, isPlatDuJour: next } : x)),
-                    );
-                    try {
-                      await authedFetch((tk) =>
-                        api.updateDish(tk, d.id, { isPlatDuJour: next }),
-                      );
-                    } catch {
-                      setOrdered((prev) =>
-                        prev.map((x) => (x.id === d.id ? { ...x, isPlatDuJour: !next } : x)),
-                      );
-                    }
-                  }}
-                >
-                  ⭐
-                </button>
+              <td>
+                {pickLang(d.name, lang)}
+                {d.isPlatDuJour ? <span style={{ marginInlineStart: 6, fontSize: '0.78rem', color: 'var(--saffron, #D97A2C)' }}>⭐ PDJ</span> : null}
               </td>
+              <td className="right">{formatMillimes(d.priceMillimes)}</td>
               <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                 <input
                   type="checkbox"
@@ -747,10 +716,8 @@ function DishEditor({
   const [priceInput, setPriceInput] = useState<string>(
     initial ? (initial.priceMillimes / 1000).toFixed(3) : '',
   );
-  const [prepTimeInput, setPrepTimeInput] = useState<string>(
-    initial?.prepTimeMinutes != null ? String(initial.prepTimeMinutes) : '',
-  );
   const [categoryId, setCategoryId] = useState<string | null>(initial?.categoryId ?? null);
+  const [isPlatDuJour, setIsPlatDuJour] = useState(initial?.isPlatDuJour ?? false);
   const [available, setAvailable] = useState(initial?.available ?? true);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
@@ -759,8 +726,6 @@ function DishEditor({
     setBusy(true);
     try {
       const priceMillimes = parseMillimes(priceInput) ?? 0;
-      const trimmedPrep = prepTimeInput.trim();
-      const prepTimeMinutes: number | null = trimmedPrep === '' ? null : Number(trimmedPrep);
       let dish: Dish;
       if (initial) {
         dish = await authedFetch((tk) =>
@@ -768,9 +733,9 @@ function DishEditor({
             name,
             description,
             priceMillimes,
-            prepTimeMinutes,
             available,
             categoryId,
+            isPlatDuJour,
           }),
         );
       } else {
@@ -779,9 +744,9 @@ function DishEditor({
             name,
             description,
             priceMillimes,
-            ...(prepTimeMinutes !== null ? { prepTimeMinutes } : {}),
             available,
             categoryId: categoryId ?? undefined,
+            isPlatDuJour,
           }),
         );
       }
@@ -821,29 +786,16 @@ function DishEditor({
         label={t('menu.descriptionPerLang', { lang: '' })}
         multiline
       />
-      <div className="row-gap row-wrap">
-        <label style={{ flex: 1 }}>
-          {t('menu.price')}
-          <input
-            type="text"
-            inputMode="decimal"
-            value={priceInput}
-            onChange={(e) => setPriceInput(e.target.value)}
-            placeholder="0.000"
-          />
-        </label>
-        <label style={{ flex: 1 }}>
-          {t('menu.prepTimeMinutes')}
-          <input
-            type="number"
-            min={1}
-            max={120}
-            value={prepTimeInput}
-            placeholder={t('menu.prepTimeUseDefault')}
-            onChange={(e) => setPrepTimeInput(e.target.value)}
-          />
-        </label>
-      </div>
+      <label>
+        {t('menu.price')}
+        <input
+          type="text"
+          inputMode="decimal"
+          value={priceInput}
+          onChange={(e) => setPriceInput(e.target.value)}
+          placeholder="0.000"
+        />
+      </label>
       <label>
         {t('menu.category')}
         <select
@@ -866,6 +818,15 @@ function DishEditor({
           style={{ width: 'auto', marginInlineEnd: '0.5rem' }}
         />
         {t('menu.available')}
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={isPlatDuJour}
+          onChange={(e) => setIsPlatDuJour(e.target.checked)}
+          style={{ width: 'auto', marginInlineEnd: '0.5rem' }}
+        />
+        ⭐ Plat du Jour <span style={{ fontSize: '0.78rem', opacity: 0.55, fontWeight: 400 }}>(affiché en premier dans le menu client)</span>
       </label>
       <label>
         {t('menu.image')}
