@@ -97,6 +97,7 @@ export const CreateDishRequestSchema = z.object({
   prepTimeMinutes: z.number().int().min(1).max(120).nullable().optional(),
   imageUrl: z.url().nullable().optional(),
   available: z.boolean().optional(),
+  isPlatDuJour: z.boolean().optional(),
   sortOrder: z.number().int().nonnegative().optional(),
 });
 export type CreateDishRequest = z.infer<typeof CreateDishRequestSchema>;
