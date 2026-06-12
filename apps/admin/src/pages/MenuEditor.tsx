@@ -158,15 +158,21 @@ function CategoriesPanel({
 }) {
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
-  const [ordered, setOrdered] = useState<Category[]>(categories);
+  // sortOrder=0 is the dedicated "Plat du Jour" slot — always shown first, never draggable.
+  const [platDuJour, setPlatDuJour] = useState<Category | null>(
+    () => categories.find((c) => c.sortOrder === 0) ?? null,
+  );
+  const [ordered, setOrdered] = useState<Category[]>(() =>
+    categories.filter((c) => c.sortOrder !== 0),
+  );
   const [savingOrder, setSavingOrder] = useState(false);
+  const [creating, setCreating] = useState(false);
   const dragSrc = useRef<number | null>(null);
 
-  // Resync local drag-order buffer when server data arrives (e.g. another session edits menu).
-  // The double-render cost is acceptable — this fires rarely and only when categories changes.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
-    setOrdered(categories);
+    setPlatDuJour(categories.find((c) => c.sortOrder === 0) ?? null);
+    setOrdered(categories.filter((c) => c.sortOrder !== 0));
   }, [categories]);
 
   const onDragOver = (e: React.DragEvent, targetIdx: number) => {
@@ -204,15 +210,149 @@ function CategoriesPanel({
     setSavingOrder(true);
     try {
       await Promise.all(
-        next.map((cat, i) => authedFetch((tk) => api.updateCategory(tk, cat.id, { sortOrder: i + 1 }))),
+        next.map((cat, i) =>
+          authedFetch((tk) => api.updateCategory(tk, cat.id, { sortOrder: i + 1 })),
+        ),
       );
     } finally {
       setSavingOrder(false);
     }
   };
 
+  const createPlatDuJour = async () => {
+    setCreating(true);
+    try {
+      const cat = await authedFetch((tk) =>
+        api.createCategory(tk, {
+          name: { fr: 'Plat du Jour', ar: 'طبق اليوم', en: 'Dish of the Day' },
+          isActive: true,
+          kitchenSection: 'kitchen',
+          sortOrder: 0,
+        }),
+      );
+      setPlatDuJour(cat);
+    } catch {
+      // non-critical — user can retry
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <div className="stack">
+      {/* ── Plat du Jour slot ── */}
+      <div
+        style={{
+          border: '2px solid var(--saffron, #D97A2C)',
+          borderRadius: 'var(--radius-sm)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            background: 'rgba(217,122,44,0.10)',
+            padding: '0.4rem 0.75rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid rgba(217,122,44,0.25)',
+          }}
+        >
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: '0.75rem',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: 'var(--saffron, #D97A2C)',
+            }}
+          >
+            ⭐ Plat du Jour
+          </span>
+          <span style={{ fontSize: '0.72rem', opacity: 0.55 }}>
+            Toujours affiché en premier
+          </span>
+        </div>
+        {platDuJour ? (
+          <table className="dt" style={{ margin: 0 }}>
+            <tbody>
+              <tr>
+                <td style={{ width: 24, color: 'var(--saffron, #D97A2C)', textAlign: 'center', opacity: 0.5 }}>
+                  ⭐
+                </td>
+                <td style={{ fontWeight: 500 }}>{pickLang(platDuJour.name, lang)}</td>
+                <td style={{ textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={platDuJour.isActive}
+                    onChange={async (e) => {
+                      const next = e.target.checked;
+                      setPlatDuJour((prev) => (prev ? { ...prev, isActive: next } : null));
+                      try {
+                        await authedFetch((tk) =>
+                          api.updateCategory(tk, platDuJour.id, { isActive: next }),
+                        );
+                      } catch {
+                        setPlatDuJour((prev) => (prev ? { ...prev, isActive: !next } : null));
+                      }
+                    }}
+                  />
+                </td>
+                {!isPlan1 && (
+                  <td>
+                    <span className={`section-badge section-badge--${platDuJour.kitchenSection}`}>
+                      {t(
+                        `menu.section${platDuJour.kitchenSection.charAt(0).toUpperCase()}${platDuJour.kitchenSection.slice(1)}`,
+                        { defaultValue: platDuJour.kitchenSection },
+                      )}
+                    </span>
+                  </td>
+                )}
+                <td className="right">
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    onClick={() => onEdit(platDuJour)}
+                  >
+                    {t('menu.edit')}
+                  </button>{' '}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-danger"
+                    onClick={() => onDelete(platDuJour)}
+                  >
+                    {t('menu.delete')}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        ) : (
+          <div
+            style={{
+              padding: '0.65rem 0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}
+          >
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{ borderColor: 'var(--saffron, #D97A2C)', color: 'var(--saffron, #D97A2C)', whiteSpace: 'nowrap' }}
+              disabled={creating}
+              onClick={() => void createPlatDuJour()}
+            >
+              {creating ? '…' : '+ Créer le Plat du Jour'}
+            </button>
+            <span style={{ fontSize: '0.8rem', opacity: 0.55 }}>
+              Le chef y ajoute chaque matin les plats disponibles du jour.
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Regular categories ── */}
       <div className="row-gap" style={{ justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-primary" onClick={onNew}>
           + {t('menu.newCategory')}
@@ -252,23 +392,7 @@ function CategoriesPanel({
                 >
                   ⠿
                 </td>
-                <td>
-                  {idx === 0 && (
-                    <span
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.04em',
-                        textTransform: 'uppercase',
-                        color: 'var(--saffron, #D97A2C)',
-                        marginInlineEnd: '0.4rem',
-                      }}
-                    >
-                      📌
-                    </span>
-                  )}
-                  {pickLang(c.name, lang)}
-                </td>
+                <td>{pickLang(c.name, lang)}</td>
                 <td style={{ textAlign: 'center' }}>
                   <input
                     type="checkbox"
@@ -282,7 +406,7 @@ function CategoriesPanel({
                         await authedFetch((tk) =>
                           api.updateCategory(tk, c.id, { isActive: next }),
                         );
-                      } catch (err) {
+                      } catch {
                         setOrdered((prev) =>
                           prev.map((x) => (x.id === c.id ? { ...x, isActive: !next } : x)),
                         );
@@ -293,7 +417,10 @@ function CategoriesPanel({
                 {!isPlan1 && (
                   <td>
                     <span className={`section-badge section-badge--${c.kitchenSection}`}>
-                      {t(`menu.section${c.kitchenSection.charAt(0).toUpperCase()}${c.kitchenSection.slice(1)}`, { defaultValue: c.kitchenSection })}
+                      {t(
+                        `menu.section${c.kitchenSection.charAt(0).toUpperCase()}${c.kitchenSection.slice(1)}`,
+                        { defaultValue: c.kitchenSection },
+                      )}
                     </span>
                   </td>
                 )}
