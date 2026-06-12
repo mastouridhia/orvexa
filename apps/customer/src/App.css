@@ -349,12 +349,18 @@
   padding: 6px 0 12px;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
+  /* fade-out hint on right edge — reveals more pills exist */
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
+          mask-image: linear-gradient(to right, black calc(100% - 40px), transparent 100%);
 }
 .tf-cat-strip__inner {
   display: flex;
   gap: 4px;
   overflow-x: auto;
-  padding: 0 16px;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px 0 16px;
+  /* extra right padding so last pill isn't hidden under the fade */
+  padding-inline-end: 48px;
   scrollbar-width: none;
 }
 .tf-cat-strip__inner::-webkit-scrollbar {
