@@ -62,6 +62,7 @@ services:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set}
       JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-1h}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       SESSION_JWT_SECRET: ${SESSION_JWT_SECRET:?SESSION_JWT_SECRET must be set}
@@ -85,6 +86,7 @@ services:
       SMTP_USER: ${SMTP_USER:?SMTP_USER must be set}
       SMTP_PASS: ${SMTP_PASS:?SMTP_PASS must be set}
       SMTP_FROM: ${SMTP_FROM:-Orvexa <noreply@orvexa.tn>}
+      LEAD_NOTIFY_EMAIL: ${LEAD_NOTIFY_EMAIL:-}
     volumes:
       - api-uploads:/var/lib/orvexa/uploads
     networks: [internal]
