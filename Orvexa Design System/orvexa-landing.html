@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Orvexa — Menu digital & gestion de restaurant en Tunisie</title>
+  <meta name="description" content="Remplacez votre menu papier par un QR code intelligent. Commandes, cuisine, analytics — une seule plateforme pensée pour la Tunisie.">
+  <link rel="icon" href="assets/orvexa-mark.svg">
+  <link rel="stylesheet" href="colors_and_type.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; overflow-x: hidden; background: var(--paper); }
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; padding: 0; margin: 0; }
+
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      font-family: var(--font-sans); font-weight: 600; font-size: 14px; letter-spacing: -0.1px;
+      padding: 10px 22px; border-radius: var(--radius-pill); border: none; cursor: pointer;
+      box-shadow: var(--shadow-saffron); transition: filter var(--motion-fast), transform var(--motion-fast);
+      white-space: nowrap;
+    }
+    .btn-primary:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    .btn-primary.lg { font-size: 15px; padding: 13px 28px; }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: rgba(245,239,230,0.72); font-weight: 500; font-size: 15px;
+      padding: 12px 20px; border-radius: var(--radius-pill);
+      border: 1px solid rgba(245,239,230,0.18); background: transparent;
+      transition: color var(--motion-fast), border-color var(--motion-fast);
+    }
+    .btn-ghost:hover { color: var(--paper-warm); border-color: rgba(245,239,230,0.38); }
+    .btn-outline {
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px 22px; border-radius: var(--radius-pill);
+      border: 1.5px solid var(--line); color: var(--ink-muted);
+      font-family: var(--font-sans); font-weight: 600; font-size: 14px;
+      transition: border-color var(--motion-fast), color var(--motion-fast), background var(--motion-fast);
+    }
+    .btn-outline:hover { border-color: rgba(25,20,14,0.22); color: var(--ink); background: var(--sunken); }
+    .btn-outline-warm {
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px 22px; border-radius: var(--radius-pill);
+      border: 1px solid rgba(245,239,230,0.18); color: var(--paper-warm);
+      font-family: var(--font-sans); font-weight: 600; font-size: 14px;
+      transition: border-color var(--motion-fast), background var(--motion-fast);
+    }
+    .btn-outline-warm:hover { border-color: rgba(245,239,230,0.38); background: rgba(245,239,230,0.06); }
+
+    /* ── Eyebrow ── */
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--accent-ink);
+    }
+    .eyebrow::before { content: ''; width: 18px; height: 1px; background: var(--accent); flex-shrink: 0; }
+    .eyebrow-light { color: var(--accent); }
+    .eyebrow-light::before { background: var(--accent); }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,248,244,0.94); backdrop-filter: blur(18px) saturate(1.4);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { display: flex; align-items: center; gap: 6px; height: 64px; }
+    .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 17px; letter-spacing: -0.4px; color: var(--ink); flex-shrink: 0; }
+    .nav-brand svg { width: 26px; height: 26px; }
+    .nav-brand em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 2px; margin-left: 16px; }
+    .nav-links a { padding: 6px 13px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 500; color: var(--ink-muted); transition: color var(--motion-fast), background var(--motion-fast); }
+    .nav-links a:hover { color: var(--ink); background: var(--sunken); }
+    .nav-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .nav-login { font-size: 14px; font-weight: 500; color: var(--ink-muted); padding: 6px 13px; border-radius: var(--radius-pill); transition: color var(--motion-fast); }
+    .nav-login:hover { color: var(--ink); }
+
+    /* ── HERO ── */
+    .hero { background: var(--ink); position: relative; overflow: hidden; padding: 96px 0 80px; }
+    .hero::before { content: ''; position: absolute; top: -80px; right: -80px; width: 720px; height: 720px; background: radial-gradient(circle, rgba(217,122,44,0.17) 0%, transparent 62%); pointer-events: none; }
+    .hero::after { content: ''; position: absolute; bottom: -100px; left: 100px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(217,122,44,0.07) 0%, transparent 60%); pointer-events: none; }
+    .hero-inner { display: grid; grid-template-columns: 1fr 320px; gap: 64px; align-items: center; position: relative; }
+    .hero .eyebrow { margin-bottom: 26px; }
+    .hero h1 { font-size: clamp(46px, 5.8vw, 70px); font-weight: 500; letter-spacing: -2.8px; line-height: 1.01; color: var(--paper-warm); margin-bottom: 22px; }
+    .hero h1 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .hero-lede { font-size: 17px; line-height: 1.65; color: rgba(245,239,230,0.65); max-width: 48ch; margin-bottom: 34px; }
+    .hero-lede b { color: var(--paper-warm); font-weight: 500; }
+    .hero-ctas { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; flex-wrap: wrap; }
+    .hero-trust { display: flex; align-items: center; gap: 14px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.6px; color: rgba(245,239,230,0.38); }
+    .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(245,239,230,0.2); flex-shrink: 0; }
+
+    /* Phone mockup */
+    .hero-visual { position: relative; height: 480px; }
+    .mock-phone { width: 248px; position: absolute; right: 0; top: 0; background: #fff; border-radius: 30px; box-shadow: 0 40px 100px rgba(0,0,0,0.55), 0 6px 20px rgba(0,0,0,0.3); overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+    .mock-notch { width: 76px; height: 20px; background: #0D0D0D; border-radius: 0 0 13px 13px; margin: 0 auto; }
+    .mock-header { background: var(--ink); padding: 14px 14px 12px; display: flex; align-items: center; gap: 10px; }
+    .mock-logo { width: 34px; height: 34px; border-radius: 10px; background: var(--accent-bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .mock-logo svg { width: 22px; height: 22px; }
+    .mock-rname { font-size: 12px; font-weight: 600; color: var(--paper-warm); letter-spacing: -0.1px; }
+    .mock-rsub { font-size: 9.5px; color: rgba(245,239,230,0.45); font-family: var(--font-mono); margin-top: 1px; }
+    .mock-cats { display: flex; gap: 5px; padding: 10px 12px; border-bottom: 1px solid var(--line); overflow: hidden; }
+    .mock-cat { font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--sunken); color: var(--ink-muted); white-space: nowrap; }
+    .mock-cat.on { background: var(--accent); color: #fff; }
+    .mock-items { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+    .mock-item { display: flex; align-items: center; gap: 9px; background: var(--surface); border-radius: 11px; padding: 9px 10px; box-shadow: var(--shadow-xs); border: 1px solid var(--line-soft); }
+    .mock-img { width: 36px; height: 36px; border-radius: 7px; flex-shrink: 0; }
+    .mock-iname { font-size: 10.5px; font-weight: 600; color: var(--ink); letter-spacing: -0.1px; }
+    .mock-iprice { font-size: 9.5px; color: var(--accent-ink); font-family: var(--font-mono); margin-top: 2px; }
+    .mock-add { width: 22px; height: 22px; border-radius: 7px; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 300; flex-shrink: 0; line-height: 1; margin-left: auto; }
+    .mock-notif { position: absolute; bottom: 48px; left: -24px; background: #fff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 10px 36px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.08); border: 1px solid var(--line); width: 162px; animation: float 3s ease-in-out infinite; }
+    .notif-head { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+    .notif-label { font-size: 9px; font-weight: 700; color: var(--ink); letter-spacing: 0.8px; text-transform: uppercase; font-family: var(--font-mono); }
+    .notif-table { font-size: 12px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+    .notif-items { font-size: 10px; color: var(--ink-muted); line-height: 1.45; }
+    .mock-qr { position: absolute; top: 32px; left: -12px; background: var(--ink); border-radius: 14px; padding: 11px; box-shadow: 0 10px 36px rgba(0,0,0,0.35); animation: float 3.6s ease-in-out infinite 0.6s; }
+    .mock-qr svg { display: block; width: 54px; height: 54px; }
+    .mock-qr-lbl { font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(245,239,230,0.42); text-align: center; margin-top: 5px; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+    /* ── STATS BAR ── */
+    .stats-bar { background: var(--surface); border-bottom: 1px solid var(--line); }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .stat { padding: 28px 32px; border-right: 1px solid var(--line); }
+    .stat:last-child { border-right: none; }
+    .stat-n { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 40px; letter-spacing: -1.5px; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+    .stat-lbl { font-size: 13px; color: var(--ink-muted); line-height: 1.4; }
+    .stat-lbl b { color: var(--ink); font-weight: 600; }
+
+    /* ── SECTIONS ── */
+    .section { padding: 96px 0; }
+    .section-alt { background: var(--sunken); }
+    .section-dark { background: var(--ink); }
+    .sec-head { margin-bottom: 52px; max-width: 560px; }
+    .sec-head .eyebrow { margin-bottom: 14px; }
+    .sec-head h2 { font-size: clamp(32px, 4vw, 46px); font-weight: 500; letter-spacing: -1.6px; line-height: 1.08; color: var(--ink); margin-bottom: 14px; }
+    .sec-head h2 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .sec-head p { font-size: 16.5px; line-height: 1.65; color: var(--ink-muted); }
+    .sec-head--dark h2 { color: var(--paper-warm); }
+    .sec-head--dark p { color: rgba(245,239,230,0.6); }
+
+    /* ── HOW IT WORKS ── */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 32px 28px; position: relative; transition: box-shadow var(--motion-base); }
+    .step:hover { box-shadow: var(--shadow-lg); }
+    .step-n { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 76px; color: var(--accent); line-height: 0.88; letter-spacing: -3px; margin-bottom: 18px; opacity: 0.75; }
+    .step h3 { font-size: 21px; font-weight: 600; letter-spacing: -0.3px; color: var(--ink); margin-bottom: 9px; }
+    .step p { font-size: 14px; line-height: 1.65; color: var(--ink-muted); }
+    .step p em { font-family: var(--font-display); font-style: italic; color: var(--accent-ink); }
+    .step-arr { position: absolute; top: 38px; right: -12px; z-index: 1; width: 24px; height: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .step-arr svg { width: 11px; height: 11px; fill: none; stroke: var(--ink-faint); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── FEATURES ── */
+    .feats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .feat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 32px; transition: box-shadow var(--motion-base); position: relative; overflow: hidden; }
+    .feat:hover { box-shadow: var(--shadow-md); }
+    .feat--wide { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; background: var(--ink); border-color: var(--ink); }
+    .feat-icon { width: 46px; height: 46px; border-radius: var(--radius-md); background: var(--accent-bg); border: 1px solid rgba(217,122,44,0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+    .feat-icon svg { width: 21px; height: 21px; fill: none; stroke: var(--accent-ink); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .feat-icon-dark { background: rgba(217,122,44,0.14); border-color: rgba(217,122,44,0.25); }
+    .feat-icon-dark svg { stroke: var(--dark-accent); }
+    .feat h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.3px; color: var(--ink); margin-bottom: 8px; }
+    .feat h3 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .feat p { font-size: 14px; line-height: 1.65; color: var(--ink-muted); }
+    .feat--wide h3 { color: var(--paper-warm); }
+    .feat--wide h3 em { color: var(--dark-accent); }
+    .feat--wide p { color: rgba(245,239,230,0.6); }
+    .feat-badge { position: absolute; top: 18px; right: 18px; background: var(--accent); color: #fff; font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 11px; border-radius: 999px; font-weight: 500; }
+    .feat-list { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+    .feat-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink-muted); line-height: 1.45; }
+    .chk { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; background-color: var(--accent-bg); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237C3F12' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E"); background-size: 9px; background-position: center; background-repeat: no-repeat; }
+    .chk-d { background-color: rgba(217,122,44,0.14); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F59A4D' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E"); }
+    .feat-list--dark li { color: rgba(245,239,230,0.62); }
+    .kds-flow { display: flex; align-items: center; gap: 6px; margin-top: 16px; flex-wrap: wrap; }
+    .kds-s { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; padding: 5px 11px; border-radius: 999px; background: rgba(245,239,230,0.07); color: rgba(245,239,230,0.45); white-space: nowrap; }
+    .kds-s.on { background: rgba(217,122,44,0.18); color: var(--dark-accent); font-weight: 600; }
+    .kds-arr { width: 10px; height: 10px; fill: none; stroke: rgba(245,239,230,0.2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ── PRICING ── */
+    .pricing-top { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 36px; }
+    .toggle { display: inline-flex; background: var(--sunken); border-radius: 999px; padding: 4px; }
+    .toggle button { padding: 7px 18px; border-radius: 999px; border: none; cursor: pointer; font-family: var(--font-sans); font-size: 13px; font-weight: 500; background: transparent; color: var(--ink-muted); transition: all var(--motion-fast); }
+    .toggle button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+    .toggle .save { color: var(--accent); font-size: 10.5px; font-family: var(--font-mono); margin-left: 3px; }
+    .plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .plan { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-xl); padding: 26px 22px; display: flex; flex-direction: column; gap: 18px; position: relative; transition: box-shadow var(--motion-base), transform var(--motion-base); }
+    .plan:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .plan--featured { background: var(--ink); border-color: var(--ink); box-shadow: var(--shadow-xl); }
+    .plan--featured:hover { transform: translateY(-4px); }
+    .plan--premium { border: 1.5px solid rgba(217,122,44,0.28); }
+    .plan-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); }
+    .plan-chip-d { color: rgba(245,239,230,0.35); }
+    .plan-name-t { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: 28px; letter-spacing: -0.4px; color: var(--accent); line-height: 1; }
+    .plan-name-d { color: var(--dark-accent); }
+    .plan-pn { font-size: 36px; font-weight: 500; letter-spacing: -1.5px; line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums; }
+    .plan-pn-d { color: var(--paper-warm); }
+    .plan-pn .u { font-family: var(--font-mono); font-size: 11px; font-weight: 500; opacity: 0.48; margin-left: 3px; letter-spacing: 0; }
+    .plan-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.4px; color: var(--ink-faint); margin-top: 4px; }
+    .plan-sub-d { color: rgba(245,239,230,0.38); }
+    .plan-who { font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
+    .plan-who-d { color: rgba(245,239,230,0.55); }
+    .plan-hr { height: 1px; background: var(--line); }
+    .plan-hr-d { background: rgba(245,239,230,0.09); }
+    .plan-feats { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .pf { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink-muted); line-height: 1.4; }
+    .pf-d { color: rgba(245,239,230,0.65); }
+    .plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; padding: 4px 14px; border-radius: 999px; font-weight: 500; white-space: nowrap; }
+    .pricing-note { text-align: center; margin-top: 22px; font-size: 12.5px; color: var(--ink-faint); line-height: 1.6; }
+    .pricing-note b { color: var(--ink-muted); }
+
+    /* ── FAQ ── */
+    .faq-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 72px; }
+    .faq-item { padding: 20px 0; border-bottom: 1px solid var(--line); }
+    .faq-col > .faq-item:first-child { border-top: 1px solid var(--line); }
+    .faq-q { font-size: 15.5px; font-weight: 600; letter-spacing: -0.2px; color: var(--ink); margin-bottom: 7px; }
+    .faq-q em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .faq-a { font-size: 13.5px; line-height: 1.65; color: var(--ink-muted); }
+    .faq-a b { color: var(--ink); font-weight: 600; }
+
+    /* ── FINAL CTA ── */
+    .final { background: var(--ink); position: relative; overflow: hidden; padding: 104px 0; text-align: center; }
+    .final::before { content: ''; position: absolute; top: -130px; left: 50%; transform: translateX(-50%); width: 640px; height: 640px; background: radial-gradient(circle, rgba(217,122,44,0.17) 0%, transparent 62%); pointer-events: none; }
+    .final-inner { position: relative; }
+    .final h2 { font-size: clamp(36px, 4.5vw, 54px); font-weight: 500; letter-spacing: -2px; line-height: 1.06; color: var(--paper-warm); margin: 20px auto 16px; max-width: 20ch; }
+    .final h2 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .final-lede { font-size: 17px; color: rgba(245,239,230,0.6); margin-bottom: 36px; }
+    .final-ctas { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .final-contacts { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 44px; flex-wrap: wrap; }
+    .cpill { display: inline-flex; align-items: center; gap: 8px; background: rgba(245,239,230,0.07); border: 1px solid rgba(245,239,230,0.13); color: var(--paper-warm); padding: 10px 18px; border-radius: 999px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2px; }
+    .cpill svg { width: 13px; height: 13px; fill: none; stroke: var(--dark-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    /* ── FOOTER ── */
+    .footer { background: var(--ink); border-top: 1px solid rgba(245,239,230,0.07); padding: 36px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .footer-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.3px; color: var(--paper-warm); }
+    .footer-brand svg { width: 22px; height: 22px; }
+    .footer-brand em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+    .footer-links a { font-size: 13px; color: rgba(245,239,230,0.42); transition: color var(--motion-fast); }
+    .footer-links a:hover { color: rgba(245,239,230,0.78); }
+    .footer-copy { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; color: rgba(245,239,230,0.3); }
+
+    /* ── Scroll reveal — hidden state applied by JS so content is always visible without JS ── */
+    .reveal { transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out); }
+    .reveal.js-hidden { opacity: 0; transform: translateY(18px); }
+    .reveal.js-hidden.in { opacity: 1; transform: translateY(0); }
+    .reveal-d2.js-hidden { transition-delay: 0.08s; }
+    .reveal-d3.js-hidden { transition-delay: 0.16s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 960px) {
+      .hero-inner { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .stat:nth-child(2) { border-right: none; }
+      .stat:nth-child(3) { border-top: 1px solid var(--line); }
+      .steps { grid-template-columns: 1fr; }
+      .feats { grid-template-columns: 1fr; }
+      .feat--wide { grid-column: span 1; grid-template-columns: 1fr; }
+      .plans { grid-template-columns: repeat(2, 1fr); }
+      .faq-cols { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 600px) {
+      .wrap { padding: 0 20px; }
+      .plans { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .section { padding: 72px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════════════════════════════ -->
+<nav class="nav">
+  <div class="wrap">
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#19140E"/><circle cx="50" cy="50" r="31" fill="#FBEED9"/><circle cx="50" cy="50" r="19" fill="#D97A2C"/></svg>
+        Orvexa<em>.</em>
+      </a>
+      <nav class="nav-links">
+        <a href="#comment">Comment ça marche</a>
+        <a href="#fonctionnalites">Fonctionnalités</a>
+        <a href="#tarifs">Tarifs</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="#" class="nav-login">Connexion</a>
+        <a href="#tarifs" class="btn-primary">Essai gratuit 14 jours</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
+      <div>
+        <div class="eyebrow eyebrow-light reveal">Menu digital · Commandes · Cuisine · Multi-zones</div>
+        <h1 class="reveal reveal-d2">Votre restaurant,<br>géré <em>en un scan.</em></h1>
+        <p class="hero-lede reveal reveal-d2">Remplacez votre menu papier par un QR code intelligent. Commandes à table, écran cuisine, analytics — <b>une seule plateforme, pensée pour la Tunisie.</b></p>
+        <div class="hero-ctas reveal reveal-d3">
+          <a href="#tarifs" class="btn-primary lg">Essayer 14 jours gratuit</a>
+          <a href="#comment" class="btn-ghost">Comment ça marche <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+        <div class="hero-trust reveal reveal-d3">
+          <span>Sans carte bancaire</span>
+          <div class="dot"></div>
+          <span>Sans engagement</span>
+          <div class="dot"></div>
+          <span>Arabe · Français · Anglais</span>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <!-- QR floating badge -->
+        <div class="mock-qr">
+          <svg viewBox="0 0 100 100" width="54" height="54">
+            <rect width="100" height="100" fill="#F5EFE6" rx="6"/>
+            <rect x="8" y="8" width="28" height="28" rx="4" fill="#19140E"/>
+            <rect x="13" y="13" width="18" height="18" rx="2" fill="#F5EFE6"/>
+            <rect x="17" y="17" width="10" height="10" rx="1" fill="#19140E"/>
+            <rect x="64" y="8" width="28" height="28" rx="4" fill="#19140E"/>
+            <rect x="69" y="13" width="18" height="18" rx="2" fill="#F5EFE6"/>
+            <rect x="73" y="17" width="10" height="10" rx="1" fill="#19140E"/>
+            <rect x="8" y="64" width="28" height="28" rx="4" fill="#19140E"/>
+            <rect x="13" y="69" width="18" height="18" rx="2" fill="#F5EFE6"/>
+            <rect x="17" y="73" width="10" height="10" rx="1" fill="#19140E"/>
+            <rect x="42" y="8" width="8" height="8" rx="1" fill="#D97A2C"/>
+            <rect x="54" y="8" width="6" height="6" rx="1" fill="#19140E"/>
+            <rect x="42" y="20" width="6" height="10" rx="1" fill="#19140E"/>
+            <rect x="52" y="18" width="8" height="8" rx="1" fill="#D97A2C"/>
+            <rect x="8" y="42" width="8" height="8" rx="1" fill="#19140E"/>
+            <rect x="20" y="42" width="6" height="6" rx="1" fill="#D97A2C"/>
+            <rect x="8" y="54" width="6" height="6" rx="1" fill="#D97A2C"/>
+            <rect x="18" y="52" width="10" height="8" rx="1" fill="#19140E"/>
+            <rect x="42" y="42" width="8" height="8" rx="1" fill="#19140E"/>
+            <rect x="54" y="40" width="8" height="8" rx="1" fill="#D97A2C"/>
+            <rect x="64" y="42" width="8" height="6" rx="1" fill="#19140E"/>
+            <rect x="76" y="42" width="8" height="8" rx="1" fill="#D97A2C"/>
+            <rect x="42" y="54" width="6" height="8" rx="1" fill="#D97A2C"/>
+            <rect x="52" y="54" width="8" height="6" rx="1" fill="#19140E"/>
+            <rect x="64" y="54" width="8" height="8" rx="1" fill="#19140E"/>
+            <rect x="76" y="54" width="8" height="6" rx="1" fill="#D97A2C"/>
+            <rect x="42" y="66" width="8" height="8" rx="1" fill="#19140E"/>
+            <rect x="54" y="66" width="8" height="6" rx="1" fill="#D97A2C"/>
+            <rect x="66" y="64" width="6" height="8" rx="1" fill="#19140E"/>
+            <rect x="76" y="66" width="8" height="8" rx="1" fill="#19140E"/>
+            <rect x="8" y="66" width="6" height="6" rx="1" fill="#D97A2C"/>
+            <rect x="18" y="64" width="8" height="10" rx="1" fill="#19140E"/>
+            <rect x="28" y="66" width="8" height="6" rx="1" fill="#D97A2C"/>
+            <circle cx="50" cy="50" r="9" fill="#F5EFE6"/>
+            <circle cx="50" cy="50" r="6" fill="#19140E"/>
+            <circle cx="50" cy="50" r="3.5" fill="#D97A2C"/>
+          </svg>
+          <div class="mock-qr-lbl">Scannez</div>
+        </div>
+        <!-- Phone -->
+        <div class="mock-phone">
+          <div class="mock-notch"></div>
+          <div class="mock-header">
+            <div class="mock-logo">
+              <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#19140E"/><circle cx="50" cy="50" r="31" fill="#FBEED9"/><circle cx="50" cy="50" r="19" fill="#D97A2C"/></svg>
+            </div>
+            <div>
+              <div class="mock-rname">Café Médina</div>
+              <div class="mock-rsub">Table 7 · Tunis</div>
+            </div>
+          </div>
+          <div class="mock-cats">
+            <div class="mock-cat on">Boissons</div>
+            <div class="mock-cat">Pâtisseries</div>
+            <div class="mock-cat">Snacks</div>
+          </div>
+          <div class="mock-items">
+            <div class="mock-item">
+              <div class="mock-img" style="background:linear-gradient(140deg,#7A4A28,#C8874A);"></div>
+              <div style="flex:1;min-width:0;">
+                <div class="mock-iname">Cappuccino</div>
+                <div class="mock-iprice">5.500 TND</div>
+              </div>
+              <div class="mock-add">+</div>
+            </div>
+            <div class="mock-item">
+              <div class="mock-img" style="background:linear-gradient(140deg,#215C38,#4A9E68);"></div>
+              <div style="flex:1;min-width:0;">
+                <div class="mock-iname">Thé à la menthe</div>
+                <div class="mock-iprice">3.000 TND</div>
+              </div>
+              <div class="mock-add">+</div>
+            </div>
+            <div class="mock-item">
+              <div class="mock-img" style="background:linear-gradient(140deg,#C97A2C,#F2C48A);"></div>
+              <div style="flex:1;min-width:0;">
+                <div class="mock-iname">Jus d'orange frais</div>
+                <div class="mock-iprice">7.000 TND</div>
+              </div>
+              <div class="mock-add">+</div>
+            </div>
+          </div>
+        </div>
+        <!-- Notification -->
+        <div class="mock-notif">
+          <div class="notif-head">
+            <div class="notif-dot"></div>
+            <div class="notif-label">Nouvelle commande</div>
+          </div>
+          <div class="notif-table">Table 12</div>
+          <div class="notif-items">2 Cappuccino · 1 Cheesecake<br>1 Eau minérale</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ STATS ═════════════════════════════════════════════════════════════ -->
+<section class="stats-bar">
+  <div class="wrap">
+    <div class="stats-row">
+      <div class="stat reveal">
+        <div class="stat-n">30s</div>
+        <div class="stat-lbl"><b>Mise à jour</b> du menu en temps réel</div>
+      </div>
+      <div class="stat reveal reveal-d2">
+        <div class="stat-n">0</div>
+        <div class="stat-lbl"><b>Application</b> à installer pour le client</div>
+      </div>
+      <div class="stat reveal reveal-d2">
+        <div class="stat-n">3</div>
+        <div class="stat-lbl"><b>Langues</b> — Arabe, Français, Anglais</div>
+      </div>
+      <div class="stat reveal reveal-d3">
+        <div class="stat-n">14j</div>
+        <div class="stat-lbl"><b>Essai gratuit</b> sans engagement ni carte</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══════════════════════════════════════════════════════ -->
+<section class="section" id="comment">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Comment ça marche</div>
+      <h2>Trois gestes. <em>Zéro application.</em></h2>
+      <p>Vos clients n'ont rien à télécharger ni à créer. Un QR code sur la table suffit pour démarrer.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-n">1</div>
+        <h3>Scannez</h3>
+        <p>Le client scanne le QR code posé sur la table. Son téléphone ouvre le menu instantanément — <em>aucune app, aucun compte.</em></p>
+        <div class="step-arr"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      </div>
+      <div class="step reveal reveal-d2">
+        <div class="step-n">2</div>
+        <h3>Commandez</h3>
+        <p>Il découvre vos produits avec photos et descriptions, ajoute ses articles au panier et envoie sa commande. <em>(Plans Plus, Pro & Premium)</em></p>
+        <div class="step-arr"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div>
+      </div>
+      <div class="step reveal reveal-d3">
+        <div class="step-n">3</div>
+        <h3>Gérez</h3>
+        <p>Vous recevez la commande instantanément. La cuisine prépare. Les statistiques se mettent à jour. <em>Zéro aller-retour inutile.</em></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="fonctionnalites">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Fonctionnalités</div>
+      <h2>Tout ce dont votre<br><em>établissement a besoin.</em></h2>
+      <p>De la carte QR au pilotage complet — chaque plan inclut tout le contenu du précédent.</p>
+    </div>
+    <div class="feats">
+      <!-- Menu digital -->
+      <div class="feat reveal">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/></svg></div>
+        <h3>Menu digital <em>QR</em></h3>
+        <p>Un scan et vos clients consultent votre menu avec photos, descriptions, ingrédients et allergènes. Mettez à jour vos prix en 30 secondes, depuis votre téléphone.</p>
+        <ul class="feat-list">
+          <li><span class="chk"></span><span>Catégories et produits illimités</span></li>
+          <li><span class="chk"></span><span>Logo, couleurs et bannière personnalisés</span></li>
+          <li><span class="chk"></span><span>Masquer les articles épuisés en un clic</span></li>
+          <li><span class="chk"></span><span>Lien partageable · parfait pour Instagram</span></li>
+        </ul>
+      </div>
+      <!-- Ordering -->
+      <div class="feat reveal reveal-d2">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+        <h3>Commande <em>à table</em></h3>
+        <p>Le client choisit sa table, ajoute ses produits, laisse une note et envoie. Vous recevez l'alerte sonore et la notification WhatsApp en temps réel.</p>
+        <ul class="feat-list">
+          <li><span class="chk"></span><span>Appeler le serveur · Demander l'addition</span></li>
+          <li><span class="chk"></span><span>Notifications WhatsApp instantanées</span></li>
+          <li><span class="chk"></span><span>Accepter ou refuser en un geste</span></li>
+          <li><span class="chk"></span><span>20 tables incluses · packs extensibles</span></li>
+        </ul>
+      </div>
+      <!-- KDS wide card -->
+      <div class="feat feat--wide reveal">
+        <div>
+          <div class="feat-badge">Plan Pro</div>
+          <div class="feat-icon feat-icon-dark"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+          <h3>Écran cuisine <em>en temps réel</em></h3>
+          <p>Chaque commande s'affiche en cuisine avec son statut. Fini les tickets papier perdus et les erreurs de communication entre la salle et la cuisine.</p>
+          <div class="kds-flow">
+            <span class="kds-s on">En attente</span>
+            <svg class="kds-arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span class="kds-s on">En préparation</span>
+            <svg class="kds-arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span class="kds-s on">Prêt</span>
+            <svg class="kds-arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            <span class="kds-s on">Servi</span>
+          </div>
+        </div>
+        <div>
+          <div class="feat-icon feat-icon-dark"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <h3>Application <em>serveur</em></h3>
+          <p>Plan de salle en direct, commandes manuelles, transfert de table, addition partagée, mode comptoir. Cinq rôles d'accès pour chaque membre de l'équipe.</p>
+          <ul class="feat-list feat-list--dark">
+            <li><span class="chk chk-d"></span><span>Tables libres, occupées, en attente de paiement</span></li>
+            <li><span class="chk chk-d"></span><span>Propriétaire · Manager · Serveur · Cuisine · Caissier</span></li>
+            <li><span class="chk chk-d"></span><span>Rapport quotidien par email ou WhatsApp</span></li>
+            <li><span class="chk chk-d"></span><span>Employés et tables illimités</span></li>
+          </ul>
+        </div>
+      </div>
+      <!-- Multi-zones -->
+      <div class="feat reveal">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+        <h3>Multi-zones <em>hôtels & resorts</em></h3>
+        <p>Restaurant, pool bar, plage, room service — chaque zone avec son menu, ses équipes et ses rapports. Un QR code par chambre pour le room service direct.</p>
+        <ul class="feat-list">
+          <li><span class="chk"></span><span>Facturation chambre automatique au checkout</span></li>
+          <li><span class="chk"></span><span>Dashboard direction multi-zones</span></li>
+          <li><span class="chk"></span><span>Installation, formation et déploiement inclus</span></li>
+        </ul>
+      </div>
+      <!-- Analytics -->
+      <div class="feat reveal reveal-d2">
+        <div class="feat-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <h3>Analytics <em>en temps réel</em></h3>
+        <p>Chiffre d'affaires, meilleures ventes, heures de pointe, performance par employé et par zone. Toutes vos données, au bon moment.</p>
+        <ul class="feat-list">
+          <li><span class="chk"></span><span>Revenus jour · semaine · mois</span></li>
+          <li><span class="chk"></span><span>Produits les plus consultés & commandés</span></li>
+          <li><span class="chk"></span><span>Scans QR et vues du menu</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PRICING ════════════════════════════════════════════════════════════ -->
+<section class="section" id="tarifs">
+  <div class="wrap">
+    <div class="sec-head reveal" style="max-width:680px;">
+      <div class="eyebrow">Tarifs</div>
+      <h2>Commencez petit,<br><em>grandissez quand vous êtes prêt.</em></h2>
+      <p>Chaque plan inclut tout le contenu du précédent. Changez de plan à tout moment.</p>
+    </div>
+    <div class="pricing-top">
+      <div class="toggle">
+        <button class="on" id="btn-monthly" onclick="setMode('monthly')">Mensuel</button>
+        <button id="btn-yearly" onclick="setMode('yearly')">Annuel <span class="save">−17%</span></button>
+      </div>
+      <div style="font-size:13px;color:var(--ink-faint);">Tous les prix en <b style="color:var(--ink-muted);">dinars tunisiens (TND)</b></div>
+    </div>
+    <div class="plans reveal">
+      <!-- Essentiel -->
+      <div class="plan">
+        <div>
+          <div class="plan-chip">Plan 01</div>
+          <div class="plan-name-t">Essentiel</div>
+        </div>
+        <div>
+          <div class="plan-pn"><span class="pval" data-m="19" data-y="190">19</span><span class="u" id="u1">TND/mois</span></div>
+          <div class="plan-sub psub" data-m="Facturé mensuellement" data-y="190 TND/an · 2 mois offerts">Facturé mensuellement</div>
+        </div>
+        <div class="plan-who">Cafés, salons de thé, pâtisseries, fast-foods, commerces.</div>
+        <div class="plan-hr"></div>
+        <div class="plan-feats">
+          <div class="pf"><span class="chk"></span><span>Menu digital QR complet</span></div>
+          <div class="pf"><span class="chk"></span><span>Photos, allergènes, ingrédients</span></div>
+          <div class="pf"><span class="chk"></span><span>Arabe · Français · Anglais</span></div>
+          <div class="pf"><span class="chk"></span><span>Logo, couleurs, QR codes</span></div>
+          <div class="pf"><span class="chk"></span><span>Scans & vues · statistiques</span></div>
+        </div>
+        <a href="#" class="btn-outline">Commencer gratuitement</a>
+      </div>
+      <!-- Plus -->
+      <div class="plan">
+        <div>
+          <div class="plan-chip">Plan 02</div>
+          <div class="plan-name-t">Plus</div>
+        </div>
+        <div>
+          <div class="plan-pn"><span class="pval" data-m="79" data-y="790">79</span><span class="u" id="u2">TND/mois</span></div>
+          <div class="plan-sub psub" data-m="Facturé mensuellement" data-y="790 TND/an · 2 mois offerts">Facturé mensuellement</div>
+        </div>
+        <div class="plan-who">Cafés avec service à table, chichas, food courts.</div>
+        <div class="plan-hr"></div>
+        <div class="plan-feats">
+          <div class="pf"><span class="chk"></span><span>Tout Essentiel</span></div>
+          <div class="pf"><span class="chk"></span><span>Commande à table</span></div>
+          <div class="pf"><span class="chk"></span><span>Notifications WhatsApp</span></div>
+          <div class="pf"><span class="chk"></span><span>Appeler serveur · Demander l'addition</span></div>
+          <div class="pf"><span class="chk"></span><span>3 comptes · 20 tables incluses</span></div>
+          <div class="pf"><span class="chk"></span><span>Analytics ventes & revenus</span></div>
+        </div>
+        <a href="#" class="btn-outline">Commencer gratuitement</a>
+      </div>
+      <!-- Pro (featured) -->
+      <div class="plan plan--featured">
+        <div class="plan-badge">Le plus populaire</div>
+        <div>
+          <div class="plan-chip plan-chip-d">Plan 03</div>
+          <div class="plan-name-t plan-name-d">Pro</div>
+        </div>
+        <div>
+          <div class="plan-pn plan-pn-d"><span class="pval" data-m="149" data-y="1490">149</span><span class="u" id="u3">TND/mois</span></div>
+          <div class="plan-sub plan-sub-d psub" data-m="Facturé mensuellement" data-y="1 490 TND/an · 2 mois offerts">Facturé mensuellement</div>
+        </div>
+        <div class="plan-who plan-who-d">Restaurants professionnels, équipes complètes.</div>
+        <div class="plan-hr plan-hr-d"></div>
+        <div class="plan-feats">
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Tout Plus</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Écran cuisine (KDS) inclus</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Application serveur complète</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>5 rôles d'accès (Manager, Caissier…)</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Employés et tables illimités</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Rapport quotidien email & WhatsApp</span></div>
+        </div>
+        <a href="#" class="btn-primary" style="justify-content:center;">Commencer gratuitement</a>
+      </div>
+      <!-- Premium -->
+      <div class="plan plan--premium">
+        <div>
+          <div class="plan-chip">Plan 04</div>
+          <div class="plan-name-t">Premium</div>
+        </div>
+        <div>
+          <div class="plan-pn">499+<span class="u">TND/mois</span></div>
+          <div class="plan-sub">À partir de · sur devis</div>
+        </div>
+        <div class="plan-who">Hôtels, resorts, beach clubs, grands établissements.</div>
+        <div class="plan-hr"></div>
+        <div class="plan-feats">
+          <div class="pf"><span class="chk"></span><span>Tout Pro</span></div>
+          <div class="pf"><span class="chk"></span><span>Multi-zones (restaurant, pool bar…)</span></div>
+          <div class="pf"><span class="chk"></span><span>Room service QR par chambre</span></div>
+          <div class="pf"><span class="chk"></span><span>Facturation chambre automatique</span></div>
+          <div class="pf"><span class="chk"></span><span>Dashboard direction multi-zones</span></div>
+          <div class="pf"><span class="chk"></span><span>Installation · Formation · Déploiement</span></div>
+        </div>
+        <a href="#" class="btn-outline">Demander un devis</a>
+      </div>
+    </div>
+    <p class="pricing-note reveal">Essai gratuit 14 jours sur les plans Essentiel, Plus et Pro — <b>aucune carte bancaire requise.</b><br>Tables supplémentaires : +10 TND/mois par pack de 10. Écran cuisine supplémentaire : +50 TND/mois.</p>
+  </div>
+</section>
+
+<!-- ══ FAQ ════════════════════════════════════════════════════════════════ -->
+<section class="section section-alt" id="faq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">FAQ</div>
+      <h2>Questions <em>fréquentes.</em></h2>
+    </div>
+    <div class="faq-cols">
+      <div class="faq-col">
+        <div class="faq-item reveal">
+          <div class="faq-q">Mes clients ont-ils besoin d'une <em>application</em> ?</div>
+          <div class="faq-a">Non. Ils scannent le QR code et accèdent au menu directement dans leur navigateur. <b>Aucune application à télécharger, aucun compte à créer.</b></div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Puis-je <em>changer de plan</em> à tout moment ?</div>
+          <div class="faq-a">Oui, à tout moment. Vos données, menus et historique sont <b>conservés lors de tout changement de plan</b>, dans un sens comme dans l'autre.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Comment fonctionne l'<em>essai gratuit</em> ?</div>
+          <div class="faq-a">14 jours complets, sans carte bancaire et sans engagement. Vous passez à un plan payant uniquement quand vous êtes prêt.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Orvexa fonctionne-t-il en <em>arabe</em> ?</div>
+          <div class="faq-a">Oui. Le menu client est disponible en <b>arabe, français et anglais</b>. La plateforme de gestion est disponible en français et en arabe.</div>
+        </div>
+      </div>
+      <div class="faq-col">
+        <div class="faq-item reveal">
+          <div class="faq-q">Comment ajouter plus de <em>tables</em> ?</div>
+          <div class="faq-a">Le plan Plus inclut 20 tables. Ajoutez des packs de 10 tables pour <b>+10 TND/mois par pack</b>. Le plan Pro inclut des tables illimitées.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Puis-je recevoir les commandes sur <em>WhatsApp</em> ?</div>
+          <div class="faq-a">Oui, à partir du plan Plus. Chaque commande déclenche une notification WhatsApp en plus de l'alerte sonore dans l'application.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Qu'est-ce que le <em>KDS</em> (écran cuisine) ?</div>
+          <div class="faq-a">L'écran cuisine affiche les commandes en temps réel avec leur statut : En attente → Préparation → Prêt → Servi. <b>Plus besoin de tickets papier.</b> Disponible dès le plan Pro.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Est-ce adapté aux <em>hôtels et resorts</em> ?</div>
+          <div class="faq-a">Oui, le plan Premium est conçu pour les établissements multi-zones. Chaque zone (restaurant, pool bar, room service) a son propre menu, équipe et rapports indépendants.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FINAL CTA ══════════════════════════════════════════════════════════ -->
+<section class="final">
+  <div class="wrap">
+    <div class="final-inner reveal">
+      <div class="eyebrow eyebrow-light" style="justify-content:center;display:flex;">Prêt à démarrer ?</div>
+      <h2>Lancez votre menu digital <em>aujourd'hui.</em></h2>
+      <p class="final-lede">14 jours gratuits. Sans carte bancaire. Sans engagement.</p>
+      <div class="final-ctas">
+        <a href="#tarifs" class="btn-primary lg">Commencer gratuitement</a>
+        <a href="#" class="btn-ghost">Voir une démo <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="final-contacts">
+        <div class="cpill">
+          <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 1 0-3 6.2L21 19l-.6-3.4A8 8 0 0 0 21 12z"/></svg>
+          +216 96 830 161
+        </div>
+        <div class="cpill">
+          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          contact@orvexa.tn
+        </div>
+        <div class="cpill">
+          <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          @orvexa.tn
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ═════════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#F5EFE6"/><circle cx="50" cy="50" r="31" fill="#15110D"/><circle cx="50" cy="50" r="19" fill="#F59A4D"/></svg>
+        Orvexa<em>.</em>
+      </div>
+      <nav class="footer-links">
+        <a href="#fonctionnalites">Fonctionnalités</a>
+        <a href="#tarifs">Tarifs</a>
+        <a href="#faq">FAQ</a>
+        <a href="#">Connexion</a>
+        <a href="#">Politique de confidentialité</a>
+      </nav>
+      <div class="footer-copy">© 2026 Orvexa · Tunisie</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal — hide elements below fold, then animate in on scroll
+  const reveals = Array.from(document.querySelectorAll('.reveal'));
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
+  reveals.forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top > window.innerHeight - 40) {
+      // Only hide elements that are actually below the fold
+      el.classList.add('js-hidden');
+      io.observe(el);
+    }
+  });
+
+  // Pricing toggle
+  let mode = 'monthly';
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btn-monthly').classList.toggle('on', m === 'monthly');
+    document.getElementById('btn-yearly').classList.toggle('on', m === 'yearly');
+    document.querySelectorAll('.pval').forEach(el => {
+      el.textContent = m === 'yearly' ? el.dataset.y : el.dataset.m;
+    });
+    // unit labels: monthly → TND/mois, yearly → TND/an
+    ['u1','u2','u3'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = m === 'yearly' ? 'TND/an' : 'TND/mois';
+    });
+    document.querySelectorAll('.psub').forEach(el => {
+      el.textContent = m === 'yearly' ? el.dataset.y : el.dataset.m;
+    });
+  }
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const id = a.getAttribute('href').slice(1);
+      const el = id ? document.getElementById(id) : null;
+      if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    });
+  });
+</script>
+</body>
+</html>

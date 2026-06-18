@@ -21,10 +21,12 @@ export const users = pgTable(
     email: text('email').notNull(),
     name: text('name').notNull(),
     role: text('role', {
-      enum: ['admin', 'manager', 'kitchen', 'waiter', 'cashier'],
+      enum: ['admin', 'manager', 'kitchen', 'waiter', 'cashier', 'employee'],
     }).notNull(),
     passwordHash: text('password_hash').notNull(),
     tokenVersion: integer('token_version').notNull().default(1),
+    failedLoginAttempts: integer('failed_login_attempts').notNull().default(0),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
     disabledAt: timestamp('disabled_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

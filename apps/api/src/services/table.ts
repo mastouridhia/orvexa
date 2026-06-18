@@ -9,8 +9,10 @@ import type {
   UpdateTableRequest,
 } from '@orvexa/shared';
 import { config } from '../config.js';
+import { tableLimit } from '@orvexa/shared';
 import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors.js';
 import { CustomerSessionRepository } from '../repositories/customer-session.js';
+import { RestaurantRepository } from '../repositories/restaurant.js';
 import { OrderRepository, type OrderRow } from '../repositories/order.js';
 import { TableCartRepository } from '../repositories/table-cart.js';
 import { TableRepository, TableZoneRepository, type TableRow } from '../repositories/table.js';
@@ -19,6 +21,9 @@ import { WaiterCallRepository, type WaiterCallRow } from '../repositories/waiter
 // Safety expiry for a waiter-issued ordering code; the primary lifecycle is
 // "cleared when the table is freed", this just caps an abandoned code.
 const ORDERING_CODE_TTL_MS = 6 * 60 * 60 * 1000;
+
+// Numeric-aware, locale-friendly comparator for table labels ("Table 2" < "Table 10").
+const TABLE_LABEL_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 export function toTable(row: TableRow): Table {
   return {
@@ -67,6 +72,7 @@ export class TableService {
   private readonly orderRepo: OrderRepository;
   private readonly customerSessionRepo: CustomerSessionRepository;
   private readonly tableCartRepo: TableCartRepository;
+  private readonly restaurantRepo: RestaurantRepository;
 
   constructor(
     tableRepo: TableRepository = new TableRepository(),
@@ -74,12 +80,14 @@ export class TableService {
     orderRepo: OrderRepository = new OrderRepository(),
     customerSessionRepo: CustomerSessionRepository = new CustomerSessionRepository(),
     tableCartRepo: TableCartRepository = new TableCartRepository(),
+    restaurantRepo: RestaurantRepository = new RestaurantRepository(),
   ) {
     this.tableRepo = tableRepo;
     this.waiterCallRepo = waiterCallRepo;
     this.orderRepo = orderRepo;
     this.customerSessionRepo = customerSessionRepo;
     this.tableCartRepo = tableCartRepo;
+    this.restaurantRepo = restaurantRepo;
   }
 
   /**
@@ -118,10 +126,14 @@ export class TableService {
   async list(restaurantId: string): Promise<TableWithDerived[]> {
     const rows = await this.tableRepo.listForRestaurant(restaurantId);
     if (rows.length === 0) return [];
+    // Natural sort by label so "Table 2" precedes "Table 10" (SQL's lexicographic
+    // ORDER BY would put "Table 10" first).
+    rows.sort((a, b) => TABLE_LABEL_COLLATOR.compare(a.label, b.label));
     const tableIds = rows.map((r) => r.id);
-    const [calls, activeOrders] = await Promise.all([
+    const [calls, activeOrders, seatedByTable] = await Promise.all([
       this.waiterCallRepo.listOpenForTables(tableIds),
       this.orderRepo.listActiveForTables(tableIds),
+      this.customerSessionRepo.earliestActiveByTable(tableIds),
     ]);
     // Build mergedTableIds map: leader → [member ids]
     const membersByLeader = new Map<string, string[]>();
@@ -132,15 +144,20 @@ export class TableService {
         membersByLeader.set(r.mergedIntoTableId, list);
       }
     }
-    return rows.map((row) => ({
-      ...toTable(row),
-      derivedStatus: deriveStatus(
-        row.status as TableStatus,
-        calls.filter((c) => c.tableId === row.id),
-        activeOrders.filter((o) => o.tableId === row.id),
-      ),
-      mergedTableIds: membersByLeader.get(row.id) ?? [],
-    }));
+    return rows.map((row) => {
+      const seatedAt = seatedByTable.get(row.id) ?? null;
+      return {
+        ...toTable(row),
+        derivedStatus: deriveStatus(
+          row.status as TableStatus,
+          calls.filter((c) => c.tableId === row.id),
+          activeOrders.filter((o) => o.tableId === row.id),
+        ),
+        mergedTableIds: membersByLeader.get(row.id) ?? [],
+        inUse: seatedAt !== null,
+        seatedAt: seatedAt ? seatedAt.toISOString() : null,
+      };
+    });
   }
 
   async deriveForTable(restaurantId: string, tableId: string): Promise<TableStatus | null> {
@@ -195,11 +212,32 @@ export class TableService {
   }
 
   async create(restaurantId: string, input: CreateTableRequest): Promise<Table> {
+    await this.assertUnderTableQuota(restaurantId);
     if (input.zoneId) {
       await this.assertZoneBelongsToRestaurant(restaurantId, input.zoneId);
     }
     const row = await this.tableRepo.create({ ...input, restaurantId });
     return toTable(row);
+  }
+
+  /**
+   * Soft-cap enforcement (PLANS.md §8): a restaurant may hold at most
+   * `TABLE_QUOTA[plan] + extraTables` tables. Backstop for the admin UI, which
+   * also pre-checks — Capitol is grandfathered via a large `extraTables`.
+   */
+  private async assertUnderTableQuota(restaurantId: string): Promise<void> {
+    const restaurant = await this.restaurantRepo.findById(restaurantId);
+    if (!restaurant) throw new NotFoundError('Restaurant not found');
+    const limit = tableLimit(restaurant.plan, restaurant.extraTables);
+    if (limit === null) return; // unlimited tier
+    const count = await this.tableRepo.countForRestaurant(restaurantId);
+    if (count >= limit) {
+      throw new ForbiddenError(`Table limit reached (${limit}). Upgrade your plan or add more tables.`, {
+        code: 'TABLE_QUOTA_EXCEEDED',
+        limit,
+        count,
+      });
+    }
   }
 
   async update(restaurantId: string, id: string, input: UpdateTableRequest): Promise<Table> {
@@ -271,9 +309,12 @@ export class TableService {
     if (existing.restaurantId !== restaurantId) throw new ForbiddenError('Wrong restaurant');
     const row = await this.tableRepo.update(tableId, { status: 'free' });
     if (!row) throw new NotFoundError('Table not found');
-    if (existing.status !== 'free') {
-      await this.resetGuestStateForTable(tableId);
-    }
+    // Always reset guest state — this is the explicit "free this table" action.
+    // The stored status is often already 'free' (QR ordering never flips it off
+    // 'free'), so guarding on a status change would skip expiring the live
+    // customer session and the table would stay occupied. Reset is a cheap no-op
+    // when there's nothing to clear.
+    await this.resetGuestStateForTable(tableId);
     return toTable(row);
   }
 

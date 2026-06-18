@@ -28,6 +28,12 @@ export class ValidationError extends HttpError {
   }
 }
 
+export class BadRequestError extends HttpError {
+  constructor(message = 'Bad request') {
+    super(400, ApiErrorCode.VALIDATION_ERROR, message);
+  }
+}
+
 export class UnauthorizedError extends HttpError {
   constructor(message = 'Authentication required', details?: unknown) {
     super(401, ApiErrorCode.UNAUTHORIZED, message, { details });

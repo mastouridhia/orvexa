@@ -14,6 +14,10 @@ import ms, { type StringValue } from 'ms';
 
 const tokenRepo = new RefreshTokenRepository();
 
+// Version identifier of the legal document set (legal/CGU.md + legal/Politique-de-confidentialite.md).
+// Bump when those documents change so consent records reflect what was actually accepted.
+const LEGAL_TERMS_VERSION = '1.0';
+
 const AcceptSchema = z.object({
   password: z.string().min(8),
   slug: z
@@ -21,6 +25,10 @@ const AcceptSchema = z.object({
     .min(2)
     .max(40)
     .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens only'),
+  // Explicit acceptance of the CGU + Politique de confidentialité — required to create the account.
+  acceptedTerms: z.literal(true, {
+    message: 'Vous devez accepter les conditions pour créer le compte',
+  }),
 });
 
 export const invitationsRouter = Router();
@@ -47,6 +55,7 @@ invitationsRouter.post(
   asyncHandler(async (req, res) => {
     const { token } = req.params;
     const { password, slug } = AcceptSchema.parse(req.body);
+    // acceptedTerms is validated above (must be true); record consent on the restaurant below.
 
     const [invite] = await db
       .select()
@@ -67,7 +76,13 @@ invitationsRouter.post(
     // Provision restaurant + admin user atomically
     const [restaurant] = await db
       .insert(restaurants)
-      .values({ slug, name: invite.restaurantName })
+      .values({
+        slug,
+        name: invite.restaurantName,
+        plan: invite.plan,
+        termsAcceptedAt: new Date(),
+        termsVersion: LEGAL_TERMS_VERSION,
+      })
       .returning();
     if (!restaurant) throw new Error('Failed to create restaurant');
 
@@ -95,6 +110,7 @@ invitationsRouter.post(
       rid: restaurant.id,
       role: 'admin',
       ver: user.tokenVersion,
+      plan: restaurant.plan,
     });
     const refreshToken = signStaffRefreshToken({ sub: user.id, rid: restaurant.id });
     const ttlMs = ms(config.auth.refreshTokenTtl as StringValue);

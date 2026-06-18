@@ -8,6 +8,7 @@ import { restaurantRouter } from './restaurant.js';
 import { tablesRouter } from './tables.js';
 import { tableZonesRouter } from './table-zones.js';
 import { menuRouter } from './menu.js';
+import { publicMenuRouter } from './public-menu.js';
 import { categoriesRouter } from './categories.js';
 import { dishesRouter } from './dishes.js';
 import { variantGroupsRouter } from './variant-groups.js';
@@ -20,6 +21,7 @@ import { reportsRouter } from './reports.js';
 import { closeDayRouter } from './close-day.js';
 import { invitationsRouter } from './invitations.js';
 import { platformRouter } from './platform.js';
+import { leadsRouter } from './leads.js';
 
 export const apiRouter = Router();
 
@@ -32,6 +34,7 @@ apiRouter.use(restaurantRouter);
 apiRouter.use(tablesRouter);
 apiRouter.use(tableZonesRouter);
 apiRouter.use(menuRouter);
+apiRouter.use(publicMenuRouter);
 apiRouter.use(categoriesRouter);
 apiRouter.use(dishesRouter);
 apiRouter.use(variantGroupsRouter);
@@ -44,3 +47,4 @@ apiRouter.use(reportsRouter);
 apiRouter.use(closeDayRouter);
 apiRouter.use(invitationsRouter);
 apiRouter.use(platformRouter);
+apiRouter.use(leadsRouter);

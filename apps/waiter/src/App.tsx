@@ -4,9 +4,10 @@ import type { LanguageCode } from '@orvexa/shared';
 import { setDocumentLocale, ErrorBoundary } from '@orvexa/ui';
 import { Login } from './pages/Login.js';
 import { useAuthStore } from './store/auth.js';
-import { isPlan1 } from './utils/plan.js';
+import { useCan } from './utils/plan.js';
 
-function PlanUnavailable() {
+function PlanUnavailable({ onLogout }: { onLogout?: () => void }) {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -16,7 +17,7 @@ function PlanUnavailable() {
         justifyContent: 'center',
         height: '100vh',
         gap: 12,
-        opacity: 0.5,
+        opacity: 0.7,
         fontFamily: 'sans-serif',
         fontSize: 15,
         textAlign: 'center',
@@ -25,7 +26,12 @@ function PlanUnavailable() {
     >
       <div style={{ fontSize: 36 }}>🛎️</div>
       <div style={{ fontWeight: 600 }}>Waiter app not active</div>
-      <div style={{ fontSize: 13, opacity: 0.7 }}>Upgrade to Orvexa Plus or higher to enable staff ordering.</div>
+      <div style={{ fontSize: 13, opacity: 0.7 }}>Upgrade to Orvexa Pro to enable staff ordering.</div>
+      {onLogout ? (
+        <button type="button" className="btn btn-ghost" style={{ marginTop: 12 }} onClick={onLogout}>
+          {t('header.logout')}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -59,6 +65,8 @@ const LANG_KEY = 'orvexa.waiter.lang';
 export default function App() {
   const { i18n } = useTranslation();
   const accessToken = useAuthStore((s) => s.accessToken);
+  const logout = useAuthStore((s) => s.logout);
+  const canWaiterApp = useCan()('waiter.app');
 
   // Show the language picker only if no language has been explicitly chosen yet.
   const [langPicked, setLangPicked] = useState(() => !!localStorage.getItem(LANG_KEY));
@@ -75,8 +83,6 @@ export default function App() {
     };
   }, [i18n]);
 
-  if (isPlan1) return <PlanUnavailable />;
-
   return (
     <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
@@ -84,6 +90,9 @@ export default function App() {
           <LanguagePicker onConfirm={() => setLangPicked(true)} />
         ) : !accessToken ? (
           <Login />
+        ) : !canWaiterApp ? (
+          // Gate on plan only after login, so a stale/wrong-plan token can log out.
+          <PlanUnavailable onLogout={logout} />
         ) : (
           <Dashboard />
         )}

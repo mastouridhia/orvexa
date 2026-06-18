@@ -13,6 +13,20 @@
     "logout": "Sign out",
     "toggle": "Menu"
   },
+  "upsell": {
+    "title": "Unlock {{feature}}",
+    "body": "This is part of {{plan}} — {{price}} TND/month. Upgrade your plan to turn it on.",
+    "cta": "View plans",
+    "navHint": "Upgrade",
+    "features": {
+      "orders": "the order inbox",
+      "openBills": "open bills & split payments",
+      "staff": "staff accounts",
+      "reports": "sales reports",
+      "feedback": "customer feedback",
+      "reportsAdvanced": "revenue by category"
+    }
+  },
   "login": {
     "title": "Admin sign-in",
     "email": "Email",
@@ -25,6 +39,11 @@
     "title": "Today",
     "defaultUser": "boss",
     "allGreen": "All systems green",
+    "views": {
+      "scansToday": "Scans today",
+      "scans7d": "Scans (7 days)",
+      "activity": "Visitor activity (last 7 days)"
+    },
     "greet": {
       "morning": "Good morning",
       "afternoon": "Good afternoon",
@@ -94,6 +113,10 @@
   "shell": {
     "brandSub": "Admin · owner",
     "defaultUser": "boss"
+  },
+  "platform": {
+    "viewingAs": "Viewing as {{name}}",
+    "returnToPlatform": "Back to platform"
   },
   "pulse": {
     "caption": "Service pulse · today",
@@ -184,6 +207,7 @@
     "derivedStatus": "Status",
     "new": "New table",
     "save": "Save",
+    "edit": "Edit",
     "cancel": "Cancel",
     "delete": "Delete",
     "deleteConfirm": "Delete this table?",
@@ -209,6 +233,10 @@
     "printWifiPassShort": "Password",
     "printOrAskWaiter": "or ask your waiter for an access code",
     "printWifiRequired": "Wi-Fi credentials are required before printing — customers need them to connect and access the menu.",
+    "quotaLabel": "{{count}} / {{limit}} tables",
+    "quotaUnlimited": "{{count}} tables",
+    "quotaReached": "You've reached your plan's table limit ({{limit}}). Upgrade your plan or add more tables to your subscription.",
+    "quotaAddSome": "+ {{count}} tables",
     "merged": "Merged",
     "merge": "Merge with",
     "unmerge": "Unmerge",
@@ -288,6 +316,53 @@
     "created": "Created",
     "export": "Export CSV",
     "viewReceipt": "Receipt",
+    "freeTable": "Free table",
+    "tablesInUse": "Tables in use",
+    "freeTableHint": "Clear this table for the next guest — cancels any open order and ends the guest's session",
+    "freeTableConfirm": "Free this table? This cancels any still-open order on it and clears the guest's phone, for the next party.",
+    "actions": "Actions",
+    "advance": {
+      "preparing": "Accept",
+      "ready": "Mark ready",
+      "served": "Mark served",
+      "cancelled": "Cancel"
+    },
+    "board": {
+      "live": "{{count}} live",
+      "empty": "No active orders right now.",
+      "emptyHint": "New orders from customers appear here instantly.",
+      "new": "New",
+      "preparing": "Preparing",
+      "ready": "Ready to serve",
+      "history": "History",
+      "justNow": "just now",
+      "minAgo": "{{m}} min ago",
+      "hrAgo": "{{h}}h ago",
+      "round": "Round {{n}}",
+      "table": "Table",
+      "soundOn": "Sound on",
+      "soundOff": "Sound off"
+    },
+    "notify": {
+      "title": "Orvexa — Orders",
+      "newOrder": "New order received",
+      "newOrderAt": "New order — Table {{table}}",
+      "newOrders": "{{count}} new orders received",
+      "call": "A table needs service",
+      "callAt": "Table {{table}} needs service",
+      "bill": "A table requested the bill",
+      "billAt": "Table {{table}} requested the bill"
+    },
+    "calls": {
+      "heading": "Service calls",
+      "done": "Done",
+      "kind": {
+        "call_waiter": "Calling a waiter",
+        "request_bill": "Asking for the bill",
+        "request_extras": "Requesting extras",
+        "code_request": "Needs ordering code"
+      }
+    },
     "receipt": {
       "title": "Order receipt",
       "order": "Order",
@@ -329,6 +404,35 @@
   },
   "settings": {
     "title": "Settings",
+    "groups": {
+      "subscription": "Subscription",
+      "establishment": "Establishment",
+      "operations": "Operations",
+      "interface": "Interface",
+      "account": "Account",
+      "danger": "Danger zone"
+    },
+    "account": {
+      "title": "My account",
+      "sub": "Your login name and email address.",
+      "name": "Name",
+      "email": "Email",
+      "save": "Save",
+      "saving": "Updating…",
+      "saved": "Profile updated"
+    },
+    "security": {
+      "title": "Security",
+      "sub": "Change your login password.",
+      "current": "Current password",
+      "new": "New password",
+      "newHint": "(8 min.)",
+      "confirm": "Confirm",
+      "mismatch": "Passwords do not match.",
+      "save": "Change password",
+      "saving": "Updating…",
+      "saved": "Password updated"
+    },
     "name": "Restaurant name",
     "defaultLanguage": "Default language",
     "supportedLanguages": "Supported languages",
@@ -343,9 +447,52 @@
     "sectionRestaurantSub": "Your restaurant's public name.",
     "sectionLocalization": "Localization",
     "sectionLocalizationSub": "Timezone, default menu language, and languages available to customers.",
+    "sectionQr": "QR codes",
+    "sectionQrSub": "How customers reach your menu: one QR per table, or a single menu QR for the whole place.",
+    "shareMenuTitle": "Shareable menu",
+    "shareMenuSub": "A single view-only QR and link to share on Instagram or anywhere else. It shows the menu but can't place orders.",
+    "shareMenuCopy": "Copy link",
+    "shareMenuCopied": "Copied",
+    "shareMenuDownload": "Download QR",
+    "shareMenuError": "Couldn't load the menu QR.",
+    "qrMode": "QR mode",
+    "qrModePerTable": "One QR per table",
+    "qrModeSingle": "Single menu QR",
+    "sectionInfo": "Business info",
+    "sectionInfoSub": "Hours, address, contact and WiFi shown to customers on your menu. All optional.",
+    "info": {
+      "contactHead": "Contact & location",
+      "address": "Address",
+      "mapUrl": "Map link",
+      "phone": "Phone",
+      "socialsHead": "Social links",
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "tiktok": "TikTok",
+      "wifiHead": "WiFi",
+      "wifiSsid": "Network name",
+      "wifiPassword": "Password",
+      "hoursHead": "Opening hours",
+      "open": "Open",
+      "closed": "Closed",
+      "days": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    },
     "sectionPricing": "Pricing",
     "sectionPricingSub": "Tax and service percentages applied to every order.",
     "pricingNote": "Amounts are in Tunisian Dinar (TND). Tax and service are calculated on the order subtotal.",
+    "sectionKitchen": "Kitchen",
+    "sectionKitchenSub": "Defaults the kitchen and customer ETAs build on.",
+    "defaultPrepMinutes": "Default preparation time",
+    "defaultPrepMinutesUnit": "min",
+    "defaultPrepMinutesHint": "Used to estimate when an order will be ready. Dishes with their own prep time override this.",
     "orderingAccess": {
       "section": "Ordering access",
       "sectionSub": "Controls who can place orders — protects your QR against off-premises abuse.",

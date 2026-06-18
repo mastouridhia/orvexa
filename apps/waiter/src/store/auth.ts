@@ -4,10 +4,20 @@ import type { StaffUser } from '@orvexa/shared';
 import { api } from '../api/queries.js';
 import { ApiError, getErrorMessage } from '../api/client.js';
 
+function decodePlan(token: string): number {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]!));
+    return typeof payload.plan === 'number' ? payload.plan : 1;
+  } catch {
+    return 1;
+  }
+}
+
 type AuthState = {
   accessToken: string | null;
   refreshToken: string | null;
   user: StaffUser | null;
+  plan: number;
   loginError: string | null;
   setTokens: (a: string, r: string) => void;
   setUser: (u: StaffUser) => void;
@@ -22,13 +32,14 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       user: null,
+      plan: 1,
       loginError: null,
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken, plan: decodePlan(accessToken) }),
       setUser: (user) => set({ user }),
       logout: () => {
         const { refreshToken } = get();
         if (refreshToken) void api.logout(refreshToken).catch(() => undefined);
-        set({ accessToken: null, refreshToken: null, user: null });
+        set({ accessToken: null, refreshToken: null, user: null, plan: 1 });
       },
       async login(email, password, restaurantSlug) {
         try {
@@ -37,6 +48,7 @@ export const useAuthStore = create<AuthState>()(
             accessToken: result.accessToken,
             refreshToken: result.refreshToken,
             user: result.user,
+            plan: decodePlan(result.accessToken),
             loginError: null,
           });
           return true;
@@ -54,10 +66,10 @@ export const useAuthStore = create<AuthState>()(
           if (err instanceof ApiError && err.status === 401 && refreshToken) {
             try {
               const tokens = await api.refresh(refreshToken);
-              set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken });
+              set({ accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, plan: decodePlan(tokens.accessToken) });
               return await call(tokens.accessToken);
             } catch {
-              set({ accessToken: null, refreshToken: null, user: null });
+              set({ accessToken: null, refreshToken: null, user: null, plan: 1 });
               throw err;
             }
           }
@@ -71,6 +83,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: s.accessToken,
         refreshToken: s.refreshToken,
         user: s.user,
+        plan: s.plan,
       }),
     },
   ),

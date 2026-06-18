@@ -8,8 +8,12 @@ type SessionState = {
   session: CustomerSessionResponse['session'] | null;
   restaurant: RestaurantInfo | null;
   locale: LanguageCode;
+  // Restaurant slug when viewing the shared public menu (/m/:slug): no table
+  // session, read-only. null in the normal QR ordering flow.
+  previewSlug: string | null;
   setSession: (data: CustomerSessionResponse) => void;
   setRestaurant: (info: RestaurantInfo) => void;
+  setPreview: (slug: string) => void;
   setLocale: (locale: LanguageCode) => void;
   clear: () => void;
 };
@@ -21,11 +25,19 @@ export const useSessionStore = create<SessionState>()(
       session: null,
       restaurant: null,
       locale: 'fr',
+      previewSlug: null,
+      // Opening a real table session supersedes preview mode.
       setSession: (data) =>
-        set({ token: data.token, session: data.session, locale: data.session.locale }),
+        set({
+          token: data.token,
+          session: data.session,
+          locale: data.session.locale,
+          previewSlug: null,
+        }),
       setRestaurant: (info) => set({ restaurant: info }),
+      setPreview: (slug) => set({ previewSlug: slug, token: null, session: null }),
       setLocale: (locale) => set({ locale }),
-      clear: () => set({ token: null, session: null, restaurant: null }),
+      clear: () => set({ token: null, session: null, restaurant: null, previewSlug: null }),
     }),
     {
       name: 'orvexa.customer.session',
@@ -34,6 +46,7 @@ export const useSessionStore = create<SessionState>()(
         session: s.session,
         restaurant: s.restaurant,
         locale: s.locale,
+        previewSlug: s.previewSlug,
       }),
     },
   ),

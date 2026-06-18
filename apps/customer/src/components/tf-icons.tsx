@@ -72,6 +72,15 @@ export function IconClock({ size = 16, ...rest }: IconProps) {
     </svg>
   );
 }
+export function IconInfo({ size = 16, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
 export function IconBell({ size = 20, ...rest }: IconProps) {
   return (
     <svg {...base(size, rest)}>

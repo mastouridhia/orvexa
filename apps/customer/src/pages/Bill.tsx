@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { LanguageCode, Order } from '@orvexa/shared';
 import { api } from '../api/queries.js';
+import { ApiError } from '../api/client.js';
 import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
@@ -113,6 +114,7 @@ export function BillPage() {
   const session = useSessionStore((s) => s.session);
   const restaurant = useSessionStore((s) => s.restaurant);
   const orderIds = useOrderRefsStore((s) => s.ids);
+  const forgetOrderRef = useOrderRefsStore((s) => s.forget);
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -144,6 +146,12 @@ export function BillPage() {
           const o = await api.getOrder(token, oid);
           if (o.status !== 'cancelled') fetched.push(o);
         } catch (err) {
+          // An orphaned ref (e.g. left over from a previous session) returns
+          // 403/404 — drop it from the store so it stops failing on every load.
+          if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
+            forgetOrderRef(oid);
+            continue;
+          }
           if (!cancelled) setError(handleApiError(err, t));
         }
       }
@@ -154,7 +162,7 @@ export function BillPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, session, orderIds, navigate, t]);
+  }, [token, session, orderIds, navigate, t, forgetOrderRef]);
 
   const requestBill = async () => {
     if (!token || !session) return;

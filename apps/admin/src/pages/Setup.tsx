@@ -27,6 +27,7 @@ export function Setup() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [slug, setSlug] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,7 +47,8 @@ export function Setup() {
   const canSubmit =
     password.length >= 8 &&
     password === confirm &&
-    /^[a-z0-9-]{2,40}$/.test(slug);
+    /^[a-z0-9-]{2,40}$/.test(slug) &&
+    acceptedTerms;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,10 +62,10 @@ export function Setup() {
         user: StaffUser;
       }>(`/invitations/${token}/accept`, {
         method: 'POST',
-        body: { password, slug },
+        body: { password, slug, acceptedTerms },
       });
       setSession(result.accessToken, result.refreshToken, result.user);
-      navigate('/', { replace: true });
+      navigate('/onboarding', { replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
       setBusy(false);
@@ -149,6 +151,35 @@ export function Setup() {
                 Vos employés se connecteront avec : <strong>{slug}</strong>
               </span>
             )}
+          </label>
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: '0.5rem',
+              fontSize: '0.85rem',
+              margin: '0.5rem 0',
+            }}
+          >
+            <input
+              type="checkbox"
+              required
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              style={{ width: 'auto', marginTop: '0.15rem' }}
+            />
+            <span>
+              J&apos;ai lu et j&apos;accepte les{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>
+                Conditions d&apos;utilisation
+              </a>{' '}
+              et la{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>
+                Politique de confidentialité
+              </a>{' '}
+              d&apos;Orvexa.
+            </span>
           </label>
           {error && <div className="error-banner">{error}</div>}
           <button

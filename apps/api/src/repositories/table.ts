@@ -29,6 +29,15 @@ export class TableRepository extends BaseRepository {
     return row ?? null;
   }
 
+  /** Number of tables a restaurant currently has — used to enforce the plan quota. */
+  async countForRestaurant(restaurantId: string): Promise<number> {
+    const [row] = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tables)
+      .where(eq(tables.restaurantId, restaurantId));
+    return row?.count ?? 0;
+  }
+
   async findByPublicSlug(slug: string): Promise<TableRow | null> {
     const [row] = await this.db.select().from(tables).where(eq(tables.publicSlug, slug)).limit(1);
     return row ?? null;

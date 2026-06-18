@@ -48,6 +48,9 @@ export async function seedDemoData(db: Db): Promise<SeededIds> {
       taxPercent: 19,
       servicePercent: 10,
       timezone: 'Africa/Tunis',
+      // Demo/dev/test fixture runs as Pro so every feature (ordering, KDS,
+      // waiter, split bills, feedback) is exercisable. Real tenants default to 1.
+      plan: 3,
     })
     .returning();
   if (!restaurant) throw new Error('failed to insert restaurant');

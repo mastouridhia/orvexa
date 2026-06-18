@@ -3,6 +3,7 @@ import type {
   CategoryRevenueRow,
   DashboardSummary,
   LocalizedString,
+  MenuAnalyticsSummary,
   ReportGranularity,
   SalesReportRow,
   TopItemRow,
@@ -13,6 +14,7 @@ import { dishes, categories } from '../db/schema/menu.js';
 import { tables } from '../db/schema/tables.js';
 import { payments } from '../db/schema/payments.js';
 import { waiterCalls } from '../db/schema/waiter-calls.js';
+import { customerSessions } from '../db/schema/sessions.js';
 
 const TERMINAL_FOR_REVENUE = ['served'] as const;
 const ACTIVE_ORDER_STATUSES = ['received', 'preparing', 'ready'] as const;
@@ -191,6 +193,68 @@ export class ReportsService {
       quantity: r.quantity,
       revenueMillimes: r.revenueMillimes,
     }));
+  }
+
+  /**
+   * Essentiel-tier "basic analytics": QR scans (one customer session per scan) —
+   * today's count, the rolling 7-day count, and a per-day activity series.
+   */
+  async menuAnalytics(restaurantId: string): Promise<MenuAnalyticsSummary> {
+    const todayStart = startOfDay(new Date());
+    const tomorrowStart = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const weekStart = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+
+    const [todayRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(customerSessions)
+      .where(
+        and(
+          eq(customerSessions.restaurantId, restaurantId),
+          gte(customerSessions.createdAt, todayStart),
+          lt(customerSessions.createdAt, tomorrowStart),
+        ),
+      );
+
+    const [weekRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(customerSessions)
+      .where(
+        and(
+          eq(customerSessions.restaurantId, restaurantId),
+          gte(customerSessions.createdAt, weekStart),
+        ),
+      );
+
+    const dayBucket = sql<string>`date_trunc('day', ${sql.raw('"customer_sessions"."created_at"')})`;
+    const activityRows = await db
+      .select({ bucket: dayBucket, count: sql<number>`count(*)::int` })
+      .from(customerSessions)
+      .where(
+        and(
+          eq(customerSessions.restaurantId, restaurantId),
+          gte(customerSessions.createdAt, weekStart),
+        ),
+      )
+      .groupBy(dayBucket)
+      .orderBy(dayBucket);
+
+    // Fill the 7-day window so empty days render as zeros (stable x-axis).
+    const counts = new Map<string, number>();
+    for (const r of activityRows) {
+      const key = new Date(r.bucket as unknown as string | Date).toISOString().slice(0, 10);
+      counts.set(key, r.count);
+    }
+    const activity = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(weekStart.getTime() + i * 24 * 60 * 60 * 1000);
+      const key = d.toISOString().slice(0, 10);
+      return { date: d.toISOString(), count: counts.get(key) ?? 0 };
+    });
+
+    return {
+      scansToday: todayRow?.count ?? 0,
+      scans7d: weekRow?.count ?? 0,
+      activity,
+    };
   }
 
   async dashboardSummary(restaurantId: string): Promise<DashboardSummary> {

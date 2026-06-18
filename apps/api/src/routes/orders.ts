@@ -15,6 +15,7 @@ import { TableService } from '../services/table.js';
 import {
   requireAnyAuth,
   requireAuth,
+  requireCapability,
   requireCustomerSession,
   requireRole,
   resolveRestaurantId,
@@ -51,6 +52,7 @@ export const ordersRouter = Router();
 ordersRouter.post(
   '/orders',
   requireCustomerSession,
+  requireCapability('ordering.customer'),
   orderRateLimit,
   orderCooldown,
   requirePresence,
@@ -119,6 +121,7 @@ ordersRouter.post(
   '/tables/:tableId/orders',
   requireAuth,
   requireRole('admin', 'manager', 'waiter'),
+  requireCapability('ordering.inbox'),
   validate({ params: TableParams, body: PlaceOrderRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -138,6 +141,7 @@ ordersRouter.post(
 ordersRouter.post(
   '/orders/:id/items',
   requireCustomerSession,
+  requireCapability('ordering.customer'),
   orderRateLimit,
   requirePresence,
   validate({ params: IdParams, body: AddOrderItemsRequestSchema }),
@@ -157,6 +161,7 @@ ordersRouter.post(
   '/orders/:id/items/staff',
   requireAuth,
   requireRole('admin', 'manager', 'waiter'),
+  requireCapability('ordering.inbox'),
   validate({ params: IdParams, body: AddOrderItemsRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -173,6 +178,7 @@ ordersRouter.post(
 ordersRouter.delete(
   '/orders/:id/items/:itemId',
   requireCustomerSession,
+  requireCapability('ordering.customer'),
   validate({ params: OrderItemIdParams }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
@@ -191,7 +197,7 @@ ordersRouter.delete(
 ordersRouter.get(
   '/orders/active',
   requireAuth,
-  requireRole('admin', 'manager', 'kitchen', 'waiter', 'cashier'),
+  requireRole('admin', 'manager', 'kitchen', 'waiter', 'cashier', 'employee'),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
     const list = await service.listActive(req.user.restaurantId);
@@ -203,6 +209,7 @@ ordersRouter.get(
   '/orders/open-bills',
   requireAuth,
   requireRole('admin', 'manager', 'cashier', 'waiter'),
+  requireCapability('bills.split'),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
     const list = await service.listOpenBills(req.user.restaurantId);
@@ -225,7 +232,7 @@ ordersRouter.get(
 ordersRouter.get(
   '/orders',
   requireAuth,
-  requireRole('admin', 'manager', 'waiter', 'kitchen'),
+  requireRole('admin', 'manager', 'waiter', 'kitchen', 'employee'),
   validate({ query: OrderListQuerySchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -260,7 +267,7 @@ ordersRouter.get(
 ordersRouter.patch(
   '/orders/:id/status',
   requireAuth,
-  requireRole('admin', 'manager', 'kitchen', 'waiter'),
+  requireRole('admin', 'manager', 'kitchen', 'waiter', 'employee'),
   validate({ params: IdParams, body: UpdateOrderStatusRequestSchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');

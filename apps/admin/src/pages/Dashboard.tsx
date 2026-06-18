@@ -7,6 +7,7 @@ import type {
   CloseDayResult,
   DashboardSummary,
   LanguageCode,
+  MenuAnalyticsSummary,
   OrderCreatedPayload,
   OrderStatusPayload,
   TableStatusPayload,
@@ -15,7 +16,7 @@ import type {
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
-import { isPlan1 } from '../utils/plan.js';
+import { useCan } from '../utils/plan.js';
 import { connectAdminSocket } from '../socket/client.js';
 import { FirstRunChecklist } from '../components/FirstRunChecklist.js';
 import { ServicePulse } from '../components/ServicePulse.js';
@@ -56,10 +57,29 @@ type CloseDayModal =
   | { phase: 'success'; result: CloseDayResult }
   | { phase: 'error'; message: string };
 
-function Plan1Dashboard() {
+function MenuOnlyDashboard() {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
   const user = useAuthStore((s) => s.user);
+  const authedFetch = useAuthStore((s) => s.authedFetch);
+  const [analytics, setAnalytics] = useState<MenuAnalyticsSummary | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    authedFetch((tk) => api.getMenuAnalytics(tk))
+      .then((a) => {
+        if (!cancelled) setAnalytics(a);
+      })
+      .catch(() => {
+        /* analytics is best-effort — never block the dashboard */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authedFetch]);
+
+  const maxActivity = analytics ? Math.max(1, ...analytics.activity.map((p) => p.count)) : 1;
+
   const now = Date.now();
   const dateNow = new Date(now);
   const dateLabel = dateNow.toLocaleDateString(lang, {
@@ -98,18 +118,50 @@ function Plan1Dashboard() {
           })}
         </p>
       </div>
+
+      {analytics ? (
+        <div className="tf-a-views">
+          <div className="tf-a-views__kpis">
+            <div className="tf-a-views__kpi">
+              <div className="tf-a-views__kpi-val">{analytics.scansToday}</div>
+              <div className="tf-a-views__kpi-label">{t('dashboard.views.scansToday')}</div>
+            </div>
+            <div className="tf-a-views__kpi">
+              <div className="tf-a-views__kpi-val">{analytics.scans7d}</div>
+              <div className="tf-a-views__kpi-label">{t('dashboard.views.scans7d')}</div>
+            </div>
+          </div>
+          <div className="tf-a-views__chart-head">{t('dashboard.views.activity')}</div>
+          <div className="tf-a-views__chart" role="img" aria-label={t('dashboard.views.activity')}>
+            {analytics.activity.map((p) => {
+              const d = new Date(p.date);
+              const dayLabel = d.toLocaleDateString(lang, { weekday: 'short' });
+              return (
+                <div key={p.date} className="tf-a-views__bar-col" title={`${dayLabel}: ${p.count}`}>
+                  <div
+                    className="tf-a-views__bar"
+                    style={{ height: `${Math.round((p.count / maxActivity) * 100)}%` }}
+                  />
+                  <div className="tf-a-views__bar-lbl">{dayLabel}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export function Dashboard() {
-  if (isPlan1) return <Plan1Dashboard />;
-
+  const menuOnly = !useCan()('ordering.customer');
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
   const authedFetch = useAuthStore((s) => s.authedFetch);
+
+  if (menuOnly) return <MenuOnlyDashboard />;
 
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [error, setError] = useState<string | null>(null);

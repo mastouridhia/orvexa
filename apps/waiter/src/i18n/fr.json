@@ -127,6 +127,8 @@
     "markPassed": "Marquer comme servi",
     "settleBill": "Encaisser",
     "markClean": "Marquer comme nettoyée",
+    "freeTable": "Libérer la table",
+    "freeTableConfirm": "Libérer cette table maintenant ? Cela met fin à la session des clients et efface leur téléphone, même si l'addition n'est pas réglée.",
     "requestBill": "Demander l'addition",
     "billRequested": "Demandée ✓",
     "takeOrder": "Prendre la commande",

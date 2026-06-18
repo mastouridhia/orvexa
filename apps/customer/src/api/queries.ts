@@ -3,6 +3,7 @@ import type {
   Category,
   Dish,
   LanguageCode,
+  OpeningHours,
   Order,
   OrderGateMode,
   PlaceOrderRequest,
@@ -29,12 +30,23 @@ export type RestaurantInfo = {
   id: string;
   slug: string;
   name: string;
+  plan: number;
   defaultLanguage: LanguageCode;
   supportedLanguages: LanguageCode[];
   currency: 'TND';
   taxPercent: number;
   servicePercent: number;
   timezone: string;
+  // Restaurant info card (menu.info) — all owner-filled & optional.
+  address: string | null;
+  mapUrl: string | null;
+  phone: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  tiktokUrl: string | null;
+  wifiSsid: string | null;
+  wifiPassword: string | null;
+  openingHours: OpeningHours | null;
 };
 
 export const api = {
@@ -62,6 +74,12 @@ export const api = {
   },
   getMenu(token: string) {
     return apiRequest<MenuTreeCategory[]>('/menu', { token });
+  },
+  // Public, table-less menu for the shared link (/m/:slug) — no auth, no ordering.
+  getPublicMenu(slug: string) {
+    return apiRequest<{ restaurant: RestaurantInfo; menu: MenuTreeCategory[] }>(
+      `/public/${encodeURIComponent(slug)}/menu`,
+    );
   },
   placeOrder(token: string, body: PlaceOrderRequest) {
     return apiRequest<Order[]>('/orders', { method: 'POST', token, body });

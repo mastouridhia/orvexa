@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/auth.js';
 import { Modal } from '@orvexa/ui';
 import { TriLangInput } from '../components/TriLangInput.js';
 import { formatMillimes, parseMillimes, pickLang } from '../utils/format.js';
-import { isPlan1 } from '../utils/plan.js';
+import { useCan } from '../utils/plan.js';
 
 type Tab = 'categories' | 'dishes';
 
@@ -156,6 +156,7 @@ function CategoriesPanel({
   onNew: () => void;
   onDelete: (c: Category) => void;
 }) {
+  const showKitchenSection = useCan()('kitchen.kds');
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [ordered, setOrdered] = useState<Category[]>(categories);
@@ -227,7 +228,7 @@ function CategoriesPanel({
               <th style={{ width: 24 }} />
               <th>{t('menu.tabs.categories')}</th>
               <th>{t('menu.active')}</th>
-              {!isPlan1 && <th>{t('menu.section')}</th>}
+              {showKitchenSection && <th>{t('menu.section')}</th>}
               <th />
             </tr>
           </thead>
@@ -274,7 +275,7 @@ function CategoriesPanel({
                     }}
                   />
                 </td>
-                {!isPlan1 && (
+                {showKitchenSection && (
                   <td>
                     <span className={`section-badge section-badge--${c.kitchenSection}`}>
                       {t(
@@ -332,6 +333,7 @@ function CategoryEditor({
   onSaved: () => Promise<void> | void;
   onError: (msg: string) => void;
 }) {
+  const showKitchenSection = useCan()('kitchen.kds');
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [name, setName] = useState<LocalizedString>(initial?.name ?? { ...EMPTY_L10N });
@@ -384,7 +386,7 @@ function CategoryEditor({
           style={{ width: 'auto' }}
         />
       </label>
-      {!isPlan1 && (
+      {showKitchenSection && (
         <label>
           {t('menu.section')}
           <select

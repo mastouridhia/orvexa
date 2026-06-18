@@ -12,7 +12,7 @@ export const api = {
   login(email: string, password: string, restaurantSlug?: string) {
     return apiRequest<StaffLoginResponse>('/auth/login', {
       method: 'POST',
-      body: { email, password, ...(restaurantSlug ? { restaurantSlug } : {}) },
+      body: { email, password, app: 'kitchen', ...(restaurantSlug ? { restaurantSlug } : {}) },
     });
   },
   refresh(refreshToken: string) {

@@ -1,4 +1,4 @@
-import { and, eq, gt, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, sql } from 'drizzle-orm';
 import type { LanguageCode } from '@orvexa/shared';
 import { customerSessions } from '../db/schema/sessions.js';
 import { BaseRepository } from './base.js';
@@ -18,6 +18,31 @@ export class CustomerSessionRepository extends BaseRepository {
       .where(and(eq(customerSessions.tableId, tableId), gt(customerSessions.expiresAt, sql`NOW()`)))
       .returning({ id: customerSessions.id });
     return rows.length;
+  }
+
+  /**
+   * For the given tables, return the start time of the current occupancy —
+   * the earliest still-active (non-expired) session per table. Tables with no
+   * active session are absent from the map. Drives the "tables in use" view.
+   */
+  async earliestActiveByTable(tableIds: string[]): Promise<Map<string, Date>> {
+    if (tableIds.length === 0) return new Map();
+    const rows = await this.db
+      .select({
+        tableId: customerSessions.tableId,
+        seatedAt: sql<Date>`MIN(${customerSessions.createdAt})`,
+      })
+      .from(customerSessions)
+      .where(
+        and(
+          inArray(customerSessions.tableId, tableIds),
+          gt(customerSessions.expiresAt, sql`NOW()`),
+        ),
+      )
+      .groupBy(customerSessions.tableId);
+    const map = new Map<string, Date>();
+    for (const r of rows) map.set(r.tableId, new Date(r.seatedAt));
+    return map;
   }
 
   async create(input: {

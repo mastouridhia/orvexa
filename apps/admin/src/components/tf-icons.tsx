@@ -21,6 +21,14 @@ export function IconBolt({ size = 15, ...rest }: IconProps) {
     </svg>
   );
 }
+export function IconClock({ size = 15, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
 export function IconUtensils({ size = 15, ...rest }: IconProps) {
   return (
     <svg {...base(size, rest)}>
@@ -149,6 +157,32 @@ export function IconX({ size = 15, ...rest }: IconProps) {
   return (
     <svg {...base(size, rest)}>
       <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+export function IconLock({ size = 15, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}
+export function IconQr({ size = 15, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+      <path d="M14 14h3v3M21 14v3M14 21h3M21 21h.01M17 17h.01" />
+    </svg>
+  );
+}
+export function IconAlertTriangle({ size = 15, ...rest }: IconProps) {
+  return (
+    <svg {...base(size, rest)}>
+      <path d="M12 3L2 20h20L12 3z" />
+      <path d="M12 9v5M12 17.5v.5" />
     </svg>
   );
 }

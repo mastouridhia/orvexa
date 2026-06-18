@@ -127,6 +127,8 @@
     "markPassed": "Mark passed to table",
     "settleBill": "Settle bill",
     "markClean": "Mark as clean",
+    "freeTable": "Free table",
+    "freeTableConfirm": "Free this table now? This ends the guests' session and clears their phone, even if the bill isn't settled.",
     "requestBill": "Request bill",
     "billRequested": "Requested ✓",
     "takeOrder": "Take order",

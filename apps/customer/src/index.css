@@ -22,6 +22,9 @@
   --tf-accent-ink: #7c3f12;
   --tf-accent-bg: #fbeed9;
   --tf-accent-glow: rgba(217, 122, 44, 0.32);
+  --tf-accent-700: #a8561a; /* saffron hover */
+  --tf-accent-900: #3d1e08; /* deep saffron — cart pill hover */
+  --paper-warm: #f5efe6;    /* warm off-white — text on ink/saffron surfaces */
 
   /* Legacy variable aliases (kept so non-redesigned code keeps working) */
   --primary: var(--tf-accent);

@@ -4,10 +4,14 @@ import type { StaffRole, StaffShift, StaffUser } from '@orvexa/shared';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
+import { useCan } from '../utils/plan.js';
 import { Modal } from '@orvexa/ui';
 import { formatDateTime } from '../utils/format.js';
 
-const ROLES: StaffRole[] = ['admin', 'manager', 'kitchen', 'waiter', 'cashier'];
+// Full restaurant roles unlock at Pro (`staff.roles_full`). Plus only gets
+// Owner + Employee (the order-inbox role).
+const ALL_ROLES: StaffRole[] = ['admin', 'manager', 'kitchen', 'waiter', 'cashier', 'employee'];
+const BASIC_ROLES: StaffRole[] = ['admin', 'employee'];
 
 function todayDateIso(): string {
   const d = new Date();
@@ -361,9 +365,13 @@ function StaffEditor({
 }) {
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
+  const can = useCan();
+  const roles = can('staff.roles_full') ? ALL_ROLES : BASIC_ROLES;
   const [email, setEmail] = useState(initial?.email ?? '');
   const [name, setName] = useState(initial?.name ?? '');
-  const [role, setRole] = useState<StaffRole>(initial?.role ?? 'waiter');
+  const [role, setRole] = useState<StaffRole>(
+    initial?.role ?? (can('staff.roles_full') ? 'waiter' : 'employee'),
+  );
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -421,7 +429,7 @@ function StaffEditor({
       <label>
         {t('staff.role')}
         <select value={role} onChange={(e) => setRole(e.target.value as StaffRole)}>
-          {ROLES.map((r) => (
+          {roles.map((r) => (
             <option key={r} value={r}>
               {r}
             </option>

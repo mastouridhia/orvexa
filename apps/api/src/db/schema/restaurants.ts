@@ -1,4 +1,5 @@
-import { boolean, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import type { OpeningHours } from '@orvexa/shared';
 
 export const restaurants = pgTable('restaurants', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -25,7 +26,27 @@ export const restaurants = pgTable('restaurants', {
   // Max concurrent active orders per table before customers are prompted to ask
   // the waiter. Waiter can temporarily bypass via DELETE /tables/:id/order-ceiling.
   orderCeiling: integer('order_ceiling').notNull().default(20),
+  plan: integer('plan').notNull().default(1),
+  // true = one QR per table; false = a single menu QR for the whole place (Essentiel).
+  perTableQr: boolean('per_table_qr').notNull().default(true),
+  // Purchased table overage on top of the per-tier quota (PLANS.md §8). Effective
+  // limit = TABLE_QUOTA[plan] + extraTables. Capitol is grandfathered with a large value.
+  extraTables: integer('extra_tables').notNull().default(0),
+  // View-only "restaurant info card" (menu.info, all tiers). All owner-filled & optional.
+  address: text('address'),
+  mapUrl: text('map_url'),
+  phone: text('phone'),
+  instagramUrl: text('instagram_url'),
+  facebookUrl: text('facebook_url'),
+  tiktokUrl: text('tiktok_url'),
+  wifiSsid: text('wifi_ssid'),
+  wifiPassword: text('wifi_password'),
+  openingHours: jsonb('opening_hours').$type<OpeningHours>(),
   isActive: boolean('is_active').notNull().default(true),
+  // Legal consent captured at account creation (CGU + Politique de confidentialité).
+  // Kept as proof of acceptance; version string identifies which document set was accepted.
+  termsAcceptedAt: timestamp('terms_accepted_at', { withTimezone: true }),
+  termsVersion: text('terms_version'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

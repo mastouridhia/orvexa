@@ -1,28 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { Dish, LanguageCode, OrderStatus, PaymentStatus } from '@orvexa/shared';
 import { Toast } from '@orvexa/ui';
 import { api, type MenuTreeCategory } from '../api/queries.js';
+import { ApiError } from '../api/client.js';
 import { handleApiError } from '../api/errorMessage.js';
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
-import { useCartStore, cartLineCount, cartSubtotal } from '../store/cart.js';
+import { useCartStore, cartLineCount, cartSubtotal, makeLine } from '../store/cart.js';
 import { connectCustomerSocket } from '../socket/client.js';
 import { useSharedCart } from '../hooks/useSharedCart.js';
 import { CartDrawer } from '../components/CartDrawer.js';
-import { ExtrasSheet } from '../components/ExtrasSheet.js';
 import { ItemDetailModal } from '../components/ItemDetailModal.js';
-import { IconArrowRight, IconSearch } from '../components/tf-icons.js';
+import { IconArrowRight, IconBag, IconMinus, IconPlus, IconSearch } from '../components/tf-icons.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
-import { isPlan1 } from '../utils/plan.js';
+import { serviceStatus } from '../utils/serviceStatus.js';
+import { useMenuOnly } from '../utils/plan.js';
 
 export function Menu() {
+  const menuOnly = useMenuOnly();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const token = useSessionStore((s) => s.token);
   const session = useSessionStore((s) => s.session);
+  const previewSlug = useSessionStore((s) => s.previewSlug);
   const restaurant = useSessionStore((s) => s.restaurant);
+  const setRestaurant = useSessionStore((s) => s.setRestaurant);
   const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
 
   const [tree, setTree] = useState<MenuTreeCategory[] | null>(null);
@@ -31,17 +35,20 @@ export function Menu() {
   const [search, setSearch] = useState('');
   const [openDish, setOpenDish] = useState<Dish | null>(null);
   const [openCart, setOpenCart] = useState(false);
-  const [openExtras, setOpenExtras] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [addedToast, setAddedToast] = useState<string | null>(null);
   const [pulse, setPulse] = useState(false);
 
   const lines = useCartStore((s) => s.lines);
+  const addLine = useCartStore((s) => s.add);
+  const setLineQuantity = useCartStore((s) => s.setQuantity);
+  const removeLine = useCartStore((s) => s.remove);
   const prevCountRef = useRef(0);
 
   useSharedCart();
 
   const orderIds = useOrderRefsStore((s) => s.ids);
+  const forgetOrderRef = useOrderRefsStore((s) => s.forget);
   type OrderRef = {
     id: string;
     status: OrderStatus;
@@ -73,8 +80,13 @@ export function Menu() {
             paymentStatus: o.paymentStatus,
             totalMillimes: o.totalMillimes,
           });
-        } catch {
-          // skip — order may have been purged or no longer accessible
+        } catch (err) {
+          // An orphaned ref (left over from a previous session) returns 403/404 —
+          // drop it so it stops being refetched on every menu load.
+          if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
+            forgetOrderRef(id);
+          }
+          // otherwise skip — order may be temporarily inaccessible (network, etc.)
         }
       }
       if (!cancelled) setSessionOrders(fetched);
@@ -97,7 +109,7 @@ export function Menu() {
       cancelled = true;
       socket.off('order:status', onStatus);
     };
-  }, [token, orderIds]);
+  }, [token, orderIds, forgetOrderRef]);
 
   // Keep served (but unpaid) rounds in the banner so the customer still has
   // an entry point to the order tracker / bill / call-waiter actions.
@@ -106,22 +118,30 @@ export function Menu() {
     [sessionOrders],
   );
 
-  // redirect if no session
+  // redirect if no session (preview mode has no session but is allowed)
   useEffect(() => {
-    if (!token || !session) {
+    if (!previewSlug && (!token || !session)) {
       navigate('/', { replace: true });
     }
-  }, [token, session, navigate]);
+  }, [token, session, previewSlug, navigate]);
 
-  // load menu (initial + on reloadKey bump)
+  // load menu (initial + on reloadKey bump). Preview mode pulls the public,
+  // table-less menu by slug; the normal flow uses the session token.
   useEffect(() => {
-    if (!token) return;
+    if (!token && !previewSlug) return;
     let cancelled = false;
     void (async () => {
       try {
-        const data = await api.getMenu(token);
-        if (cancelled) return;
-        setTree(data);
+        if (previewSlug) {
+          const { restaurant: info, menu } = await api.getPublicMenu(previewSlug);
+          if (cancelled) return;
+          setRestaurant(info);
+          setTree(menu);
+        } else {
+          const data = await api.getMenu(token!);
+          if (cancelled) return;
+          setTree(data);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(handleApiError(err, t));
@@ -131,7 +151,27 @@ export function Menu() {
     return () => {
       cancelled = true;
     };
-  }, [token, reloadKey, t]);
+  }, [token, previewSlug, reloadKey, t, setRestaurant]);
+
+  // Refresh the restaurant (plan + info) on every menu open. The persisted copy
+  // can be stale — e.g. the owner upgraded the plan after this device's last scan —
+  // and the plan drives ordering capability gating (menuOnly). Refetching here keeps
+  // an already-open session in sync without forcing a rescan.
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const info = await api.getRestaurant(token);
+        if (!cancelled) setRestaurant(info);
+      } catch {
+        // keep the persisted restaurant on failure — never block the menu
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, reloadKey, setRestaurant]);
 
   // socket: bump reloadKey on menu:updated
   useEffect(() => {
@@ -170,6 +210,14 @@ export function Menu() {
 
   const PLAT_DU_JOUR_ID = 'plat-du-jour';
 
+  // A dish opens the detail modal when it has at least one selectable variant;
+  // otherwise it can be added straight from the card with an inline stepper.
+  const dishNeedsModal = (dish: Dish) =>
+    (dish.variantGroups ?? []).some((g) => (g.variants ?? []).some((v) => v.isActive));
+  // Simple dishes have exactly one cart line (no variants, no notes).
+  const simpleLineFor = (dishId: string) =>
+    lines.find((l) => l.dishId === dishId && l.variants.length === 0 && !l.notes);
+
   const visibleCategories = useMemo(() => (tree ?? []).filter((c) => c.dishes.length > 0), [tree]);
   const platDuJourDishes = useMemo(
     () => (tree ?? []).flatMap((c) => c.dishes).filter((d) => d.isPlatDuJour && d.available),
@@ -206,6 +254,10 @@ export function Menu() {
 
   const isLoading = tree === null && error === null;
 
+  // Live service line, derived from the owner's opening hours (admin Settings).
+  // null = today's hours unspecified → the subtitle is hidden entirely.
+  const service = useMemo(() => serviceStatus(restaurant?.openingHours), [restaurant?.openingHours]);
+
   // Restaurant name → split first word + remainder for the display-italic feel
   const headline = (() => {
     const name = restaurant?.name?.trim() ?? 'Orvexa';
@@ -216,7 +268,7 @@ export function Menu() {
 
   return (
     <div className="tf-menu">
-      {!isPlan1 && activeOrders.length > 0 ? (
+      {!menuOnly && activeOrders.length > 0 ? (
         <div className="tf-active-order-stack">
           {activeOrders.length > 1 ? (
             <div className="tf-active-order-stack__head">
@@ -260,7 +312,15 @@ export function Menu() {
             </>
           ) : null}
         </h1>
-        {!isPlan1 && <p className="tf-menu__sub">{t('menu.serviceHours')}</p>}
+        {!menuOnly && service ? (
+          <p className="tf-menu__sub">
+            {service.kind === 'closedToday'
+              ? t('menu.closedToday')
+              : t(service.kind === 'openUntil' ? 'menu.openUntil' : 'menu.opensAt', {
+                  time: service.time,
+                })}
+          </p>
+        ) : null}
         <div className="tf-menu__search">
           <div className="tf-search">
             <IconSearch />
@@ -273,11 +333,6 @@ export function Menu() {
             />
           </div>
         </div>
-        {!isPlan1 && (
-          <button type="button" className="tf-menu__extras" onClick={() => setOpenExtras(true)}>
-            {t('extras.openCta')}
-          </button>
-        )}
       </div>
 
       {/* Category strip */}
@@ -370,47 +425,117 @@ export function Menu() {
               </div>
             </div>
           ) : (
-            <div style={{ paddingTop: 8 }}>
-              {filtered.map((d) => (
-                <DishRow
-                  key={d.id}
-                  dish={d}
-                  lang={lang}
-                  unavailableLabel={t('menu.unavailable')}
-                  categoryInactive={!d._catActive}
-                  onOpen={isPlan1 || !d._catActive ? null : () => d.available && setOpenDish(d)}
-                />
-              ))}
-            </div>
+            <>
+              <div className="tf-menu__section-head">
+                <h2 className="tf-menu__section-title">
+                  {isSearching
+                    ? t('menu.searchResults', { defaultValue: 'Résultats' })
+                    : activeCat === PLAT_DU_JOUR_ID
+                      ? t('menu.platDuJour', { defaultValue: 'Plat du Jour' })
+                      : (() => {
+                          const cat = visibleCategories.find((c) => c.id === activeCat);
+                          return cat ? pickLang(cat.name, lang) : '';
+                        })()}
+                </h2>
+                <span className="tf-menu__section-count">
+                  {t('menu.itemCount', {
+                    count: filtered.length,
+                    defaultValue: '{{count}} plats',
+                  })}
+                </span>
+              </div>
+              {filtered.map((d) => {
+                const needsModal = dishNeedsModal(d);
+                const simpleLine = needsModal ? undefined : simpleLineFor(d.id);
+                const qty = simpleLine?.quantity ?? 0;
+                const canOrder = !menuOnly && d._catActive && d.available;
+                const action = !canOrder ? null : needsModal ? (
+                  <button
+                    type="button"
+                    className="tf-add-btn"
+                    onClick={() => setOpenDish(d)}
+                    aria-label={t('cart.add')}
+                  >
+                    <IconPlus size={18} />
+                  </button>
+                ) : qty === 0 ? (
+                  <button
+                    type="button"
+                    className="tf-add-btn"
+                    onClick={() => addLine(makeLine(d, [], 1))}
+                    aria-label={t('cart.add')}
+                  >
+                    <IconPlus size={18} />
+                  </button>
+                ) : (
+                  <div className="tf-qty-ctrl">
+                    <button
+                      type="button"
+                      className="tf-qty-btn"
+                      onClick={() =>
+                        qty <= 1
+                          ? removeLine(simpleLine!.uid)
+                          : setLineQuantity(simpleLine!.uid, qty - 1)
+                      }
+                      aria-label={t('cart.decrease', { defaultValue: 'Decrease' })}
+                    >
+                      <IconMinus size={16} />
+                    </button>
+                    <span className="tf-qty-num" aria-live="polite">
+                      {qty}
+                    </span>
+                    <button
+                      type="button"
+                      className="tf-qty-btn"
+                      onClick={() => setLineQuantity(simpleLine!.uid, qty + 1)}
+                      aria-label={t('cart.increase', { defaultValue: 'Increase' })}
+                    >
+                      <IconPlus size={16} />
+                    </button>
+                  </div>
+                );
+                return (
+                  <DishRow
+                    key={d.id}
+                    dish={d}
+                    lang={lang}
+                    unavailableLabel={t('menu.unavailable')}
+                    categoryInactive={!d._catActive}
+                    onOpen={menuOnly || !d._catActive ? null : () => d.available && setOpenDish(d)}
+                    action={action}
+                  />
+                );
+              })}
+            </>
           )
         ) : null}
+
       </div>
 
-      {!isPlan1 && openDish ? (
+      {!menuOnly && openDish ? (
         <ItemDetailModal dish={openDish} lang={lang} onClose={() => setOpenDish(null)} />
       ) : null}
-      {!isPlan1 && openCart ? <CartDrawer lang={lang} onClose={() => setOpenCart(false)} /> : null}
-      {!isPlan1 && openExtras ? <ExtrasSheet onClose={() => setOpenExtras(false)} /> : null}
+      {!menuOnly && openCart ? <CartDrawer lang={lang} onClose={() => setOpenCart(false)} /> : null}
 
-      {!isPlan1 && !openCart && !openDish ? (
-        <button
-          type="button"
-          className={`tf-cart-fab${pulse ? ' is-pulsing' : ''}`}
-          onClick={() => setOpenCart(true)}
-          aria-label={t('cart.view')}
-        >
-          <span style={{ display: 'flex', alignItems: 'center' }}>
-            <span className="tf-cart-fab__count">{lineCount}</span>
-            <span className="tf-cart-fab__label">{t('cart.review')}</span>
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center' }}>
-            <span className="tf-cart-fab__total">{formatMillimes(subtotal)}</span>
-            <IconArrowRight size={16} style={{ marginInlineStart: 8, opacity: 0.7 }} />
-          </span>
-        </button>
+      {!menuOnly && !openCart && !openDish && lineCount > 0 ? (
+        <div className="tf-cart-bar">
+          <button
+            type="button"
+            className={`tf-cart-bar__pill${pulse ? ' is-pulsing' : ''}`}
+            onClick={() => setOpenCart(true)}
+            aria-label={t('cart.view')}
+          >
+            <span className="tf-cart-bar__left">
+              <IconBag size={18} />
+              <span className="tf-cart-bar__label">{t('cart.review')}</span>
+              <span className="tf-cart-bar__badge">{lineCount}</span>
+            </span>
+            <span className="tf-cart-bar__total">{formatMillimes(subtotal)}</span>
+          </button>
+        </div>
       ) : null}
 
-      {!isPlan1 && addedToast ? <Toast message={addedToast} onDone={() => setAddedToast(null)} /> : null}
+      {!menuOnly && addedToast ? <Toast message={addedToast} onDone={() => setAddedToast(null)} /> : null}
     </div>
   );
 }
@@ -421,12 +546,14 @@ function DishRow({
   onOpen,
   unavailableLabel,
   categoryInactive = false,
+  action = null,
 }: {
   dish: Dish;
   lang: LanguageCode;
   onOpen: (() => void) | null;
   unavailableLabel: string;
   categoryInactive?: boolean;
+  action?: ReactNode;
 }) {
   const inner = (
     <>
@@ -471,18 +598,21 @@ function DishRow({
 
   const rowClass = `tf-row${dish.available ? '' : ' is-unavailable'}${categoryInactive ? ' is-cat-inactive' : ''}`;
 
-  if (!onOpen) {
-    return <div className={rowClass}>{inner}</div>;
-  }
-
   return (
-    <button
-      type="button"
-      className={rowClass}
-      onClick={onOpen}
-      aria-label={pickLang(dish.name, lang)}
-    >
-      {inner}
-    </button>
+    <div className={rowClass}>
+      {onOpen ? (
+        <button
+          type="button"
+          className="tf-row__open"
+          onClick={onOpen}
+          aria-label={pickLang(dish.name, lang)}
+        >
+          {inner}
+        </button>
+      ) : (
+        <div className="tf-row__open">{inner}</div>
+      )}
+      {action}
+    </div>
   );
 }

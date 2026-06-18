@@ -1,0 +1,244 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   Orvexa Design System — colors & type
+   "Saffron-Hospitality" direction. Warm-paper neutrals, single saffron accent,
+   editorial italic serif + neutral sans + tabular mono.
+   Use these tokens in any new Orvexa work. Ported verbatim from the
+   production app (apps/customer/src/index.css) + handoff tokens.jsx.
+   ─────────────────────────────────────────────────────────────────────────────
+*/
+
+/* ── Web fonts ─────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,ital,wght@6..72,1,400;6..72,1,500;6..72,1,600&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap');
+
+:root {
+  /* ── COLOR · Surfaces (light) ────────────────────────────────────────────
+     Light is warm paper, not pure white. The faintest cream undertone.       */
+  --paper:        #FAF8F4;        /* app bg — warm paper */
+  --paper-warm:   #F5EFE6;        /* warm off-white — text on ink surfaces */
+  --surface:      #FFFFFF;        /* cards, sheets, raised */
+  --sunken:       #F2EFE8;        /* sections, chips, inputs at rest */
+  --line:         rgba(25, 20, 14, 0.08);
+  --line-soft:    rgba(25, 20, 14, 0.05);
+
+  /* ── COLOR · Text (light) ──────────────────────────────────────────────── */
+  --ink:          #19140E;        /* primary text — near-black warm */
+  --ink-muted:    rgba(25, 20, 14, 0.62);
+  --ink-faint:    rgba(25, 20, 14, 0.42);
+
+  /* ── COLOR · Saffron accent ────────────────────────────────────────────── */
+  --accent:       #D97A2C;        /* THE saffron — one accent, used confidently */
+  --accent-ink:   #7C3F12;        /* deep saffron — for ink on tinted bg */
+  --accent-bg:    #FBEED9;        /* faint saffron tint — bg for accent text */
+  --accent-glow:  rgba(217, 122, 44, 0.32);
+  /* Optional ramp for richer treatments */
+  --accent-50:    #FBEED9;
+  --accent-200:   #F2C994;
+  --accent-500:   #D97A2C;
+  --accent-700:   #A8561A;
+  --accent-900:   #3D1E08;
+
+  /* ── COLOR · Status ────────────────────────────────────────────────────── */
+  --success:      #2E8B57;
+  --success-bg:   #E6F4EC;
+  --success-ink:  #1F6B43;
+  --warn:         #C97A2C;        /* shares hue with accent intentionally */
+  --warn-bg:      #FBEED9;
+  --warn-ink:     #7C3F12;
+  --danger:       #C8392E;
+  --danger-bg:    #FBE6E3;
+  --danger-ink:   #8E2218;
+  --info:         #3D6E8C;
+
+  /* ── COLOR · Dark mode (used by kitchen wall display, admin dark, etc) ── */
+  --dark-bg:        #15110D;
+  --dark-surface:   #1D1814;
+  --dark-sunken:    #221C17;
+  --dark-ink:       #F5EFE6;
+  --dark-ink-muted: rgba(245, 239, 230, 0.62);
+  --dark-ink-faint: rgba(245, 239, 230, 0.38);
+  --dark-line:      rgba(255, 240, 220, 0.08);
+  --dark-accent:    #F59A4D;       /* warmed-up saffron for dark surfaces */
+
+  /* ── TYPE · Stacks ───────────────────────────────────────────────────────
+     Display = editorial italic serif (use for moments, not utility).
+     Sans = neutral, software-precise.
+     Mono = numerics, timestamps, tags.
+     Arabic gets IBM Plex Sans Arabic in the sans slot.                        */
+  --font-display: 'Newsreader', 'GT Sera', 'Times New Roman', serif;
+  --font-sans:    'Geist', 'Inter Tight', -apple-system, system-ui, sans-serif;
+  --font-mono:    'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --font-arabic:  'IBM Plex Sans Arabic', 'Noto Sans Arabic', var(--font-sans);
+
+  /* ── TYPE · Scale (px @ 1rem = 16px base) ─────────────────────────────── */
+  --fs-display: 56px;  --lh-display: 1.04; /* @kind font */  --ls-display: -1.6px;
+  --fs-h1:      40px;  --lh-h1:      1.08; /* @kind font */  --ls-h1:      -1.0px;
+  --fs-h2:      28px;  --lh-h2:      1.18; /* @kind font */  --ls-h2:      -0.4px;
+  --fs-h3:      20px;  --lh-h3:      1.30; /* @kind font */  --ls-h3:      -0.2px;
+  --fs-h4:      16px;  --lh-h4:      1.40; /* @kind font */  --ls-h4:      -0.1px;
+  --fs-bodyL:   17px;  --lh-bodyL:   1.55; /* @kind font */  --ls-bodyL:   -0.1px;
+  --fs-body:    15px;  --lh-body:    1.55; /* @kind font */  --ls-body:     0px;
+  --fs-caption: 12px;  --lh-caption: 1.40; /* @kind font */  --ls-caption:  0.2px;
+  --fs-mono:    12px;  --lh-mono:    1.40; /* @kind font */  --ls-mono:     0px;
+  /* eyebrow = mono, uppercase, 11px, tracked +1.4 */
+  --fs-eyebrow: 11px;
+  --ls-eyebrow: 1.4px;
+
+  /* ── SPACING · 4-base modular ────────────────────────────────────────── */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+  --space-10: 72px;
+
+  /* ── RADIUS ──────────────────────────────────────────────────────────── */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   24px;
+  --radius-pill: 999px;
+
+  /* ── SHADOW · soft layered, never harsh ──────────────────────────────── */
+  --shadow-xs:      0 1px 2px rgba(36,28,20,0.04);
+  --shadow-sm:      0 1px 3px rgba(36,28,20,0.06), 0 1px 2px rgba(36,28,20,0.04);
+  --shadow-md:      0 2px 4px rgba(36,28,20,0.04), 0 8px 24px rgba(36,28,20,0.08);
+  --shadow-lg:      0 4px 8px rgba(36,28,20,0.05), 0 16px 48px rgba(36,28,20,0.12);
+  --shadow-xl:      0 8px 16px rgba(36,28,20,0.06), 0 32px 80px rgba(36,28,20,0.16);
+  --shadow-inset:   inset 0 0 0 1px rgba(36,28,20,0.06);
+  /* Saffron CTA / ink-button shadows have a tinted depth */
+  --shadow-saffron: 0 1px 2px rgba(217,122,44,0.32), 0 8px 24px rgba(217,122,44,0.24);
+  --shadow-ink:     0 1px 2px rgba(25,20,14,0.20), 0 8px 24px rgba(25,20,14,0.16);
+  --shadow-fab:     0 4px 12px rgba(25,20,14,0.20), 0 16px 40px rgba(25,20,14,0.18);
+
+  /* ── MOTION ──────────────────────────────────────────────────────────── */
+  --ease-out:    cubic-bezier(0.2, 0.7, 0.3, 1); /* @kind other */
+  --ease-inout:  cubic-bezier(0.5, 0, 0.2, 1); /* @kind other */
+  /* --ease-spring: overshoot for cart slide */
+  --ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1); /* @kind other */
+  --motion-instant: 80ms  var(--ease-out); /* @kind other */
+  --motion-fast:    180ms var(--ease-out); /* @kind other */
+  --motion-base:    240ms var(--ease-out); /* @kind other */
+  --motion-slow:    420ms var(--ease-out); /* @kind other */
+  --motion-spring:  520ms var(--ease-spring); /* @kind other */
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Semantic style classes — assign roles to the type scale.
+   Use these on real markup; avoid hardcoding sizes/colors.
+   ─────────────────────────────────────────────────────────────────────────── */
+html, body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: 'ss01', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* DISPLAY · use for editorial moments — hero headlines, quotes, the one
+   italic-saffron flourish in the brand wordmark "quick." */
+.display, h1.display {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  color: var(--ink);
+}
+
+h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: var(--ls-h1);
+  font-weight: 500;
+  margin: 0;
+}
+h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: var(--ls-h2);
+  font-weight: 500;
+  margin: 0;
+}
+h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: var(--ls-h3);
+  font-weight: 500;
+  margin: 0;
+}
+h4 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  letter-spacing: var(--ls-h4);
+  font-weight: 600;
+  margin: 0;
+}
+
+p, .body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  letter-spacing: var(--ls-body);
+  color: var(--ink);
+  margin: 0;
+}
+.body-large {
+  font-size: var(--fs-bodyL);
+  line-height: var(--lh-bodyL);
+  letter-spacing: var(--ls-bodyL);
+}
+.muted    { color: var(--ink-muted); }
+.faint    { color: var(--ink-faint); }
+
+.caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  font-weight: 500;
+}
+
+/* MONO · numbers, timestamps, codes, tabular. Always tnum. */
+.mono, code, kbd, samp {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* EYEBROW · mono, uppercase, tracked — used at the top of section blocks
+   and as the "DIRECTION A · editorial · warm-minimal" labels in mood docs. */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 500;
+}
+
+/* RTL · the customer app supports Arabic. Logical properties are required
+   in product code; this just swaps the font stack. */
+[dir='rtl'] {
+  font-family: var(--font-arabic);
+}
+
+/* Reduced motion · honour the OS toggle everywhere */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

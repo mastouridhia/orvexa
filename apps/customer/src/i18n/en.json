@@ -45,10 +45,36 @@
     "loading": "Loading menu…",
     "empty": "No dishes available right now.",
     "unavailable": "Unavailable",
-    "serviceHours": "Lunch service · until 16:00",
+    "openUntil": "Open · until {{time}}",
+    "opensAt": "Opens at {{time}}",
+    "closedToday": "Closed today",
     "served": "Served",
     "activeOrderTitle": "Order #{{id}} · {{status}}",
-    "activeOrderCta": "Track order"
+    "activeOrderCta": "Track order",
+    "platDuJour": "Dish of the Day",
+    "searchResults": "Results",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items"
+  },
+  "info": {
+    "title": "Practical info",
+    "hours": "Opening hours",
+    "directions": "Directions",
+    "call": "Call",
+    "follow": "Follow us",
+    "wifi": "WiFi",
+    "wifiNetwork": "Network",
+    "wifiPassword": "Password",
+    "closed": "Closed",
+    "days": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    }
   },
   "dish": {
     "addToCart": "Add to cart",
@@ -62,6 +88,9 @@
   },
   "cart": {
     "title": "Your cart",
+    "add": "Add",
+    "increase": "Increase",
+    "decrease": "Decrease",
     "titleLead": "Your",
     "titleEm": "order",
     "empty": "Your cart is empty.",
@@ -129,7 +158,7 @@
     "readyTitle": "Enjoy.",
     "cookingSub": "Estimated 22–28 min",
     "readySub": "Your dishes are at the pass.",
-    "received": { "name": "Sent to kitchen", "sub": "The team has it" },
+    "received": { "name": "Order received", "sub": "Being prepared" },
     "preparing": { "name": "In preparation", "sub": "Plating soon" },
     "ready": { "name": "Ready & served", "sub": "Bon appétit" },
     "live": "live",

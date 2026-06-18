@@ -13,6 +13,20 @@
     "logout": "Déconnexion",
     "toggle": "Menu"
   },
+  "upsell": {
+    "title": "Débloquez {{feature}}",
+    "body": "Cette fonctionnalité fait partie de {{plan}} — {{price}} TND/mois. Passez à l'offre supérieure pour l'activer.",
+    "cta": "Voir les offres",
+    "navHint": "Mettre à niveau",
+    "features": {
+      "orders": "la réception des commandes",
+      "openBills": "les notes ouvertes & le partage de l'addition",
+      "staff": "les comptes du personnel",
+      "reports": "les rapports de ventes",
+      "feedback": "les avis clients",
+      "reportsAdvanced": "le chiffre d'affaires par catégorie"
+    }
+  },
   "login": {
     "title": "Connexion admin",
     "email": "Email",
@@ -25,6 +39,11 @@
     "title": "Aujourd'hui",
     "defaultUser": "patron",
     "allGreen": "Tous systèmes verts",
+    "views": {
+      "scansToday": "Scans aujourd'hui",
+      "scans7d": "Scans (7 jours)",
+      "activity": "Activité des visiteurs (7 derniers jours)"
+    },
     "greet": {
       "morning": "Bonjour",
       "afternoon": "Bon après-midi",
@@ -94,6 +113,10 @@
   "shell": {
     "brandSub": "Admin · propriétaire",
     "defaultUser": "patron"
+  },
+  "platform": {
+    "viewingAs": "Vue en tant que {{name}}",
+    "returnToPlatform": "Retour à la plateforme"
   },
   "pulse": {
     "caption": "Pouls du service · aujourd'hui",
@@ -188,6 +211,7 @@
     "derivedStatus": "Statut",
     "new": "Nouvelle table",
     "save": "Enregistrer",
+    "edit": "Modifier",
     "cancel": "Annuler",
     "delete": "Supprimer",
     "deleteConfirm": "Supprimer cette table ?",
@@ -213,6 +237,10 @@
     "printWifiPassShort": "Mot de passe",
     "printOrAskWaiter": "ou demandez le code d'accès au serveur",
     "printWifiRequired": "Les identifiants Wi-Fi sont requis avant d'imprimer — les clients en ont besoin pour accéder au menu.",
+    "quotaLabel": "{{count}} / {{limit}} tables",
+    "quotaUnlimited": "{{count}} tables",
+    "quotaReached": "Vous avez atteint la limite de tables de votre forfait ({{limit}}). Passez à un forfait supérieur ou ajoutez des tables à votre abonnement.",
+    "quotaAddSome": "+ {{count}} tables",
     "merged": "Fusion",
     "merge": "Fusionner avec",
     "unmerge": "Dissocier",
@@ -292,6 +320,53 @@
     "created": "Créée",
     "export": "Exporter CSV",
     "viewReceipt": "Reçu",
+    "freeTable": "Libérer la table",
+    "tablesInUse": "Tables occupées",
+    "freeTableHint": "Libérer cette table pour le prochain client — annule toute commande en cours et termine la session du client",
+    "freeTableConfirm": "Libérer cette table ? Cela annule toute commande encore ouverte et efface le téléphone du client, pour le prochain groupe.",
+    "actions": "Actions",
+    "advance": {
+      "preparing": "Accepter",
+      "ready": "Prête",
+      "served": "Servie",
+      "cancelled": "Annuler"
+    },
+    "board": {
+      "live": "{{count}} en cours",
+      "empty": "Aucune commande active pour le moment.",
+      "emptyHint": "Les nouvelles commandes des clients apparaissent ici instantanément.",
+      "new": "Nouvelles",
+      "preparing": "En préparation",
+      "ready": "Prêtes à servir",
+      "history": "Historique",
+      "justNow": "à l'instant",
+      "minAgo": "il y a {{m}} min",
+      "hrAgo": "il y a {{h}} h",
+      "round": "Tour {{n}}",
+      "table": "Table",
+      "soundOn": "Son activé",
+      "soundOff": "Son coupé"
+    },
+    "notify": {
+      "title": "Orvexa — Commandes",
+      "newOrder": "Nouvelle commande reçue",
+      "newOrderAt": "Nouvelle commande — Table {{table}}",
+      "newOrders": "{{count}} nouvelles commandes reçues",
+      "call": "Une table demande le service",
+      "callAt": "La table {{table}} demande le service",
+      "bill": "Une table demande l'addition",
+      "billAt": "La table {{table}} demande l'addition"
+    },
+    "calls": {
+      "heading": "Appels service",
+      "done": "Traité",
+      "kind": {
+        "call_waiter": "Appelle un serveur",
+        "request_bill": "Demande l'addition",
+        "request_extras": "Demande un extra",
+        "code_request": "Besoin du code de commande"
+      }
+    },
     "receipt": {
       "title": "Reçu de commande",
       "order": "Commande",
@@ -333,6 +408,35 @@
   },
   "settings": {
     "title": "Paramètres",
+    "groups": {
+      "subscription": "Abonnement",
+      "establishment": "Établissement",
+      "operations": "Exploitation",
+      "interface": "Interface",
+      "account": "Compte",
+      "danger": "Zone sensible"
+    },
+    "account": {
+      "title": "Mon compte",
+      "sub": "Votre nom et adresse e-mail de connexion.",
+      "name": "Nom",
+      "email": "E-mail",
+      "save": "Enregistrer",
+      "saving": "Mise à jour…",
+      "saved": "Profil mis à jour"
+    },
+    "security": {
+      "title": "Sécurité",
+      "sub": "Modifier votre mot de passe de connexion.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "newHint": "(8 min.)",
+      "confirm": "Confirmer",
+      "mismatch": "Les mots de passe ne correspondent pas.",
+      "save": "Changer le mot de passe",
+      "saving": "Mise à jour…",
+      "saved": "Mot de passe mis à jour"
+    },
     "name": "Nom du restaurant",
     "defaultLanguage": "Langue par défaut",
     "supportedLanguages": "Langues supportées",
@@ -347,9 +451,52 @@
     "sectionRestaurantSub": "Le nom public de votre restaurant.",
     "sectionLocalization": "Localisation",
     "sectionLocalizationSub": "Fuseau horaire, langue par défaut du menu et langues disponibles pour les clients.",
+    "sectionQr": "Codes QR",
+    "sectionQrSub": "Comment vos clients accèdent au menu : un QR par table, ou un seul QR menu pour tout l'établissement.",
+    "shareMenuTitle": "Menu à partager",
+    "shareMenuSub": "Un QR et un lien en lecture seule à partager sur Instagram ou ailleurs. Il affiche le menu mais ne permet pas de commander.",
+    "shareMenuCopy": "Copier le lien",
+    "shareMenuCopied": "Copié",
+    "shareMenuDownload": "Télécharger le QR",
+    "shareMenuError": "Impossible de charger le QR du menu.",
+    "qrMode": "Mode QR",
+    "qrModePerTable": "Un QR par table",
+    "qrModeSingle": "QR menu unique",
+    "sectionInfo": "Infos de l'établissement",
+    "sectionInfoSub": "Horaires, adresse, contact et WiFi affichés aux clients sur votre menu. Tout est optionnel.",
+    "info": {
+      "contactHead": "Contact et adresse",
+      "address": "Adresse",
+      "mapUrl": "Lien carte",
+      "phone": "Téléphone",
+      "socialsHead": "Réseaux sociaux",
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "tiktok": "TikTok",
+      "wifiHead": "WiFi",
+      "wifiSsid": "Nom du réseau",
+      "wifiPassword": "Mot de passe",
+      "hoursHead": "Horaires d'ouverture",
+      "open": "Ouvert",
+      "closed": "Fermé",
+      "days": {
+        "mon": "Lundi",
+        "tue": "Mardi",
+        "wed": "Mercredi",
+        "thu": "Jeudi",
+        "fri": "Vendredi",
+        "sat": "Samedi",
+        "sun": "Dimanche"
+      }
+    },
     "sectionPricing": "Tarification",
     "sectionPricingSub": "TVA et frais de service appliqués à chaque commande.",
     "pricingNote": "Les montants sont en Dinar Tunisien (TND). La TVA et le service sont calculés sur le sous-total de la commande.",
+    "sectionKitchen": "Cuisine",
+    "sectionKitchenSub": "Valeurs par défaut utilisées pour estimer les délais en cuisine et côté client.",
+    "defaultPrepMinutes": "Temps de préparation par défaut",
+    "defaultPrepMinutesUnit": "min",
+    "defaultPrepMinutesHint": "Sert à estimer quand une commande sera prête. Les plats ayant leur propre temps de préparation priment.",
     "orderingAccess": {
       "section": "Accès aux commandes",
       "sectionSub": "Contrôle qui peut passer une commande — protège votre QR contre les abus hors-site.",

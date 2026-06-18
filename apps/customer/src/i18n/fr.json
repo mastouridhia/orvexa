@@ -45,10 +45,36 @@
     "loading": "Chargement du menu…",
     "empty": "Aucun plat disponible pour le moment.",
     "unavailable": "Indisponible",
-    "serviceHours": "Service du midi · jusqu'à 16:00",
+    "openUntil": "Ouvert · jusqu'à {{time}}",
+    "opensAt": "Ouvre à {{time}}",
+    "closedToday": "Fermé aujourd'hui",
     "served": "Service",
     "activeOrderTitle": "Commande #{{id}} · {{status}}",
-    "activeOrderCta": "Suivre la commande"
+    "activeOrderCta": "Suivre la commande",
+    "platDuJour": "Plat du Jour",
+    "searchResults": "Résultats",
+    "itemCount_one": "{{count}} plat",
+    "itemCount_other": "{{count}} plats"
+  },
+  "info": {
+    "title": "Infos pratiques",
+    "hours": "Horaires d'ouverture",
+    "directions": "Itinéraire",
+    "call": "Appeler",
+    "follow": "Suivez-nous",
+    "wifi": "WiFi",
+    "wifiNetwork": "Réseau",
+    "wifiPassword": "Mot de passe",
+    "closed": "Fermé",
+    "days": {
+      "mon": "Lundi",
+      "tue": "Mardi",
+      "wed": "Mercredi",
+      "thu": "Jeudi",
+      "fri": "Vendredi",
+      "sat": "Samedi",
+      "sun": "Dimanche"
+    }
   },
   "dish": {
     "addToCart": "Ajouter au panier",
@@ -62,6 +88,9 @@
   },
   "cart": {
     "title": "Votre panier",
+    "add": "Ajouter",
+    "increase": "Augmenter",
+    "decrease": "Diminuer",
     "titleLead": "Votre",
     "titleEm": "commande",
     "empty": "Votre panier est vide.",
@@ -129,7 +158,7 @@
     "readyTitle": "Bon appétit.",
     "cookingSub": "Estimation 22–28 min",
     "readySub": "Vos plats arrivent.",
-    "received": { "name": "Envoyée à la cuisine", "sub": "L'équipe l'a reçue" },
+    "received": { "name": "Commande reçue", "sub": "En préparation" },
     "preparing": { "name": "En préparation", "sub": "Dressage bientôt" },
     "ready": { "name": "Prête et servie", "sub": "Bon appétit" },
     "live": "en direct",

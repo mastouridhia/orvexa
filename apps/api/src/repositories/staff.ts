@@ -23,12 +23,42 @@ export class StaffRepository extends BaseRepository {
     return row ?? null;
   }
 
+  async findAdminByRestaurant(restaurantId: string): Promise<StaffRow | null> {
+    const [row] = await this.db
+      .select()
+      .from(users)
+      .where(
+        and(eq(users.restaurantId, restaurantId), eq(users.role, 'admin'), isNull(users.disabledAt)),
+      )
+      .limit(1);
+    return row ?? null;
+  }
+
   async findActiveByEmail(email: string, restaurantId?: string): Promise<StaffRow | null> {
     const condition = restaurantId
       ? and(eq(users.email, email), eq(users.restaurantId, restaurantId), isNull(users.disabledAt))
       : and(eq(users.email, email), isNull(users.disabledAt));
     const [row] = await this.db.select().from(users).where(condition).limit(1);
     return row ?? null;
+  }
+
+  async recordFailedLogin(id: string): Promise<void> {
+    const LOCK_THRESHOLD = 5;
+    await this.db
+      .update(users)
+      .set({
+        failedLoginAttempts: sql`${users.failedLoginAttempts} + 1`,
+        lockedUntil: sql`CASE WHEN ${users.failedLoginAttempts} + 1 >= ${LOCK_THRESHOLD} THEN NOW() + INTERVAL '15 minutes' ELSE ${users.lockedUntil} END`,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id));
+  }
+
+  async clearLoginAttempts(id: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ failedLoginAttempts: 0, lockedUntil: null, updatedAt: new Date() })
+      .where(eq(users.id, id));
   }
 
   async findByEmail(email: string, restaurantId: string): Promise<StaffRow | null> {

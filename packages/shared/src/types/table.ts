@@ -74,6 +74,14 @@ export const TableWithDerivedSchema = TableSchema.extend({
   derivedStatus: TableStatusSchema,
   /** Tables merged INTO this one (only populated for the leader) */
   mergedTableIds: z.array(UuidSchema).default([]),
+  /**
+   * True while a guest holds an active (non-expired) customer session on this
+   * table — i.e. it's been scanned/used and not yet freed. Stays true across
+   * the whole order lifecycle (incl. `served`) until staff free the table.
+   */
+  inUse: z.boolean().default(false),
+  /** When the current occupancy began (earliest active session), if in use. */
+  seatedAt: IsoDateTimeSchema.nullable().default(null),
 });
 export type TableWithDerived = z.infer<typeof TableWithDerivedSchema>;
 

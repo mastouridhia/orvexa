@@ -5,7 +5,7 @@ import {
   TopItemsReportQuerySchema,
 } from '@orvexa/shared';
 import { ReportsService } from '../services/reports.js';
-import { requireAuth, requireRole } from '../middleware/auth.js';
+import { requireAuth, requireCapability, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { sendSuccess } from '../utils/envelope.js';
@@ -27,6 +27,7 @@ reportsRouter.get(
   '/dashboard/summary',
   requireAuth,
   requireRole('admin', 'manager'),
+  requireCapability('analytics.sales_basic'),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
     const summary = await service.dashboardSummary(req.user.restaurantId);
@@ -35,9 +36,22 @@ reportsRouter.get(
 );
 
 reportsRouter.get(
+  '/analytics/menu',
+  requireAuth,
+  requireRole('admin', 'manager'),
+  requireCapability('analytics.views'),
+  asyncHandler(async (req, res) => {
+    if (!req.user) throw new UnauthorizedError('Authentication required');
+    const summary = await service.menuAnalytics(req.user.restaurantId);
+    sendSuccess(res, summary);
+  }),
+);
+
+reportsRouter.get(
   '/reports/sales',
   requireAuth,
   requireRole('admin', 'manager'),
+  requireCapability('analytics.sales_basic'),
   validate({ query: SalesReportQuerySchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -52,6 +66,7 @@ reportsRouter.get(
   '/reports/top-items',
   requireAuth,
   requireRole('admin', 'manager'),
+  requireCapability('analytics.sales_basic'),
   validate({ query: TopItemsReportQuerySchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -66,6 +81,7 @@ reportsRouter.get(
   '/reports/revenue-by-category',
   requireAuth,
   requireRole('admin', 'manager'),
+  requireCapability('analytics.advanced'),
   validate({ query: ReportRangeQuerySchema }),
   asyncHandler(async (req, res) => {
     if (!req.user) throw new UnauthorizedError('Authentication required');
@@ -81,6 +97,11 @@ registerTag('reports', 'Aggregated sales/items/revenue reporting (admin/manager)
 const okResponses = { '200': { description: 'OK' } };
 registerPath('get', '/dashboard/summary', {
   summary: 'Today snapshot: sales, orders, active tables, top items',
+  tags: ['reports'],
+  responses: okResponses,
+});
+registerPath('get', '/analytics/menu', {
+  summary: 'Essentiel basic analytics: QR scan counts + 7-day activity',
   tags: ['reports'],
   responses: okResponses,
 });

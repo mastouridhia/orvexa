@@ -4,6 +4,20 @@ import { LocalizedStringSchema, UuidSchema } from './common.js';
 export const ReportGranularitySchema = z.enum(['15min', 'hour', 'day', 'week', 'month']);
 export type ReportGranularity = z.infer<typeof ReportGranularitySchema>;
 
+// Essentiel-tier "basic analytics" derived from customer sessions (QR scans).
+export const MenuActivityPointSchema = z.object({
+  date: z.string(), // ISO date (start of day)
+  count: z.number().int(),
+});
+export type MenuActivityPoint = z.infer<typeof MenuActivityPointSchema>;
+
+export const MenuAnalyticsSummarySchema = z.object({
+  scansToday: z.number().int(),
+  scans7d: z.number().int(),
+  activity: z.array(MenuActivityPointSchema), // last 7 days, one point per day
+});
+export type MenuAnalyticsSummary = z.infer<typeof MenuAnalyticsSummarySchema>;
+
 export const ReportRangeQuerySchema = z.object({
   from: z.iso.datetime().optional(),
   to: z.iso.datetime().optional(),

@@ -41,6 +41,9 @@ export const config = {
     'http://localhost:5174',
     'http://localhost:5175',
     'http://localhost:5176',
+    // static landing served locally (e.g. `python -m http.server 8000`)
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
   ]),
 
   logLevel: process.env.LOG_LEVEL ?? 'info',
@@ -57,7 +60,8 @@ export const config = {
 
   auth: {
     jwtSecret: requiredSecret('JWT_SECRET', 'change-me-dev-only'),
-    accessTokenTtl: process.env.JWT_ACCESS_EXPIRES_IN ?? '1h',
+    jwtRefreshSecret: requiredSecret('JWT_REFRESH_SECRET', 'change-me-refresh-dev-only'),
+    accessTokenTtl: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
     refreshTokenTtl: process.env.JWT_REFRESH_EXPIRES_IN ?? process.env.JWT_EXPIRES_IN ?? '7d',
     sessionSecret: requiredSecret('SESSION_JWT_SECRET', 'change-me-dev-only'),
     sessionTtl: process.env.SESSION_JWT_EXPIRES_IN ?? '12h',

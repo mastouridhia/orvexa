@@ -1,0 +1,1143 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tarifs — Orvexa</title>
+  <meta name="description" content="Plans et tarifs Orvexa. Menu QR, commandes à table, écran cuisine, dashboard admin — choisissez le plan adapté à votre établissement.">
+  <link rel="icon" href="assets/orvexa-mark.svg">
+  <link rel="stylesheet" href="colors_and_type.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; overflow-x: hidden; background: var(--paper); }
+    a { text-decoration: none; color: inherit; }
+    ul { list-style: none; padding: 0; margin: 0; }
+
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      font-family: var(--font-sans); font-weight: 600; font-size: 14px; letter-spacing: -0.1px;
+      padding: 10px 22px; border-radius: var(--radius-pill); border: none; cursor: pointer;
+      box-shadow: var(--shadow-saffron); transition: filter var(--motion-fast), transform var(--motion-fast);
+      white-space: nowrap;
+    }
+    .btn-primary:hover { filter: brightness(1.07); transform: translateY(-1px); }
+    .btn-primary.lg { font-size: 15px; padding: 13px 28px; }
+    .btn-outline {
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px 22px; border-radius: var(--radius-pill);
+      border: 1.5px solid var(--line); color: var(--ink-muted);
+      font-family: var(--font-sans); font-weight: 600; font-size: 14px;
+      transition: border-color var(--motion-fast), color var(--motion-fast), background var(--motion-fast);
+    }
+    .btn-outline:hover { border-color: rgba(25,20,14,0.22); color: var(--ink); background: var(--sunken); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 7px;
+      color: rgba(245,239,230,0.72); font-weight: 500; font-size: 15px;
+      padding: 12px 20px; border-radius: var(--radius-pill);
+      border: 1px solid rgba(245,239,230,0.18); background: transparent;
+      transition: color var(--motion-fast), border-color var(--motion-fast);
+    }
+    .btn-ghost:hover { color: var(--paper-warm); border-color: rgba(245,239,230,0.38); }
+
+    /* ── NAV ── */
+    .nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,248,244,0.94); backdrop-filter: blur(18px) saturate(1.4);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { display: flex; align-items: center; gap: 6px; height: 64px; }
+    .nav-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 17px; letter-spacing: -0.4px; color: var(--ink); flex-shrink: 0; }
+    .nav-brand svg { width: 26px; height: 26px; }
+    .nav-brand em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 2px; margin-left: 16px; }
+    .nav-links a { padding: 6px 13px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 500; color: var(--ink-muted); transition: color var(--motion-fast), background var(--motion-fast); }
+    .nav-links a:hover { color: var(--ink); background: var(--sunken); }
+    .nav-links a.active { color: var(--ink); background: var(--sunken); }
+    .nav-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .nav-login { font-size: 14px; font-weight: 500; color: var(--ink-muted); padding: 6px 13px; border-radius: var(--radius-pill); transition: color var(--motion-fast); }
+    .nav-login:hover { color: var(--ink); }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--ink); position: relative; overflow: hidden;
+      padding: 80px 0 72px;
+    }
+    .hero::before {
+      content: ''; position: absolute; top: -120px; right: -120px;
+      width: 680px; height: 680px;
+      background: radial-gradient(circle, rgba(217,122,44,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: ''; position: absolute; bottom: -100px; left: 60px;
+      width: 440px; height: 440px;
+      background: radial-gradient(circle, rgba(217,122,44,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; text-align: center; max-width: 720px; margin: 0 auto; }
+    .eyebrow-light {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.8px;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 24px;
+    }
+    .eyebrow-light::before { content: ''; width: 18px; height: 1px; background: var(--accent); flex-shrink: 0; }
+    .eyebrow-light::after  { content: ''; width: 18px; height: 1px; background: var(--accent); flex-shrink: 0; }
+    .hero h1 {
+      font-size: clamp(40px, 5vw, 62px); font-weight: 500;
+      letter-spacing: -2.4px; line-height: 1.03;
+      color: var(--paper-warm); margin-bottom: 20px;
+    }
+    .hero h1 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .hero-lede {
+      font-size: 17px; line-height: 1.65; color: rgba(245,239,230,0.62);
+      max-width: 46ch; margin: 0 auto 36px;
+    }
+    .hero-lede b { color: var(--paper-warm); font-weight: 500; }
+    .hero-pills {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap;
+    }
+    .hero-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(245,239,230,0.07); border: 1px solid rgba(245,239,230,0.13);
+      color: rgba(245,239,230,0.62); padding: 7px 14px;
+      border-radius: 999px; font-size: 13px; font-family: var(--font-mono);
+      letter-spacing: 0.2px;
+    }
+    .hero-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    /* ── PRICING SECTION ── */
+    .pricing-wrap { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+    .pricing-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px; margin-bottom: 36px; padding-top: 72px;
+    }
+    .eyebrow-ink {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.8px;
+      text-transform: uppercase; color: var(--accent-ink);
+      margin-bottom: 14px;
+    }
+    .eyebrow-ink::before { content: ''; width: 18px; height: 1px; background: var(--accent); flex-shrink: 0; }
+    .pricing-header-left h2 {
+      font-size: clamp(28px, 3.5vw, 40px); font-weight: 500;
+      letter-spacing: -1.4px; line-height: 1.08; color: var(--ink); margin-bottom: 10px;
+    }
+    .pricing-header-left h2 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .pricing-header-left p { font-size: 15px; color: var(--ink-muted); line-height: 1.55; }
+    .toggle-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+    .toggle {
+      display: inline-flex; background: var(--sunken);
+      border-radius: 999px; padding: 4px;
+    }
+    .toggle button {
+      padding: 7px 20px; border-radius: 999px; border: none; cursor: pointer;
+      font-family: var(--font-sans); font-size: 13px; font-weight: 500;
+      background: transparent; color: var(--ink-muted);
+      transition: all var(--motion-fast);
+    }
+    .toggle button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
+    .toggle .save { color: var(--accent); font-size: 10.5px; font-family: var(--font-mono); margin-left: 3px; }
+    .toggle-note { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); letter-spacing: 0.3px; }
+
+    /* ── PLAN CARDS ── */
+    .plans {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+      margin-bottom: 20px;
+    }
+    .plan {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius-xl); padding: 26px 22px;
+      display: flex; flex-direction: column; gap: 18px;
+      position: relative;
+      transition: box-shadow var(--motion-base), transform var(--motion-base);
+    }
+    .plan:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .plan--featured {
+      background: var(--ink); border-color: var(--ink);
+      box-shadow: var(--shadow-xl); transform: translateY(-4px);
+    }
+    .plan--featured:hover { transform: translateY(-6px); }
+    .plan--premium { border: 1.5px solid rgba(217,122,44,0.28); }
+    .plan-badge {
+      position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff;
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.2px;
+      text-transform: uppercase; padding: 4px 14px; border-radius: 999px;
+      font-weight: 500; white-space: nowrap;
+    }
+    .plan-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); }
+    .plan-chip-d { color: rgba(245,239,230,0.35); }
+    .plan-name {
+      font-family: var(--font-display); font-style: italic; font-weight: 400;
+      font-size: 30px; letter-spacing: -0.4px; color: var(--accent); line-height: 1;
+      margin-top: 4px;
+    }
+    .plan-name-d { color: var(--dark-accent); }
+    .plan-price {
+      font-size: 38px; font-weight: 500; letter-spacing: -1.6px;
+      line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums;
+    }
+    .plan-price-d { color: var(--paper-warm); }
+    .plan-price .u {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+      opacity: 0.48; margin-left: 3px; letter-spacing: 0;
+    }
+    .plan-sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.4px; color: var(--ink-faint); margin-top: 5px; }
+    .plan-sub-d { color: rgba(245,239,230,0.38); }
+    .plan-who { font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
+    .plan-who-d { color: rgba(245,239,230,0.55); }
+    .plan-hr { height: 1px; background: var(--line); }
+    .plan-hr-d { background: rgba(245,239,230,0.09); }
+    .plan-feats { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .pf { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--ink-muted); line-height: 1.45; }
+    .pf-d { color: rgba(245,239,230,0.65); }
+    .chk {
+      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+      background-color: var(--accent-bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237C3F12' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+      background-size: 9px; background-position: center; background-repeat: no-repeat;
+    }
+    .chk-d {
+      background-color: rgba(217,122,44,0.14);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F59A4D' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    }
+    .pricing-note {
+      text-align: center; margin-top: 20px; font-size: 12.5px;
+      color: var(--ink-faint); line-height: 1.7;
+    }
+    .pricing-note b { color: var(--ink-muted); }
+
+    /* ── COMPARISON TABLE ── */
+    .compare-section { padding: 80px 0 0; }
+    .compare-section h2 {
+      font-size: clamp(24px, 3vw, 34px); font-weight: 500;
+      letter-spacing: -1px; line-height: 1.1; color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .compare-section h2 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .compare-section p { font-size: 15px; color: var(--ink-muted); margin-bottom: 36px; }
+
+    .compare-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    .compare-table th, .compare-table td {
+      padding: 0; text-align: left; vertical-align: middle;
+    }
+    .compare-table thead tr th { padding-bottom: 16px; }
+    .th-plan {
+      text-align: center; padding: 20px 16px 16px; vertical-align: bottom;
+    }
+    .th-plan-name {
+      font-family: var(--font-display); font-style: italic; font-weight: 400;
+      font-size: 22px; color: var(--accent); line-height: 1;
+    }
+    .th-plan-name-d { color: var(--dark-accent); }
+    .th-plan-price {
+      font-size: 15px; font-weight: 600; color: var(--ink);
+      font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+    }
+    .th-plan-price-d { color: var(--paper-warm); }
+    .th-plan-inner {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border-bottom: none; padding: 18px 16px 14px;
+    }
+    .th-plan-inner.featured-col {
+      background: var(--ink); border-color: var(--ink);
+    }
+    .compare-table .group-row td {
+      padding: 20px 0 8px; font-family: var(--font-mono);
+      font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase;
+      color: var(--ink-faint); border-bottom: 1px solid var(--line);
+    }
+    .compare-table .group-row td:first-child { padding-right: 16px; }
+    .compare-table .feat-row td {
+      padding: 12px 0; border-bottom: 1px solid var(--line-soft);
+    }
+    .feat-label { padding-right: 16px !important; font-size: 13.5px; color: var(--ink); }
+    .feat-label small { display: block; color: var(--ink-faint); font-size: 11.5px; margin-top: 2px; font-family: var(--font-mono); letter-spacing: 0.2px; }
+    .feat-cell {
+      text-align: center; padding: 12px 16px !important;
+      font-size: 13px; color: var(--ink-muted);
+    }
+    .feat-cell.col-featured { background: rgba(25,20,14,0.035); }
+    .ic-yes {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--accent-bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237C3F12' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+      background-size: 10px; background-position: center; background-repeat: no-repeat;
+    }
+    .ic-yes-d {
+      background-color: rgba(217,122,44,0.18);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F59A4D' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+    }
+    .ic-no {
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--ink-faint); font-size: 16px; width: 20px; height: 20px;
+      line-height: 1;
+    }
+    .feat-text { font-size: 12.5px; }
+    .feat-text-d { color: rgba(245,239,230,0.65); }
+    .compare-table tfoot tr td { padding: 0; }
+    .compare-table tfoot .th-plan-inner {
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      border-top: none; border-bottom: 1px solid var(--line);
+      padding: 14px 16px 18px;
+    }
+    .compare-table tfoot .th-plan-inner.featured-col {
+      border-bottom-color: var(--ink);
+    }
+
+    /* ── ADD-ONS ── */
+    .addons-section { padding: 72px 0 0; }
+    .addons-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+    .addon {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius-lg); padding: 24px 22px;
+      transition: box-shadow var(--motion-base);
+    }
+    .addon:hover { box-shadow: var(--shadow-md); }
+    .addon-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-md);
+      background: var(--accent-bg); border: 1px solid rgba(217,122,44,0.15);
+      display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+    }
+    .addon-icon svg { width: 18px; height: 18px; fill: none; stroke: var(--accent-ink); stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+    .addon h4 { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; color: var(--ink); margin-bottom: 5px; }
+    .addon p { font-size: 13px; line-height: 1.55; color: var(--ink-muted); margin-bottom: 14px; }
+    .addon-price { font-family: var(--font-mono); font-size: 12px; color: var(--accent-ink); letter-spacing: 0.2px; background: var(--accent-bg); padding: 4px 10px; border-radius: 999px; display: inline-block; }
+
+    /* ── FAQ ── */
+    .faq-section { padding: 80px 0 0; }
+    .sec-head { margin-bottom: 44px; }
+    .sec-head h2 { font-size: clamp(28px, 3.5vw, 38px); font-weight: 500; letter-spacing: -1.2px; line-height: 1.1; color: var(--ink); margin-bottom: 10px; }
+    .sec-head h2 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .sec-head p { font-size: 15px; color: var(--ink-muted); }
+    .faq-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 72px; }
+    .faq-item { padding: 20px 0; border-bottom: 1px solid var(--line); }
+    .faq-col > .faq-item:first-child { border-top: 1px solid var(--line); }
+    .faq-q { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; color: var(--ink); margin-bottom: 7px; }
+    .faq-q em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .faq-a { font-size: 13.5px; line-height: 1.65; color: var(--ink-muted); }
+    .faq-a b { color: var(--ink); font-weight: 600; }
+
+    /* ── FINAL CTA ── */
+    .final {
+      background: var(--ink); position: relative; overflow: hidden;
+      padding: 96px 0; text-align: center; margin-top: 80px;
+    }
+    .final::before {
+      content: ''; position: absolute; top: -130px; left: 50%; transform: translateX(-50%);
+      width: 640px; height: 640px;
+      background: radial-gradient(circle, rgba(217,122,44,0.17) 0%, transparent 62%);
+      pointer-events: none;
+    }
+    .final-inner { position: relative; }
+    .final h2 {
+      font-size: clamp(32px, 4.2vw, 52px); font-weight: 500;
+      letter-spacing: -2px; line-height: 1.06; color: var(--paper-warm);
+      margin: 20px auto 16px; max-width: 22ch;
+    }
+    .final h2 em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .final-lede { font-size: 16px; color: rgba(245,239,230,0.58); margin-bottom: 34px; }
+    .final-ctas { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+    .final-contacts { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 40px; flex-wrap: wrap; }
+    .cpill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,239,230,0.07); border: 1px solid rgba(245,239,230,0.13);
+      color: var(--paper-warm); padding: 10px 18px; border-radius: 999px;
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2px;
+    }
+    .cpill svg { width: 13px; height: 13px; fill: none; stroke: var(--dark-accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    /* ── FOOTER ── */
+    .footer { background: var(--ink); border-top: 1px solid rgba(245,239,230,0.07); padding: 34px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .footer-brand { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.3px; color: var(--paper-warm); }
+    .footer-brand svg { width: 22px; height: 22px; }
+    .footer-brand em { font-family: var(--font-display); font-style: italic; font-weight: 400; color: var(--accent); }
+    .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+    .footer-links a { font-size: 13px; color: rgba(245,239,230,0.42); transition: color var(--motion-fast); }
+    .footer-links a:hover { color: rgba(245,239,230,0.78); }
+    .footer-copy { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.5px; color: rgba(245,239,230,0.3); }
+
+    /* ── Reveal animations ── */
+    .reveal { transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out); }
+    .reveal.js-hidden { opacity: 0; transform: translateY(18px); }
+    .reveal.js-hidden.in { opacity: 1; transform: translateY(0); }
+    .reveal-d2.js-hidden { transition-delay: 0.08s; }
+    .reveal-d3.js-hidden { transition-delay: 0.16s; }
+    .reveal-d4.js-hidden { transition-delay: 0.24s; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1060px) {
+      .compare-section { display: none; }
+    }
+    @media (max-width: 960px) {
+      .plans { grid-template-columns: repeat(2, 1fr); }
+      .addons-grid { grid-template-columns: 1fr 1fr; }
+      .faq-cols { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .plan--featured { transform: none; }
+      .plan--featured:hover { transform: translateY(-2px); }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 20px; }
+      .pricing-wrap { padding: 0 20px; }
+      .plans { grid-template-columns: 1fr; }
+      .addons-grid { grid-template-columns: 1fr; }
+      .pricing-header { flex-direction: column; align-items: flex-start; }
+      .toggle-wrap { align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══════════════════════════════════════════════════════════════ -->
+<nav class="nav">
+  <div class="wrap">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-brand">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#19140E"/><circle cx="50" cy="50" r="31" fill="#FBEED9"/><circle cx="50" cy="50" r="19" fill="#D97A2C"/></svg>
+        Orvexa<em>.</em>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html#comment">Comment ça marche</a>
+        <a href="index.html#fonctionnalites">Fonctionnalités</a>
+        <a href="plans.html" class="active">Tarifs</a>
+        <a href="index.html#faq">FAQ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="https://admin.orvexa.tn" class="nav-login">Connexion</a>
+        <a href="#plans" class="btn-primary">Essai gratuit 14 jours</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ HERO ══════════════════════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-inner">
+      <div class="eyebrow-light reveal">Tarifs · 2026</div>
+      <h1 class="reveal reveal-d2">Commencez petit,<br>grandissez <em>quand vous êtes prêt.</em></h1>
+      <p class="hero-lede reveal reveal-d2">
+        Du menu digital simple à la gestion complète d'un hôtel multi-zones —
+        <b>chaque plan inclut tout le contenu du précédent.</b>
+      </p>
+      <div class="hero-pills reveal reveal-d3">
+        <div class="hero-pill"><div class="hero-pill-dot"></div>14 jours gratuits</div>
+        <div class="hero-pill"><div class="hero-pill-dot"></div>Sans carte bancaire</div>
+        <div class="hero-pill"><div class="hero-pill-dot"></div>Sans engagement</div>
+        <div class="hero-pill"><div class="hero-pill-dot"></div>Changez de plan à tout moment</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ PLANS ══════════════════════════════════════════════════════════════ -->
+<div id="plans" style="background: var(--paper);">
+  <div class="pricing-wrap">
+    <div class="pricing-header">
+      <div class="pricing-header-left reveal">
+        <div class="eyebrow-ink">Nos plans</div>
+        <h2>Simple, <em>transparent,</em> sans commissions.</h2>
+        <p>Prix fixes en dinars tunisiens. Aucune commission sur vos ventes.</p>
+      </div>
+      <div class="toggle-wrap reveal reveal-d2">
+        <div class="toggle">
+          <button class="on" id="btn-monthly" onclick="setMode('monthly')">Mensuel</button>
+          <button id="btn-yearly" onclick="setMode('yearly')">Annuel <span class="save">−17%</span></button>
+        </div>
+        <div class="toggle-note" id="toggle-note">Tous les prix en dinars tunisiens (TND)</div>
+      </div>
+    </div>
+
+    <div class="plans reveal">
+
+      <!-- Essentiel -->
+      <div class="plan">
+        <div>
+          <div class="plan-chip">Plan 01</div>
+          <div class="plan-name">Essentiel</div>
+        </div>
+        <div>
+          <div class="plan-price">
+            <span class="pval" data-m="19" data-y="190">19</span><span class="u">TND/mois</span>
+          </div>
+          <div class="plan-sub psub" data-m="Facturé mensuellement" data-y="190 TND/an · 2 mois offerts">
+            Facturé mensuellement
+          </div>
+        </div>
+        <div class="plan-who">Cafés, salons de thé, pâtisseries, fast-foods, commerces.</div>
+        <div class="plan-hr"></div>
+        <div class="plan-feats">
+          <div class="pf"><span class="chk"></span><span>Menu digital QR complet</span></div>
+          <div class="pf"><span class="chk"></span><span>Photos, allergènes, ingrédients</span></div>
+          <div class="pf"><span class="chk"></span><span>Arabe · Français · Anglais</span></div>
+          <div class="pf"><span class="chk"></span><span>Logo, couleurs, QR personnalisé</span></div>
+          <div class="pf"><span class="chk"></span><span>Statistiques scans &amp; vues</span></div>
+        </div>
+        <a href="https://admin.orvexa.tn" class="btn-outline" data-lead>Commencer gratuitement</a>
+      </div>
+
+      <!-- Plus -->
+      <div class="plan">
+        <div>
+          <div class="plan-chip">Plan 02</div>
+          <div class="plan-name">Plus</div>
+        </div>
+        <div>
+          <div class="plan-price">
+            <span class="pval" data-m="79" data-y="790">79</span><span class="u">TND/mois</span>
+          </div>
+          <div class="plan-sub psub" data-m="Facturé mensuellement" data-y="790 TND/an · 2 mois offerts">
+            Facturé mensuellement
+          </div>
+        </div>
+        <div class="plan-who">Cafés avec service à table, chichas, food courts.</div>
+        <div class="plan-hr"></div>
+        <div class="plan-feats">
+          <div class="pf"><span class="chk"></span><span>Tout Essentiel</span></div>
+          <div class="pf"><span class="chk"></span><span>Commande à table</span></div>
+          <div class="pf"><span class="chk"></span><span>Notifications WhatsApp</span></div>
+          <div class="pf"><span class="chk"></span><span>Appeler serveur · Demander l'addition</span></div>
+          <div class="pf"><span class="chk"></span><span>1 compte · 30 tables incluses</span></div>
+          <div class="pf"><span class="chk"></span><span>Analytics ventes &amp; revenus</span></div>
+        </div>
+        <a href="https://admin.orvexa.tn" class="btn-outline" data-lead>Commencer gratuitement</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="plan plan--featured">
+        <div class="plan-badge">Le plus populaire</div>
+        <div>
+          <div class="plan-chip plan-chip-d">Plan 03</div>
+          <div class="plan-name plan-name-d">Pro</div>
+        </div>
+        <div>
+          <div class="plan-price plan-price-d">
+            <span class="pval" data-m="149" data-y="1490">149</span><span class="u">TND/mois</span>
+          </div>
+          <div class="plan-sub plan-sub-d psub" data-m="Facturé mensuellement" data-y="1 490 TND/an · 2 mois offerts">
+            Facturé mensuellement
+          </div>
+        </div>
+        <div class="plan-who plan-who-d">Restaurants professionnels, équipes complètes.</div>
+        <div class="plan-hr plan-hr-d"></div>
+        <div class="plan-feats">
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Tout Plus</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Écran cuisine (KDS) inclus</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Application serveur complète</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>5 rôles d'accès (Manager, Caissier…)</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Employés illimités · 150 tables incluses</span></div>
+          <div class="pf pf-d"><span class="chk chk-d"></span><span>Rapport quotidien email &amp; WhatsApp</span></div>
+        </div>
+        <a href="https://admin.orvexa.tn" class="btn-primary" data-lead>Commencer gratuitement</a>
+      </div>
+
+      <!-- Premium -->
+      <div class="plan plan--premium">
+        <div>
+          <div class="plan-chip">Plan 04</div>
+          <div class="plan-name">Premium</div>
+        </div>
+        <div>
+          <div class="plan-price">
+            499+<span class="u">TND/mois</span>
+          </div>
+          <div class="plan-sub">À partir de · sur devis</div>
+        </div>
+        <div class="plan-who">Hôtels, resorts, beach clubs, grands établissements.</div>
+        <div class="plan-hr"></div>
+        <div class="plan-feats">
+          <div class="pf"><span class="chk"></span><span>Tout Pro</span></div>
+          <div class="pf"><span class="chk"></span><span>Multi-zones (restaurant, pool bar…)</span></div>
+          <div class="pf"><span class="chk"></span><span>Room service QR par chambre</span></div>
+          <div class="pf"><span class="chk"></span><span>Facturation chambre automatique</span></div>
+          <div class="pf"><span class="chk"></span><span>Dashboard direction multi-zones</span></div>
+          <div class="pf"><span class="chk"></span><span>Installation · Formation · Déploiement</span></div>
+        </div>
+        <a href="mailto:contact@orvexa.tn?subject=Devis%20Orvexa%20Premium" class="btn-outline">Demander un devis</a>
+      </div>
+    </div>
+
+    <p class="pricing-note reveal">
+      Essai gratuit 14 jours sur les plans Essentiel, Plus et Pro — <b>aucune carte bancaire requise.</b><br>
+      Tables supplémentaires : +10 TND/mois par pack de 10 tables. Écran cuisine supplémentaire : +50 TND/mois.
+    </p>
+  </div>
+</div>
+
+<!-- ══ COMPARISON TABLE ══════════════════════════════════════════════════ -->
+<div class="compare-section">
+  <div class="pricing-wrap">
+    <div class="sec-head reveal" style="max-width:560px;">
+      <div class="eyebrow-ink">Comparatif détaillé</div>
+      <h2>Ce que comprend <em>chaque plan.</em></h2>
+      <p>Toutes les fonctionnalités côte à côte — pour que vous choisissiez sans hésitation.</p>
+    </div>
+
+    <table class="compare-table reveal">
+      <thead>
+        <tr>
+          <th style="width:34%;"></th>
+          <th class="th-plan" style="width:16.5%;">
+            <div class="th-plan-inner">
+              <div class="th-plan-name">Essentiel</div>
+              <div class="th-plan-price">19 TND/mois</div>
+            </div>
+          </th>
+          <th class="th-plan" style="width:16.5%;">
+            <div class="th-plan-inner">
+              <div class="th-plan-name">Plus</div>
+              <div class="th-plan-price">79 TND/mois</div>
+            </div>
+          </th>
+          <th class="th-plan" style="width:16.5%;">
+            <div class="th-plan-inner featured-col">
+              <div class="th-plan-name th-plan-name-d">Pro</div>
+              <div class="th-plan-price th-plan-price-d">149 TND/mois</div>
+            </div>
+          </th>
+          <th class="th-plan" style="width:16.5%;">
+            <div class="th-plan-inner">
+              <div class="th-plan-name">Premium</div>
+              <div class="th-plan-price">Sur devis</div>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- Menu & QR -->
+        <tr class="group-row"><td colspan="5">Menu &amp; QR</td></tr>
+        <tr class="feat-row">
+          <td class="feat-label">Menu digital QR<small>Carte complète accessible par QR code</small></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Photos, allergènes, ingrédients<small>Description complète par article</small></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">3 langues : arabe, français, anglais</td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">QR personnalisé (logo, couleurs)</td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Catégories, recherche, article détaillé</td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+
+        <!-- Commandes -->
+        <tr class="group-row"><td colspan="5">Commandes &amp; service</td></tr>
+        <tr class="feat-row">
+          <td class="feat-label">Commande à table<small>Le client commande depuis son téléphone</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Appeler serveur · demander l'addition</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Suivi commande en temps réel<small>Reçu → Préparation → Prêt → Servi</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Notifications WhatsApp</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Tables incluses</td>
+          <td class="feat-cell"><span class="feat-text">—</span></td>
+          <td class="feat-cell"><span class="feat-text">30 tables</span></td>
+          <td class="feat-cell col-featured"><span class="feat-text feat-text-d">150 tables</span></td>
+          <td class="feat-cell"><span class="feat-text">Illimitées</span></td>
+        </tr>
+
+        <!-- Cuisine & équipes -->
+        <tr class="group-row"><td colspan="5">Cuisine &amp; équipes</td></tr>
+        <tr class="feat-row">
+          <td class="feat-label">Écran cuisine (KDS)<small>Tickets en temps réel avec vieillissement couleur</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Application serveur<small>Plan de salle, appels, gestion des tables</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Comptes employés inclus</td>
+          <td class="feat-cell"><span class="feat-text">1</span></td>
+          <td class="feat-cell"><span class="feat-text">1</span></td>
+          <td class="feat-cell col-featured"><span class="feat-text feat-text-d">Illimités</span></td>
+          <td class="feat-cell"><span class="feat-text">Illimités</span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Rôles d'accès<small>Admin, Manager, Cuisine, Serveur, Caissier</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="feat-text feat-text-d">5 rôles</span></td>
+          <td class="feat-cell"><span class="feat-text">5 rôles</span></td>
+        </tr>
+
+        <!-- Analytics -->
+        <tr class="group-row"><td colspan="5">Analytics &amp; rapports</td></tr>
+        <tr class="feat-row">
+          <td class="feat-label">Statistiques scans &amp; vues</td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Analytics ventes &amp; revenus</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Dashboard admin complet<small>Revenue, couverts, ticket moyen, tendances</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Rapport quotidien email &amp; WhatsApp</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Performance menu (marge × volume)</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-yes ic-yes-d"></span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+
+        <!-- Premium / multi-zones -->
+        <tr class="group-row"><td colspan="5">Multi-zones (Premium uniquement)</td></tr>
+        <tr class="feat-row">
+          <td class="feat-label">Multi-zones indépendants<small>Restaurant, pool bar, terrasse, room service</small></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Room service QR par chambre</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Facturation chambre automatique</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Dashboard direction multi-zones</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+        <tr class="feat-row">
+          <td class="feat-label">Installation, formation, déploiement</td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-no">–</span></td>
+          <td class="feat-cell col-featured"><span class="ic-no">–</span></td>
+          <td class="feat-cell"><span class="ic-yes"></span></td>
+        </tr>
+
+      </tbody>
+      <tfoot>
+        <tr>
+          <td></td>
+          <td class="th-plan">
+            <div class="th-plan-inner">
+              <a href="https://admin.orvexa.tn" class="btn-outline" style="font-size:13px;padding:8px 16px;" data-lead>Commencer</a>
+            </div>
+          </td>
+          <td class="th-plan">
+            <div class="th-plan-inner">
+              <a href="https://admin.orvexa.tn" class="btn-outline" style="font-size:13px;padding:8px 16px;" data-lead>Commencer</a>
+            </div>
+          </td>
+          <td class="th-plan">
+            <div class="th-plan-inner featured-col">
+              <a href="https://admin.orvexa.tn" class="btn-primary" style="font-size:13px;padding:8px 16px;" data-lead>Commencer</a>
+            </div>
+          </td>
+          <td class="th-plan">
+            <div class="th-plan-inner">
+              <a href="mailto:contact@orvexa.tn?subject=Devis%20Orvexa%20Premium" class="btn-outline" style="font-size:13px;padding:8px 16px;">Devis</a>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- ══ ADD-ONS ════════════════════════════════════════════════════════════ -->
+<div class="addons-section">
+  <div class="pricing-wrap">
+    <div class="sec-head reveal" style="max-width:480px;">
+      <div class="eyebrow-ink">Options</div>
+      <h2>Complétez votre plan <em>à la carte.</em></h2>
+      <p>Ajoutez uniquement ce dont vous avez besoin, sans changer de plan.</p>
+    </div>
+    <div class="addons-grid">
+      <div class="addon reveal">
+        <div class="addon-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+        </div>
+        <h4>Pack tables supplémentaires</h4>
+        <p>Ajoutez des tables supplémentaires à votre plan Plus. Chaque pack comprend 10 tables.</p>
+        <span class="addon-price">+10 TND/mois · par pack de 10</span>
+      </div>
+      <div class="addon reveal reveal-d2">
+        <div class="addon-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h4>Écran cuisine supplémentaire</h4>
+        <p>Un KDS de plus pour un deuxième poste ou une deuxième station dans la même cuisine.</p>
+        <span class="addon-price">+50 TND/mois · par écran</span>
+      </div>
+      <div class="addon reveal reveal-d3">
+        <div class="addon-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h4>Formation sur site</h4>
+        <p>Une demi-journée avec un technicien Orvexa pour former votre équipe et configurer les écrans.</p>
+        <span class="addon-price">Sur devis · Tunis &amp; régions</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FAQ ════════════════════════════════════════════════════════════════ -->
+<div id="faq" class="faq-section" style="padding-bottom:80px;">
+  <div class="pricing-wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow-ink">FAQ</div>
+      <h2>Questions <em>fréquentes.</em></h2>
+    </div>
+    <div class="faq-cols">
+      <div class="faq-col">
+        <div class="faq-item reveal">
+          <div class="faq-q">Mes clients ont-ils besoin d'une <em>application</em> ?</div>
+          <div class="faq-a">Non. Ils scannent le QR code et accèdent au menu directement dans leur navigateur. <b>Aucune application à télécharger, aucun compte à créer.</b></div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Puis-je <em>changer de plan</em> à tout moment ?</div>
+          <div class="faq-a">Oui, à tout moment. Vos données, menus et historique sont <b>conservés lors de tout changement de plan</b>, dans un sens comme dans l'autre.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Comment fonctionne l'<em>essai gratuit</em> ?</div>
+          <div class="faq-a">14 jours complets sur les plans Essentiel, Plus et Pro — <b>sans carte bancaire et sans engagement.</b> Vous passez à un plan payant uniquement quand vous êtes prêt.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Orvexa fonctionne-t-il en <em>arabe</em> ?</div>
+          <div class="faq-a">Oui. Le menu client est disponible en <b>arabe, français et anglais</b>. La plateforme de gestion est disponible en français et en arabe. L'arabe est entièrement de droite à gauche.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Y a-t-il des <em>commissions</em> sur mes ventes ?</div>
+          <div class="faq-a">Non. Orvexa facture un abonnement mensuel fixe en dinars tunisiens. <b>Aucune commission, aucun frais caché</b> sur vos commandes ou votre chiffre d'affaires.</div>
+        </div>
+      </div>
+      <div class="faq-col">
+        <div class="faq-item reveal">
+          <div class="faq-q">Comment ajouter plus de <em>tables</em> ?</div>
+          <div class="faq-a">Le plan Plus inclut 30 tables. Ajoutez des packs de 10 tables pour <b>+10 TND/mois par pack</b>. Le plan Pro inclut 150 tables.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Puis-je recevoir les commandes sur <em>WhatsApp</em> ?</div>
+          <div class="faq-a">Oui, à partir du plan Plus. Chaque commande déclenche une notification WhatsApp en plus de l'alerte sonore dans l'application.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Qu'est-ce que le <em>KDS</em> (écran cuisine) ?</div>
+          <div class="faq-a">L'écran cuisine affiche les commandes en temps réel avec leur statut : En attente → Préparation → Prêt → Servi. <b>Plus besoin de tickets papier.</b> Disponible dès le plan Pro.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Est-ce adapté aux <em>hôtels et resorts</em> ?</div>
+          <div class="faq-a">Oui. Le plan Premium est conçu pour les établissements multi-zones. Chaque zone (restaurant, pool bar, room service) dispose de son propre menu, équipe et rapports indépendants.</div>
+        </div>
+        <div class="faq-item reveal">
+          <div class="faq-q">Que se passe-t-il si je suis <em>hors ligne</em> ?</div>
+          <div class="faq-a">Orvexa affiche un indicateur clair si la connexion est perdue. Les écrans cuisine et serveur sont conçus pour <b>rester lisibles et utiles</b> même lors d'une coupure brève.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FINAL CTA ══════════════════════════════════════════════════════════ -->
+<section class="final">
+  <div class="wrap">
+    <div class="final-inner reveal">
+      <div class="eyebrow-light" style="justify-content:center;">Prêt à démarrer ?</div>
+      <h2>Lancez votre menu digital <em>aujourd'hui.</em></h2>
+      <p class="final-lede">14 jours gratuits. Sans carte bancaire. Sans engagement.</p>
+      <div class="final-ctas">
+        <a href="https://admin.orvexa.tn" class="btn-primary lg" data-lead>Commencer gratuitement</a>
+        <a href="index.html" class="btn-ghost">Voir la plateforme <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
+      <div class="final-contacts">
+        <div class="cpill">
+          <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 1 0-3 6.2L21 19l-.6-3.4A8 8 0 0 0 21 12z"/></svg>
+          +216 96 830 161
+        </div>
+        <div class="cpill">
+          <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          contact@orvexa.tn
+        </div>
+        <div class="cpill">
+          <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          @orvexa.tn
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ LEAD MODAL ═════════════════════════════════════════════════════════ -->
+<style>
+  .lead-overlay{position:fixed;inset:0;background:rgba(21,17,13,.55);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000;}
+  .lead-overlay.open{display:flex;}
+  .lead-modal{background:#FBF7F0;border-radius:18px;max-width:440px;width:100%;padding:32px 28px;box-shadow:0 24px 60px rgba(21,17,13,.28);position:relative;max-height:92vh;overflow:auto;}
+  .lead-modal h3{margin:0 0 4px;font-size:22px;color:#15110D;}
+  .lead-modal .lead-lede{margin:0 0 20px;font-size:14px;color:rgba(21,17,13,.6);line-height:1.5;}
+  .lead-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:24px;line-height:1;color:rgba(21,17,13,.5);cursor:pointer;}
+  .lead-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .lead-field label{font-size:13px;font-weight:600;color:#15110D;}
+  .lead-field input,.lead-field textarea{font:inherit;font-size:15px;padding:11px 13px;border:1px solid rgba(21,17,13,.14);border-radius:10px;background:#fff;color:#15110D;}
+  .lead-field input:focus,.lead-field textarea:focus{outline:none;border-color:#F59A4D;box-shadow:0 0 0 3px rgba(245,154,77,.18);}
+  .lead-submit{width:100%;margin-top:6px;}
+  .lead-status{font-size:14px;margin-top:12px;text-align:center;}
+  .lead-status.err{color:#c0392b;}
+  .lead-status.ok{color:#1e8e54;}
+  .lead-success{text-align:center;padding:12px 0;}
+  .lead-success h3{margin-bottom:8px;}
+</style>
+<div class="lead-overlay" id="leadOverlay" role="dialog" aria-modal="true" aria-labelledby="leadTitle">
+  <div class="lead-modal">
+    <button class="lead-close" type="button" aria-label="Fermer" data-lead-close>&times;</button>
+    <div id="leadForm">
+      <h3 id="leadTitle">Commencer gratuitement</h3>
+      <p class="lead-lede">Laissez-nous vos coordonnées — on configure votre menu et on vous rappelle sous 24 h. 14 jours gratuits, sans engagement.</p>
+      <form id="leadFormEl" novalidate>
+        <div class="lead-field">
+          <label for="leadName">Votre nom *</label>
+          <input id="leadName" name="name" type="text" required maxlength="120" autocomplete="name" />
+        </div>
+        <div class="lead-field">
+          <label for="leadResto">Nom du restaurant *</label>
+          <input id="leadResto" name="restaurant" type="text" required maxlength="160" autocomplete="organization" />
+        </div>
+        <div class="lead-field">
+          <label for="leadPhone">Téléphone *</label>
+          <input id="leadPhone" name="phone" type="tel" required maxlength="40" autocomplete="tel" placeholder="+216 ..." />
+        </div>
+        <div class="lead-field">
+          <label for="leadEmail">E-mail (optionnel)</label>
+          <input id="leadEmail" name="email" type="email" maxlength="160" autocomplete="email" />
+        </div>
+        <div class="lead-field">
+          <label for="leadMsg">Message (optionnel)</label>
+          <textarea id="leadMsg" name="message" rows="3" maxlength="1000"></textarea>
+        </div>
+        <button class="btn-primary lead-submit" type="submit" id="leadSubmit">Envoyer ma demande</button>
+        <div class="lead-status" id="leadStatus" hidden></div>
+      </form>
+    </div>
+    <div class="lead-success" id="leadSuccess" hidden>
+      <h3>Merci ! 🎉</h3>
+      <p class="lead-lede">Votre demande est bien reçue. On vous rappelle très vite.</p>
+      <button class="btn-outline" type="button" data-lead-close>Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOOTER ═════════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#F5EFE6"/><circle cx="50" cy="50" r="31" fill="#15110D"/><circle cx="50" cy="50" r="19" fill="#F59A4D"/></svg>
+        Orvexa<em>.</em>
+      </div>
+      <nav class="footer-links">
+        <a href="index.html#fonctionnalites">Fonctionnalités</a>
+        <a href="plans.html">Tarifs</a>
+        <a href="index.html#faq">FAQ</a>
+        <a href="https://admin.orvexa.tn">Connexion</a>
+        <a href="mailto:contact@orvexa.tn">Contact</a>
+        <a href="terms.html">Conditions d'utilisation</a>
+        <a href="privacy.html">Confidentialité</a>
+      </nav>
+      <div class="footer-copy">© 2026 Orvexa · Tunisie</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Monthly / Annual toggle ──
+  function setMode(mode) {
+    const isYearly = mode === 'yearly';
+    document.getElementById('btn-monthly').classList.toggle('on', !isYearly);
+    document.getElementById('btn-yearly').classList.toggle('on', isYearly);
+
+    document.querySelectorAll('.pval').forEach(el => {
+      const v = parseInt(el.dataset[isYearly ? 'y' : 'm']);
+      el.textContent = isYearly ? v.toLocaleString('fr-FR') : el.dataset.m;
+    });
+
+    document.querySelectorAll('.psub').forEach(el => {
+      el.textContent = el.dataset[isYearly ? 'y' : 'm'];
+    });
+
+    document.getElementById('toggle-note').textContent = isYearly
+      ? 'Économisez 2 mois sur l\'abonnement annuel'
+      : 'Tous les prix en dinars tunisiens (TND)';
+  }
+
+  // ── Scroll reveal ──
+  const reveals = document.querySelectorAll('.reveal');
+  reveals.forEach(el => el.classList.add('js-hidden'));
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in'); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -32px 0px' });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // ── Lead capture modal ──────────────────────────────────────────
+  (function () {
+    const API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? 'http://localhost:4000'
+      : 'https://api.orvexa.tn';
+    const overlay = document.getElementById('leadOverlay');
+    const form = document.getElementById('leadFormEl');
+    const formWrap = document.getElementById('leadForm');
+    const success = document.getElementById('leadSuccess');
+    const status = document.getElementById('leadStatus');
+    const submitBtn = document.getElementById('leadSubmit');
+
+    function open() {
+      formWrap.hidden = false;
+      success.hidden = true;
+      status.hidden = true;
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('leadName').focus(), 50);
+    }
+    function close() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('[data-lead]').forEach(el => {
+      el.addEventListener('click', e => { e.preventDefault(); open(); });
+    });
+    document.querySelectorAll('[data-lead-close]').forEach(el => {
+      el.addEventListener('click', close);
+    });
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) close(); });
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = {
+        name: form.name.value.trim(),
+        restaurant: form.restaurant.value.trim(),
+        phone: form.phone.value.trim(),
+        email: form.email.value.trim(),
+        message: form.message.value.trim(),
+      };
+      if (!data.name || !data.restaurant || !data.phone) {
+        status.hidden = false;
+        status.className = 'lead-status err';
+        status.textContent = 'Merci de remplir les champs obligatoires.';
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Envoi…';
+      status.hidden = true;
+      try {
+        const res = await fetch(API + '/leads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        if (!res.ok) throw new Error('bad status ' + res.status);
+        formWrap.hidden = true;
+        success.hidden = false;
+      } catch (err) {
+        status.hidden = false;
+        status.className = 'lead-status err';
+        status.textContent = 'Échec de l\'envoi. Réessayez ou écrivez à contact@orvexa.tn.';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Envoyer ma demande';
+      }
+    });
+  })();
+</script>
+</body>
+</html>

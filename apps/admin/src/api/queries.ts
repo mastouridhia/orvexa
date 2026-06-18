@@ -9,11 +9,13 @@ import type {
   CreateStaffRequest,
   CreateVariantGroupRequest,
   DashboardSummary,
+  MenuAnalyticsSummary,
   Dish,
   DishImageUploadResponse,
   Order,
   OrderHistoryQuery,
   OrderListQuery,
+  OrderStatus,
   Receipt,
   PatchRestaurantRequest,
   Restaurant,
@@ -40,6 +42,7 @@ import type {
   VariantGroup,
   Feedback,
   FeedbackSummary,
+  WaiterCall,
 } from '@orvexa/shared';
 import { apiRequest } from './client.js';
 
@@ -56,7 +59,7 @@ export const api = {
   login(email: string, password: string, restaurantSlug?: string) {
     return apiRequest<StaffLoginResponse>('/auth/login', {
       method: 'POST',
-      body: { email, password, ...(restaurantSlug ? { restaurantSlug } : {}) },
+      body: { email, password, app: 'admin', ...(restaurantSlug ? { restaurantSlug } : {}) },
     });
   },
   refresh(refreshToken: string) {
@@ -64,6 +67,35 @@ export const api = {
   },
   logout(refreshToken: string) {
     return apiRequest<{ ok: boolean }>('/auth/logout', { method: 'POST', body: { refreshToken } });
+  },
+  forgotPassword(email: string, restaurantSlug?: string) {
+    return apiRequest<{ ok: boolean }>('/auth/forgot-password', {
+      method: 'POST',
+      body: { email, ...(restaurantSlug ? { restaurantSlug } : {}) },
+    });
+  },
+  getResetToken(token: string) {
+    return apiRequest<{ email: string }>(`/auth/reset-password/${token}`);
+  },
+  resetPassword(token: string, password: string) {
+    return apiRequest<{ ok: boolean }>(`/auth/reset-password/${token}`, {
+      method: 'POST',
+      body: { password },
+    });
+  },
+  changePassword(accessToken: string, currentPassword: string, newPassword: string) {
+    return apiRequest<{ ok: boolean }>('/auth/me/password', {
+      method: 'PATCH',
+      token: accessToken,
+      body: { currentPassword, newPassword },
+    });
+  },
+  updateProfile(accessToken: string, patch: { name?: string; email?: string }) {
+    return apiRequest<StaffUser>('/auth/me', {
+      method: 'PATCH',
+      token: accessToken,
+      body: patch,
+    });
   },
 
   // Restaurant
@@ -80,6 +112,9 @@ export const api = {
   // Dashboard + Reports
   getDashboardSummary(token: string) {
     return apiRequest<DashboardSummary>('/dashboard/summary', { token });
+  },
+  getMenuAnalytics(token: string) {
+    return apiRequest<MenuAnalyticsSummary>('/analytics/menu', { token });
   },
   previewCloseDay(token: string) {
     return apiRequest<CloseDayPreview>('/admin/close-day/preview', { token });
@@ -182,6 +217,9 @@ export const api = {
   deleteTable(token: string, id: string) {
     return apiRequest<{ ok: true }>(`/tables/${id}`, { method: 'DELETE', token });
   },
+  markTableClean(token: string, id: string) {
+    return apiRequest<Table>(`/tables/${id}/clean`, { method: 'POST', token });
+  },
   mergeTables(token: string, leaderId: string, memberTableIds: string[]) {
     return apiRequest<{ leader: Table; members: Table[] }>(`/tables/${leaderId}/merge`, {
       method: 'POST',
@@ -259,6 +297,22 @@ export const api = {
       `/orders/${orderId}/pay`,
       { method: 'POST', token, body },
     );
+  },
+  listActiveOrders(token: string) {
+    return apiRequest<Order[]>('/orders/active', { token });
+  },
+  listWaiterCalls(token: string) {
+    return apiRequest<WaiterCall[]>('/waiter-calls?status=open', { token });
+  },
+  clearWaiterCall(token: string, id: string) {
+    return apiRequest<WaiterCall>(`/waiter-calls/${id}/clear`, { method: 'POST', token });
+  },
+  updateOrderStatus(token: string, orderId: string, status: OrderStatus) {
+    return apiRequest<Order>(`/orders/${orderId}/status`, {
+      method: 'PATCH',
+      token,
+      body: { status },
+    });
   },
   listOrders(token: string, q: OrderListQuery) {
     return apiRequest<PaginatedOrders>(

@@ -31,6 +31,10 @@ export class RefreshTokenRepository extends BaseRepository {
     return !!row;
   }
 
+  async deleteAllForUser(userId: string): Promise<void> {
+    await this.db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  }
+
   async deleteExpiredForUser(userId: string): Promise<void> {
     await this.db
       .delete(refreshTokens)

@@ -246,6 +246,14 @@ export function TableDetail({
     }
   };
 
+  // Force-free a table whose party left without the bill being settled. Frees
+  // the table and ends the guests' session (their phone clears) regardless of
+  // payment state — the backend /clean endpoint does the reset.
+  const freeTable = async () => {
+    if (!window.confirm(t('detail.freeTableConfirm'))) return;
+    await markClean();
+  };
+
   const minsInOrder = order
     ? Math.max(0, Math.floor((now - new Date(order.createdAt).getTime()) / 60000))
     : 0;
@@ -382,6 +390,17 @@ export function TableDetail({
             >
               {t('detail.code.get')}
             </button>
+            {state !== 'open' && state !== 'clean' ? (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={freeTable}
+                disabled={busy}
+                style={{ color: 'var(--color-danger, #c0392b)' }}
+              >
+                {busy ? t('detail.saving') : t('detail.freeTable')}
+              </button>
+            ) : null}
           </div>
         )}
 

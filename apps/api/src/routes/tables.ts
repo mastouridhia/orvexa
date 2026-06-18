@@ -12,6 +12,7 @@ import { TableService } from '../services/table.js';
 import {
   requireAnyAuth,
   requireAuth,
+  requireCapability,
   requireCustomerSession,
   requireRole,
 } from '../middleware/auth.js';
@@ -143,6 +144,7 @@ tablesRouter.get(
 tablesRouter.post(
   '/tables/:id/call-waiter',
   requireCustomerSession,
+  requireCapability('customer.call_staff'),
   validate({ params: IdParamsSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
@@ -160,6 +162,7 @@ tablesRouter.post(
 tablesRouter.post(
   '/tables/:id/request-code',
   requireCustomerSession,
+  requireCapability('ordering.customer'),
   validate({ params: IdParamsSchema }),
   asyncHandler(async (req, res) => {
     if (!req.customerSession) throw new UnauthorizedError('Customer session required');
@@ -177,6 +180,7 @@ tablesRouter.post(
 tablesRouter.post(
   '/tables/:id/request-bill',
   requireAnyAuth,
+  requireCapability('customer.request_bill'),
   validate({ params: IdParamsSchema }),
   asyncHandler(async (req, res) => {
     let restaurantId: string;
@@ -201,6 +205,7 @@ tablesRouter.post(
 tablesRouter.post(
   '/tables/:id/request-extras',
   requireAnyAuth,
+  requireCapability('customer.call_staff'),
   validate({ params: IdParamsSchema, body: RequestExtrasRequestSchema }),
   asyncHandler(async (req, res) => {
     let restaurantId: string;

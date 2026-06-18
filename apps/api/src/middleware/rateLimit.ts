@@ -71,6 +71,27 @@ export const authRateLimit = rateLimit({
 });
 
 /**
+ * Hard cooldown for password-reset requests: one per email address per minute.
+ * authRateLimit alone isn't enough here — it has skipSuccessfulRequests, so a
+ * stream of *successful* forgot-password posts is never counted and a user can
+ * spam reset emails. Each new request invalidates the previous reset link, so
+ * spamming leaves a trail of dead links and confusing 404s on the reset page.
+ * This limiter counts successes and is keyed on the target email so a shared
+ * NAT IP doesn't block unrelated users (falls back to IP when email is absent).
+ */
+export const forgotPasswordCooldown = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 1,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  keyGenerator: (req: Request) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.toLowerCase().trim() : '';
+    return `forgot:${email || ipKeyGenerator(req.ip ?? '')}`;
+  },
+  handler: tooManyRequestsHandler,
+});
+
+/**
  * Session-mint limiter for POST /sessions (QR-token → JWT exchange).
  * Does NOT skip successful requests so bulk session creation is bounded.
  * 20/min handles a full-room scan burst on a shared café NAT IP without

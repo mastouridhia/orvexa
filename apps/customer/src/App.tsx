@@ -10,6 +10,7 @@ import { WaiterCallBanner } from './components/WaiterCallBanner.js';
 import { Welcome } from './pages/Welcome.js';
 import { SessionBoot } from './pages/SessionBoot.js';
 import { ScanLanguage } from './pages/ScanLanguage.js';
+import { MenuPreviewBoot } from './pages/MenuPreviewBoot.js';
 // Heavy pages are code-split so the initial bundle stays small
 const Menu = lazy(() => import('./pages/Menu.js').then((m) => ({ default: m.Menu })));
 const OrderPage = lazy(() => import('./pages/Order.js').then((m) => ({ default: m.OrderPage })));
@@ -19,7 +20,7 @@ const WaiterPage = lazy(() => import('./pages/Waiter.js').then((m) => ({ default
 const History = lazy(() => import('./pages/History.js').then((m) => ({ default: m.History })));
 import { useSessionStore } from './store/session.js';
 import { connectCustomerSocket, disconnectCustomerSocket } from './socket/client.js';
-import { isPlan1 } from './utils/plan.js';
+import { useMenuOnly } from './utils/plan.js';
 import { useCartSync } from './hooks/useCartSync.js';
 import { useSessionRenewal } from './hooks/useSessionRenewal.js';
 import './App.css';
@@ -40,13 +41,14 @@ function PageLoader() {
 }
 
 function Layout() {
+  const menuOnly = useMenuOnly();
   useCartSync();
   useSessionRenewal();
   return (
     <div className="app-shell">
       <Header />
       <OfflineBanner />
-      {!isPlan1 && <WaiterCallBanner />}
+      {!menuOnly && <WaiterCallBanner />}
       <main className="main">
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
@@ -61,6 +63,7 @@ function Layout() {
 export default function App() {
   const { i18n } = useTranslation();
   const token = useSessionStore((s) => s.token);
+  const menuOnly = useMenuOnly();
 
   useEffect(() => {
     const apply = () => {
@@ -90,12 +93,13 @@ export default function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/t/:token" element={<ScanLanguage />} />
         <Route path="/t/:token/open" element={<SessionBoot />} />
+        <Route path="/m/:slug" element={<MenuPreviewBoot />} />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/orders/round" element={isPlan1 ? <Navigate to="/menu" replace /> : <RoundPage />} />
-        <Route path="/orders/:id" element={isPlan1 ? <Navigate to="/menu" replace /> : <OrderPage />} />
-        <Route path="/waiter" element={isPlan1 ? <Navigate to="/menu" replace /> : <WaiterPage />} />
-        <Route path="/bill" element={isPlan1 ? <Navigate to="/menu" replace /> : <BillPage />} />
-        <Route path="/history" element={isPlan1 ? <Navigate to="/menu" replace /> : <History />} />
+        <Route path="/orders/round" element={menuOnly ? <Navigate to="/menu" replace /> : <RoundPage />} />
+        <Route path="/orders/:id" element={menuOnly ? <Navigate to="/menu" replace /> : <OrderPage />} />
+        <Route path="/waiter" element={menuOnly ? <Navigate to="/menu" replace /> : <WaiterPage />} />
+        <Route path="/bill" element={menuOnly ? <Navigate to="/menu" replace /> : <BillPage />} />
+        <Route path="/history" element={menuOnly ? <Navigate to="/menu" replace /> : <History />} />
         <Route path="*" element={<Welcome />} />
       </Route>
     </Routes>

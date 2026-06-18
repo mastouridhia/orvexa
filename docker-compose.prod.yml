@@ -133,6 +133,13 @@ services:
     restart: unless-stopped
     networks: [internal]
 
+  landing:
+    build:
+      context: .
+      dockerfile: apps/landing/Dockerfile
+    restart: unless-stopped
+    networks: [internal]
+
   proxy:
     image: nginx:1.27-alpine
     restart: unless-stopped
@@ -142,6 +149,7 @@ services:
       - kitchen
       - waiter
       - admin
+      - landing
     ports:
       - '80:80'
       - '443:443'

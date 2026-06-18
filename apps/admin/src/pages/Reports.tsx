@@ -10,6 +10,9 @@ import type {
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
+import { useCan } from '../utils/plan.js';
+import { UpsellPanel } from '../components/Upsell.js';
+import { IconLock } from '../components/tf-icons.js';
 import { formatDate, formatMillimes, pickLang } from '../utils/format.js';
 
 type Tab = 'sales' | 'top' | 'byCategory';
@@ -18,6 +21,8 @@ export function Reports() {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage as LanguageCode) ?? 'fr';
   const authedFetch = useAuthStore((s) => s.authedFetch);
+  // Revenue-by-category is the Pro-tier "advanced analytics"; sales + top items are basic (Plus).
+  const canAdvanced = useCan()('analytics.advanced');
 
   const [tab, setTab] = useState<Tab>('sales');
   const [granularity, setGranularity] = useState<ReportGranularity>('day');
@@ -39,6 +44,8 @@ export function Reports() {
       from: from ? new Date(from).toISOString() : undefined,
       to: to ? new Date(to).toISOString() : undefined,
     };
+    // Don't hit the (403-gated) advanced endpoint when the plan can't access it.
+    if (tab === 'byCategory' && !canAdvanced) return;
     (async () => {
       if (cancelled) return;
       setLoading(true);
@@ -81,8 +88,14 @@ export function Reports() {
           type="button"
           aria-pressed={tab === 'byCategory'}
           onClick={() => setTab('byCategory')}
+          className={canAdvanced ? undefined : 'is-locked'}
         >
           {t('reports.tabs.byCategory')}
+          {!canAdvanced ? (
+            <span className="tab-lock" aria-hidden="true">
+              <IconLock size={12} />
+            </span>
+          ) : null}
         </button>
       </div>
 
@@ -159,6 +172,8 @@ export function Reports() {
             ))}
           </tbody>
         </table>
+      ) : !canAdvanced ? (
+        <UpsellPanel cap="analytics.advanced" featureKey="reportsAdvanced" />
       ) : (
         <table className="dt">
           <thead>

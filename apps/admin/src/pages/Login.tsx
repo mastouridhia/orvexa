@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/auth.js';
 import { LanguageSelector } from '@orvexa/ui';
@@ -67,6 +68,11 @@ export function Login() {
           <button type="submit" className="btn btn-primary btn-block" disabled={busy || !canSubmit}>
             {busy ? t('login.submitting') : t('login.submit')}
           </button>
+          <p style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.85rem' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--accent)' }}>
+              Mot de passe oublié ?
+            </Link>
+          </p>
         </form>
       </div>
     </div>

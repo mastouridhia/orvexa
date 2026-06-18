@@ -10,6 +10,7 @@ declare global {
         id: string;
         restaurantId: string;
         role: StaffRole;
+        plan: number;
       };
       customerSession?: {
         id: string;

@@ -1,11 +1,14 @@
 import { z } from 'zod';
 import { LanguageCodeSchema } from './common.js';
-import { StaffUserSchema } from './staff.js';
+import { StaffAppSchema, StaffUserSchema } from './staff.js';
 
 export const StaffLoginRequestSchema = z.object({
   email: z.email(),
   password: z.string().min(1),
   restaurantSlug: z.string().min(1).optional(),
+  // Which app the login is coming from. When present, the server rejects roles
+  // that aren't allowed in that app (strict per-app account separation).
+  app: StaffAppSchema.optional(),
 });
 export type StaffLoginRequest = z.infer<typeof StaffLoginRequestSchema>;
 

@@ -12,6 +12,7 @@ export type StaffAccessPayload = {
   rid: string;
   role: StaffRole;
   ver: number;
+  plan: number;
 };
 
 export type StaffRefreshPayload = {
@@ -71,7 +72,7 @@ export function signStaffRefreshToken(
   // which is required for rotation to reliably invalidate the previous token.
   return sign<StaffRefreshPayload>(
     { ...payload, typ: 'refresh', jti: randomUUID() },
-    config.auth.jwtSecret,
+    config.auth.jwtRefreshSecret,
     ttl,
   );
 }
@@ -81,7 +82,7 @@ export function verifyStaffAccessToken(token: string): StaffAccessPayload {
 }
 
 export function verifyStaffRefreshToken(token: string): StaffRefreshPayload {
-  return verify<StaffRefreshPayload>(token, config.auth.jwtSecret, 'refresh');
+  return verify<StaffRefreshPayload>(token, config.auth.jwtRefreshSecret, 'refresh');
 }
 
 export function signCustomerSessionToken(

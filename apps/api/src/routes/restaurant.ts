@@ -45,6 +45,21 @@ restaurantRouter.patch(
   }),
 );
 
+// QR + link for the shareable, view-only public menu. Any staff member can
+// fetch it (it exposes nothing private — just the public menu URL).
+restaurantRouter.get(
+  '/restaurant/menu-qr',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    if (!req.user) throw new UnauthorizedError('Authentication required');
+    const format = req.query.format === 'svg' ? 'svg' : 'png';
+    const qr = await service.menuQr(req.user.restaurantId, format);
+    res.setHeader('content-type', qr.contentType);
+    res.setHeader('x-qr-url', qr.url);
+    res.status(200).send(qr.body);
+  }),
+);
+
 // Echoes the caller's public IP so an admin, while on the café Wi-Fi, can
 // one-tap register that network for the `wifi` ordering gate.
 restaurantRouter.get(
@@ -71,6 +86,11 @@ registerPath('patch', '/restaurant', {
   summary: 'Update restaurant settings (admin/manager)',
   tags: ['restaurant'],
   responses: jsonOk,
+});
+registerPath('get', '/restaurant/menu-qr', {
+  summary: 'QR/PNG (or ?format=svg) for the shareable view-only public menu',
+  tags: ['restaurant'],
+  responses: { '200': { description: 'QR image' } },
 });
 registerPath('get', '/restaurant/detect-ip', {
   summary: "Echo the caller's public IP (admin/manager) — for registering the café network",

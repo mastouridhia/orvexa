@@ -162,6 +162,55 @@
       "when": 1781266383093,
       "tag": "0022_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1781517829657,
+      "tag": "0023_restaurant_plan",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1781564908264,
+      "tag": "0024_password_resets",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1781565310813,
+      "tag": "0025_account_lockout",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1781609022190,
+      "tag": "0026_restaurant_per_table_qr",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1781625418379,
+      "tag": "0027_restaurant_info_card",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1781700960489,
+      "tag": "0028_restaurant_extra_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1781778285416,
+      "tag": "0029_restaurant_terms_consent",
+      "breakpoints": true
     }
   ]
 }

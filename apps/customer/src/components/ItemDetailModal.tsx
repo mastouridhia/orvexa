@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { Dish, LanguageCode, Variant, VariantGroup } from '@orvexa/shared';
 import { useEscapeKey, useFocusTrap } from '@orvexa/ui';
 import { useCartStore, makeLine } from '../store/cart.js';
-import { isPlan1 } from '../utils/plan.js';
+import { useCan } from '../utils/plan.js';
 import { formatMillimes, pickLang } from '../utils/format.js';
 import { IconChevronDown, IconMinus, IconPlus } from './tf-icons.js';
 
@@ -33,6 +33,7 @@ export function ItemDetailModal({
   lang: LanguageCode;
   onClose: () => void;
 }) {
+  const menuOnly = !useCan()('ordering.customer');
   const { t } = useTranslation();
   const groups = useMemo(() => dish.variantGroups ?? [], [dish.variantGroups]);
   const [selection, setSelection] = useState<Selection>(() => defaultSelection(groups));
@@ -242,7 +243,7 @@ export function ItemDetailModal({
             </>
           ) : null}
 
-          {!isPlan1 && (
+          {!menuOnly && (
             <div className="tf-notes">
               <div className="tf-vgroup__hint" style={{ marginBottom: 8 }}>
                 {t('dish.notes')}
@@ -259,7 +260,7 @@ export function ItemDetailModal({
         </div>
       </div>
 
-      {!isPlan1 && (
+      {!menuOnly && (
         <div className="tf-sheet__bar">
           <div className="tf-stepper" aria-label={t('dish.quantity')}>
             <button

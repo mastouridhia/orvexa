@@ -1,33 +1,48 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { LanguageCode, PaymentPoint, Restaurant } from '@orvexa/shared';
+import type { DayHours, LanguageCode, PaymentPoint, Restaurant, Weekday } from '@orvexa/shared';
+import { WEEKDAYS, PLAN_NAMES, PLAN_PRICING, normalizePlan } from '@orvexa/shared';
 import { LanguageSelector } from '@orvexa/ui';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { useAuthStore } from '../store/auth.js';
-import { isPlan1 } from '../utils/plan.js';
+import { useCan, usePlan } from '../utils/plan.js';
 import {
+  IconAlertTriangle,
+  IconBolt,
+  IconClock,
   IconGlobe,
   IconHome,
+  IconLock,
   IconLogout,
+  IconMap,
   IconMonitor,
+  IconQr,
   IconReceipt,
   IconShield,
+  IconUser,
 } from '../components/tf-icons.js';
 import type { OrderGateMode } from '@orvexa/shared';
+import { ShareableMenu } from '../components/ShareableMenu.js';
 
 const LANGS: LanguageCode[] = ['fr', 'ar', 'en'];
 const LANG_LABELS: Record<LanguageCode, string> = { fr: 'Français', ar: 'العربية', en: 'English' };
 const LANG_FLAGS: Record<LanguageCode, string> = { fr: '🇫🇷', ar: '🇸🇦', en: '🇬🇧' };
 
 export function Settings() {
+  const menuOnly = !useCan()('ordering.customer');
+  const plan = normalizePlan(usePlan());
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const logout = useAuthStore((s) => s.logout);
+  const currentUser = useAuthStore((s) => s.user);
+  const updateUser = useAuthStore((s) => s.updateUser);
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const [activeTab, setActiveTab] = useState('subscription');
 
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
@@ -39,7 +54,29 @@ export function Settings() {
   const [detecting, setDetecting] = useState(false);
   const [detectedIp, setDetectedIp] = useState<string | null>(null);
 
+  const [profileName, setProfileName] = useState(currentUser?.name ?? '');
+  const [profileEmail, setProfileEmail] = useState(currentUser?.email ?? '');
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSaved, setProfileSaved] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSaved, setPwSaved] = useState(false);
+
   const RESET_KEYWORD = t('settings.dangerZone.confirmKeyword');
+
+  const tabs = [
+    { id: 'subscription', label: t('settings.groups.subscription') },
+    { id: 'establishment', label: t('settings.groups.establishment') },
+    ...(!menuOnly ? [{ id: 'operations', label: t('settings.groups.operations') }] : []),
+    { id: 'interface', label: t('settings.groups.interface') },
+    { id: 'account', label: t('settings.groups.account') },
+    ...(!menuOnly ? [{ id: 'danger', label: t('settings.groups.danger') }] : []),
+  ];
 
   useEffect(() => {
     let cancelled = false;
@@ -124,11 +161,22 @@ export function Settings() {
           supportedLanguages: restaurant.supportedLanguages,
           taxPercent: restaurant.taxPercent,
           servicePercent: restaurant.servicePercent,
+          defaultPrepMinutes: restaurant.defaultPrepMinutes,
           timezone: restaurant.timezone,
           paymentPoint: restaurant.paymentPoint,
           orderGateMode: restaurant.orderGateMode,
           allowedNetworks: restaurant.allowedNetworks,
           orderCeiling: restaurant.orderCeiling,
+          perTableQr: restaurant.perTableQr,
+          address: restaurant.address,
+          mapUrl: restaurant.mapUrl,
+          phone: restaurant.phone,
+          instagramUrl: restaurant.instagramUrl,
+          facebookUrl: restaurant.facebookUrl,
+          tiktokUrl: restaurant.tiktokUrl,
+          wifiSsid: restaurant.wifiSsid,
+          wifiPassword: restaurant.wifiPassword,
+          openingHours: restaurant.openingHours,
         }),
       );
       setRestaurant(updated);
@@ -139,6 +187,50 @@ export function Settings() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const saveProfile = async () => {
+    const name = profileName.trim();
+    const email = profileEmail.trim();
+    if (!name || !email) return;
+    setProfileBusy(true);
+    setProfileError(null);
+    try {
+      const updated = await authedFetch((tk) => api.updateProfile(tk, { name, email }));
+      updateUser({ name: updated.name, email: updated.email });
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 2000);
+    } catch (err) {
+      setProfileError(getErrorMessage(err));
+    } finally {
+      setProfileBusy(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (!currentPassword || newPassword.length < 8 || newPassword !== confirmPassword) return;
+    setPwBusy(true);
+    setPwError(null);
+    try {
+      await authedFetch((tk) => api.changePassword(tk, currentPassword, newPassword));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPwSaved(true);
+      setTimeout(() => setPwSaved(false), 2000);
+    } catch (err) {
+      setPwError(getErrorMessage(err));
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const setDay = (day: Weekday, value: DayHours | null) => {
+    if (!restaurant) return;
+    setRestaurant({
+      ...restaurant,
+      openingHours: { ...(restaurant.openingHours ?? {}), [day]: value },
+    });
   };
 
   const toggleLang = (l: LanguageCode) => {
@@ -183,7 +275,66 @@ export function Settings() {
         </div>
       </div>
 
+      <div className="tf-a-settings__tabs" role="tablist">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={`tf-a-settings__tab${activeTab === tab.id ? ' is-active' : ''}${
+              tab.id === 'danger' ? ' tf-a-settings__tab--danger' : ''
+            }`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="tf-a-settings">
+        {/* ───────────────── Subscription ───────────────── */}
+        {activeTab === 'subscription' && (
+        <div className="tf-a-settings__group">
+
+        {/* ── Plan / subscription ── */}
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconBolt />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">
+                {t('settings.plan.title', { defaultValue: 'Your plan' })}
+              </div>
+              <div className="tf-a-settings__section-sub">
+                {t('settings.plan.sub', {
+                  defaultValue: 'The Orvexa subscription tier active on this restaurant.',
+                })}
+              </div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <div className="tf-a-settings__plan">
+              <span className={`tf-a-settings__plan-badge tf-a-settings__plan-badge--tier${plan}`}>
+                {PLAN_NAMES[plan]}
+              </span>
+              <span className="tf-a-settings__plan-price">
+                {t('settings.plan.price', {
+                  defaultValue: '{{price}} TND / month',
+                  price: PLAN_PRICING[plan].monthly,
+                })}
+              </span>
+            </div>
+          </div>
+        </section>
+        </div>
+        )}
+
+        {/* ───────────────── Establishment ───────────────── */}
+        {activeTab === 'establishment' && (
+        <div className="tf-a-settings__group">
+
         {/* ── Restaurant ── */}
         <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
@@ -205,6 +356,138 @@ export function Settings() {
                 onChange={(e) => setRestaurant({ ...restaurant, name: e.target.value })}
               />
             </label>
+          </div>
+        </section>
+
+        {/* ── Business info (menu.info — all tiers) ── */}
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconMap />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">{t('settings.sectionInfo')}</div>
+              <div className="tf-a-settings__section-sub">{t('settings.sectionInfoSub')}</div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <div className="tf-a-settings__subhead">{t('settings.info.contactHead')}</div>
+            <label className="tf-a-settings__field">
+              <span className="tf-a-settings__field-label">{t('settings.info.address')}</span>
+              <input
+                type="text"
+                value={restaurant.address ?? ''}
+                onChange={(e) => setRestaurant({ ...restaurant, address: e.target.value })}
+              />
+            </label>
+            <div className="tf-a-settings__row">
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.mapUrl')}</span>
+                <input
+                  type="text"
+                  inputMode="url"
+                  placeholder="https://maps.google.com/…"
+                  value={restaurant.mapUrl ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, mapUrl: e.target.value })}
+                />
+              </label>
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.phone')}</span>
+                <input
+                  type="tel"
+                  value={restaurant.phone ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, phone: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <div className="tf-a-settings__subhead">{t('settings.info.socialsHead')}</div>
+            <div className="tf-a-settings__row">
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.instagram')}</span>
+                <input
+                  type="text"
+                  value={restaurant.instagramUrl ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, instagramUrl: e.target.value })}
+                />
+              </label>
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.facebook')}</span>
+                <input
+                  type="text"
+                  value={restaurant.facebookUrl ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, facebookUrl: e.target.value })}
+                />
+              </label>
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.tiktok')}</span>
+                <input
+                  type="text"
+                  value={restaurant.tiktokUrl ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, tiktokUrl: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <div className="tf-a-settings__subhead">{t('settings.info.wifiHead')}</div>
+            <div className="tf-a-settings__row">
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.wifiSsid')}</span>
+                <input
+                  type="text"
+                  value={restaurant.wifiSsid ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, wifiSsid: e.target.value })}
+                />
+              </label>
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.info.wifiPassword')}</span>
+                <input
+                  type="text"
+                  value={restaurant.wifiPassword ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, wifiPassword: e.target.value })}
+                />
+              </label>
+            </div>
+
+            <div className="tf-a-settings__subhead">{t('settings.info.hoursHead')}</div>
+            <div className="tf-a-settings__hours">
+              {WEEKDAYS.map((day) => {
+                const dh = restaurant.openingHours?.[day] ?? null;
+                const isOpen = dh != null;
+                return (
+                  <div className="tf-a-settings__hours-row" key={day}>
+                    <span className="tf-a-settings__hours-day">{t(`settings.info.days.${day}`)}</span>
+                    <label className="tf-a-settings__hours-toggle">
+                      <input
+                        type="checkbox"
+                        checked={isOpen}
+                        onChange={(e) =>
+                          setDay(day, e.target.checked ? (dh ?? { open: '08:00', close: '23:00' }) : null)
+                        }
+                      />
+                      <span>{t('settings.info.open')}</span>
+                    </label>
+                    {isOpen ? (
+                      <>
+                        <input
+                          type="time"
+                          value={dh.open}
+                          onChange={(e) => setDay(day, { open: e.target.value, close: dh.close })}
+                        />
+                        <span className="tf-a-settings__hours-dash">–</span>
+                        <input
+                          type="time"
+                          value={dh.close}
+                          onChange={(e) => setDay(day, { open: dh.open, close: e.target.value })}
+                        />
+                      </>
+                    ) : (
+                      <span className="tf-a-settings__hours-closed">{t('settings.info.closed')}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
@@ -276,8 +559,44 @@ export function Settings() {
           </div>
         </section>
 
+        {/* ── QR codes ── */}
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconQr />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">{t('settings.sectionQr')}</div>
+              <div className="tf-a-settings__section-sub">{t('settings.sectionQrSub')}</div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <label className="tf-a-settings__field" style={{ flex: 1 }}>
+              <span className="tf-a-settings__field-label">{t('settings.qrMode')}</span>
+              <select
+                value={restaurant.perTableQr ? 'perTable' : 'single'}
+                onChange={(e) =>
+                  setRestaurant({ ...restaurant, perTableQr: e.target.value === 'perTable' })
+                }
+              >
+                <option value="perTable">{t('settings.qrModePerTable')}</option>
+                <option value="single">{t('settings.qrModeSingle')}</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        {/* ── Shareable public menu ── */}
+        <ShareableMenu />
+        </div>
+        )}
+
+        {/* ───────────────── Operations ───────────────── */}
+        {activeTab === 'operations' && (
+        <div className="tf-a-settings__group">
+
         {/* ── Pricing ── */}
-        {!isPlan1 && <section className="tf-a-settings__section">
+        <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
             <span className="tf-a-settings__section-icon">
               <IconReceipt />
@@ -346,10 +665,49 @@ export function Settings() {
               </select>
             </label>
           </div>
-        </section>}
+        </section>
+
+        {/* ── Kitchen / prep time ── */}
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconClock />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">{t('settings.sectionKitchen')}</div>
+              <div className="tf-a-settings__section-sub">{t('settings.sectionKitchenSub')}</div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <label className="tf-a-settings__field" style={{ maxWidth: 220 }}>
+              <span className="tf-a-settings__field-label">{t('settings.defaultPrepMinutes')}</span>
+              <div className="tf-a-settings__field-addon">
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  step="1"
+                  value={restaurant.defaultPrepMinutes}
+                  onChange={(e) =>
+                    setRestaurant({
+                      ...restaurant,
+                      defaultPrepMinutes: Math.max(1, Math.min(120, Number(e.target.value) || 1)),
+                    })
+                  }
+                />
+                <span className="tf-a-settings__addon-unit">
+                  {t('settings.defaultPrepMinutesUnit', { defaultValue: 'min' })}
+                </span>
+              </div>
+              <p className="tf-a-settings__note" style={{ marginTop: 4 }}>
+                {t('settings.defaultPrepMinutesHint')}
+              </p>
+            </label>
+          </div>
+        </section>
 
         {/* ── Ordering access ── */}
-        {!isPlan1 && <section className="tf-a-settings__section">
+        <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
             <span className="tf-a-settings__section-icon">
               <IconShield />
@@ -469,7 +827,13 @@ export function Settings() {
               </p>
             </label>
           </div>
-        </section>}
+        </section>
+        </div>
+        )}
+
+        {/* ───────────────── Interface ───────────────── */}
+        {activeTab === 'interface' && (
+        <div className="tf-a-settings__group">
 
         {/* ── Interface ── */}
         <section className="tf-a-settings__section">
@@ -486,26 +850,136 @@ export function Settings() {
             <LanguageSelector />
           </div>
         </section>
+        </div>
+        )}
 
-        {/* ── Danger zone ── */}
-        {!isPlan1 && <section className="tf-a-settings__section tf-a-settings__section--danger">
+        {/* ───────────────── Account ───────────────── */}
+        {activeTab === 'account' && (
+        <div className="tf-a-settings__group">
+
+        {/* ── Mon compte ── */}
+        <section className="tf-a-settings__section">
           <div className="tf-a-settings__section-head">
-            <span className="tf-a-settings__section-icon tf-a-settings__section-icon--danger">⚠</span>
+            <span className="tf-a-settings__section-icon">
+              <IconUser />
+            </span>
             <div>
-              <div className="tf-a-settings__section-title tf-a-settings__section-title--danger">
-                {t('settings.dangerZone.title')}
-              </div>
-              <div className="tf-a-settings__section-sub">
-                {t('settings.dangerZone.sub')}
-              </div>
+              <div className="tf-a-settings__section-title">{t('settings.account.title')}</div>
+              <div className="tf-a-settings__section-sub">{t('settings.account.sub')}</div>
             </div>
           </div>
           <div className="tf-a-settings__section-body">
-            <button type="button" className="btn btn-danger" onClick={openResetModal}>
-              {t('settings.dangerZone.resetButton')}
-            </button>
+            <div className="tf-a-settings__row">
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.account.name')}</span>
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={profileName}
+                  onChange={(e) => setProfileName(e.target.value)}
+                />
+              </label>
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.account.email')}</span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  value={profileEmail}
+                  onChange={(e) => setProfileEmail(e.target.value)}
+                />
+              </label>
+            </div>
+            {profileError && <div className="error-banner" style={{ marginBottom: 0 }}>{profileError}</div>}
+            <div className="tf-a-settings__actions">
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                disabled={profileBusy || !profileName.trim() || !profileEmail.trim()}
+                onClick={saveProfile}
+              >
+                {profileBusy ? t('settings.account.saving') : t('settings.account.save')}
+              </button>
+              {profileSaved && (
+                <span className="tf-a-settings__flash tf-a-settings__flash--ok">
+                  ✓ {t('settings.account.saved')}
+                </span>
+              )}
+            </div>
           </div>
-        </section>}
+        </section>
+
+        {/* ── Security ── */}
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconLock />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">{t('settings.security.title')}</div>
+              <div className="tf-a-settings__section-sub">{t('settings.security.sub')}</div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <label className="tf-a-settings__field">
+              <span className="tf-a-settings__field-label">{t('settings.security.current')}</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+            </label>
+            <div className="tf-a-settings__row">
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">
+                  {t('settings.security.new')}{' '}
+                  <span className="tf-a-settings__field-hint">{t('settings.security.newHint')}</span>
+                </span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </label>
+              <label className="tf-a-settings__field" style={{ flex: 1 }}>
+                <span className="tf-a-settings__field-label">{t('settings.security.confirm')}</span>
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                {confirmPassword && newPassword !== confirmPassword && (
+                  <span className="tf-a-settings__field-error">
+                    {t('settings.security.mismatch')}
+                  </span>
+                )}
+              </label>
+            </div>
+            {pwError && <div className="error-banner" style={{ marginBottom: 0 }}>{pwError}</div>}
+            <div className="tf-a-settings__actions">
+              <button
+                type="button"
+                className="btn btn-sm btn-primary"
+                disabled={
+                  pwBusy ||
+                  !currentPassword ||
+                  newPassword.length < 8 ||
+                  newPassword !== confirmPassword
+                }
+                onClick={changePassword}
+              >
+                {pwBusy ? t('settings.security.saving') : t('settings.security.save')}
+              </button>
+              {pwSaved && (
+                <span className="tf-a-settings__flash tf-a-settings__flash--ok">
+                  ✓ {t('settings.security.saved')}
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* ── Sign out ── */}
         <section className="tf-a-settings__section">
@@ -531,6 +1005,35 @@ export function Settings() {
             </button>
           </div>
         </section>
+        </div>
+        )}
+
+        {/* ───────────────── Danger zone ───────────────── */}
+        {activeTab === 'danger' && (
+        <div className="tf-a-settings__group">
+
+        <section className="tf-a-settings__section tf-a-settings__section--danger">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon tf-a-settings__section-icon--danger">
+              <IconAlertTriangle />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title tf-a-settings__section-title--danger">
+                {t('settings.dangerZone.title')}
+              </div>
+              <div className="tf-a-settings__section-sub">
+                {t('settings.dangerZone.sub')}
+              </div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <button type="button" className="btn btn-danger" onClick={openResetModal}>
+              {t('settings.dangerZone.resetButton')}
+            </button>
+          </div>
+        </section>
+        </div>
+        )}
       </div>
 
       {resetModalOpen && (

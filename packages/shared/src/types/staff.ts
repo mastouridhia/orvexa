@@ -1,8 +1,33 @@
 import { z } from 'zod';
 import { IsoDateTimeSchema, UuidSchema } from './common.js';
 
-export const StaffRoleSchema = z.enum(['admin', 'manager', 'kitchen', 'waiter', 'cashier']);
+export const StaffRoleSchema = z.enum([
+  'admin',
+  'manager',
+  'kitchen',
+  'waiter',
+  'cashier',
+  // Plus-tier lightweight role: handles the order inbox only (accept/advance/reject).
+  'employee',
+]);
 export type StaffRole = z.infer<typeof StaffRoleSchema>;
+
+// Which staff-facing app a login is coming from. Each app is locked to a
+// specific set of roles so an account can only sign in to its own surface.
+export const StaffAppSchema = z.enum(['admin', 'kitchen', 'waiter']);
+export type StaffApp = z.infer<typeof StaffAppSchema>;
+
+// Single source of truth for role → app access, shared by the server (enforced
+// at login) and the frontends. Strict separation: one role family per app.
+export const APP_ROLES: Record<StaffApp, readonly StaffRole[]> = {
+  admin: ['admin', 'manager'],
+  kitchen: ['kitchen'],
+  waiter: ['waiter', 'employee'],
+};
+
+export function roleAllowedForApp(role: StaffRole, app: StaffApp): boolean {
+  return APP_ROLES[app].includes(role);
+}
 
 export const StaffUserSchema = z.object({
   id: UuidSchema,

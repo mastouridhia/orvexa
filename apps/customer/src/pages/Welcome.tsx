@@ -4,9 +4,10 @@ import { LanguageSelector } from '@orvexa/ui';
 import { useSessionStore } from '../store/session.js';
 import { useOrderRefsStore } from '../store/orders.js';
 import { IconQR } from '../components/tf-icons.js';
-import { isPlan1 } from '../utils/plan.js';
+import { useCan } from '../utils/plan.js';
 
 export function Welcome() {
+  const menuOnly = !useCan()('ordering.customer');
   const { t } = useTranslation();
   const session = useSessionStore((s) => s.session);
   const restaurant = useSessionStore((s) => s.restaurant);
@@ -48,7 +49,7 @@ export function Welcome() {
             <Link to="/menu" className="btn btn-primary btn-lg">
               {t('welcome.browseMenu')}
             </Link>
-            {!isPlan1 && orderIds.length ? (
+            {!menuOnly && orderIds.length ? (
               <Link to="/history" className="btn btn-pill">
                 {t('order.history')}
               </Link>

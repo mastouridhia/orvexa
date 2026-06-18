@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Restaurant, TableWithDerived } from '@orvexa/shared';
-import { isPlan1 } from '../utils/plan.js';
+import { tableLimit } from '@orvexa/shared';
+import { useCan, usePlan } from '../utils/plan.js';
 import { getErrorMessage } from '../api/client.js';
 import { api } from '../api/queries.js';
 import { apiBaseUrl } from '../api/client.js';
@@ -11,10 +12,13 @@ import { Modal } from '@orvexa/ui';
 type Tab = 'list' | 'floorPlan';
 
 export function TablesManager() {
+  const showAdvanced = useCan()('tables.advanced');
+  const plan = usePlan();
   const { t } = useTranslation();
   const accessToken = useAuthStore((s) => s.accessToken);
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [tables, setTables] = useState<TableWithDerived[]>([]);
+  const [extraTables, setExtraTables] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<TableWithDerived | 'new' | null>(null);
   const [printing, setPrinting] = useState(false);
@@ -23,14 +27,25 @@ export function TablesManager() {
   const [bulkProgress, setBulkProgress] = useState<number | null>(null);
   const reload = () => setReloadKey((k) => k + 1);
 
-  const bulkAdd100 = async () => {
+  // Soft-cap (PLANS.md §8): tier quota + purchased overage. `null` = unlimited.
+  const limit = tableLimit(plan, extraTables);
+  const remaining = limit === null ? Infinity : Math.max(0, limit - tables.length);
+  const atLimit = remaining <= 0;
+  // The bulk button tops up toward the limit (capped at 100), not a blind +100.
+  const bulkCount = Math.min(100, remaining === Infinity ? 100 : remaining);
+
+  const bulkAdd = async () => {
+    if (bulkCount <= 0) {
+      setError(t('tables.quotaReached', { limit: limit ?? '' }));
+      return;
+    }
     const highest = tables.reduce((max, tb) => {
       const m = /^Table (\d+)$/i.exec(tb.label);
       return m ? Math.max(max, Number(m[1])) : max;
     }, 0);
     setBulkProgress(0);
     try {
-      for (let i = 1; i <= 100; i++) {
+      for (let i = 1; i <= bulkCount; i++) {
         await authedFetch((tk) => api.createTable(tk, { label: `Table ${highest + i}`, seats: 4 }));
         setBulkProgress(i);
       }
@@ -57,6 +72,21 @@ export function TablesManager() {
     };
   }, [authedFetch, reloadKey]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await authedFetch((tk) => api.getRestaurant(tk));
+        if (!cancelled) setExtraTables(r.extraTables);
+      } catch {
+        /* non-fatal — limit falls back to the plain tier quota */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authedFetch]);
+
   if (printing)
     return <PrintSheet tables={tables} token={accessToken} onDone={() => setPrinting(false)} />;
 
@@ -75,7 +105,7 @@ export function TablesManager() {
           >
             {t('tables.tabList')}
           </button>
-          {!isPlan1 && (
+          {showAdvanced && (
             <button
               type="button"
               role="tab"
@@ -88,24 +118,51 @@ export function TablesManager() {
           )}
         </div>
         {tab === 'list' ? (
-          <div className="row-gap">
+          <div className="row-gap" style={{ alignItems: 'center' }}>
+            <span className="muted" style={{ fontSize: '0.85rem' }}>
+              {limit === null
+                ? t('tables.quotaUnlimited', { count: tables.length })
+                : t('tables.quotaLabel', { count: tables.length, limit })}
+            </span>
             <button type="button" className="btn" onClick={() => setPrinting(true)}>
               {t('tables.printSheet')}
             </button>
             <button
               type="button"
               className="btn"
-              onClick={bulkAdd100}
-              disabled={bulkProgress !== null}
+              onClick={bulkAdd}
+              disabled={bulkProgress !== null || atLimit}
             >
-              {bulkProgress !== null ? `${bulkProgress}/100…` : '+ 100 tables'}
+              {bulkProgress !== null
+                ? `${bulkProgress}/${bulkCount}…`
+                : t('tables.quotaAddSome', { count: bulkCount })}
             </button>
-            <button type="button" className="btn btn-primary" onClick={() => setEditing('new')}>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => setEditing('new')}
+              disabled={atLimit}
+            >
               + {t('tables.new')}
             </button>
           </div>
         ) : null}
       </div>
+      {tab === 'list' && atLimit ? (
+        <div
+          style={{
+            marginBottom: '1rem',
+            padding: '0.75rem 1rem',
+            borderRadius: '0.5rem',
+            border: '1px solid rgba(217,122,44,0.35)',
+            background: 'rgba(217,122,44,0.10)',
+            color: 'var(--fg, inherit)',
+            fontSize: '0.9rem',
+          }}
+        >
+          {t('tables.quotaReached', { limit: limit ?? '' })}
+        </div>
+      ) : null}
 
       {tab === 'floorPlan' ? (
         <div
@@ -133,9 +190,9 @@ export function TablesManager() {
           <thead>
             <tr>
               <th>{t('tables.label')}</th>
-              {!isPlan1 && <th className="right">{t('tables.seats')}</th>}
-              {!isPlan1 && <th>{t('tables.derivedStatus')}</th>}
-              {!isPlan1 && <th>{t('tables.merged')}</th>}
+              {showAdvanced && <th className="right">{t('tables.seats')}</th>}
+              {showAdvanced && <th>{t('tables.derivedStatus')}</th>}
+              {showAdvanced && <th>{t('tables.merged')}</th>}
               <th />
             </tr>
           </thead>
@@ -152,9 +209,9 @@ export function TablesManager() {
                   <td>
                     <strong>{tb.label}</strong>
                   </td>
-                  {!isPlan1 && <td className="right">{tb.seats}</td>}
-                  {!isPlan1 && <td>{tb.derivedStatus}</td>}
-                  {!isPlan1 && (
+                  {showAdvanced && <td className="right">{tb.seats}</td>}
+                  {showAdvanced && <td>{tb.derivedStatus}</td>}
+                  {showAdvanced && (
                     <td>
                       {isLeader ? (
                         <span className="faint">
@@ -170,7 +227,7 @@ export function TablesManager() {
                     </td>
                   )}
                   <td className="right">
-                    {isPlan1 ? null : isMember ? (
+                    {!showAdvanced ? null : isMember ? (
                       <button
                         type="button"
                         className="btn btn-sm"
@@ -221,7 +278,7 @@ export function TablesManager() {
                       </select>
                     )}{' '}
                     <button type="button" className="btn btn-sm" onClick={() => setEditing(tb)}>
-                      {t('tables.save')}
+                      {t('tables.edit')}
                     </button>{' '}
                     <button
                       type="button"
@@ -272,6 +329,7 @@ function TableEditor({
   onSaved: () => Promise<void> | void;
   onError: (msg: string) => void;
 }) {
+  const showAdvanced = useCan()('tables.advanced');
   const { t } = useTranslation();
   const authedFetch = useAuthStore((s) => s.authedFetch);
   const [label, setLabel] = useState(initial?.label ?? '');
@@ -313,7 +371,7 @@ function TableEditor({
         {t('tables.label')}
         <input type="text" required value={label} onChange={(e) => setLabel(e.target.value)} />
       </label>
-      {!isPlan1 && (
+      {showAdvanced && (
         <label>
           {t('tables.seats')}
           <input
@@ -395,11 +453,16 @@ function PrintSheet({
     };
   }, [tables, token]);
 
+  // Single-QR plans (Essentiel) print one menu QR for the whole place instead of
+  // a per-table sheet. We reuse the first table's QR as the menu target.
+  const singleQr = restaurant?.perTableQr === false;
+
   const sheets = useMemo(() => {
+    const src = singleQr ? tables.slice(0, 1) : tables;
     const out: TableWithDerived[][] = [];
-    for (let i = 0; i < tables.length; i += 4) out.push(tables.slice(i, i + 4));
+    for (let i = 0; i < src.length; i += 4) out.push(src.slice(i, i + 4));
     return out;
-  }, [tables]);
+  }, [tables, singleQr]);
 
   const restaurantName = restaurant?.name ?? '';
   const gateMode = restaurant?.orderGateMode ?? 'off';
