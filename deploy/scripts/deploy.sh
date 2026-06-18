@@ -19,6 +19,17 @@ COMPOSE="docker compose -f docker-compose.prod.yml --env-file .env.production"
 echo "[deploy] Pulling latest code..."
 git pull
 
+# Re-sync the HTTPS server config. nginx only includes conf.d/*.conf; the real
+# host/routing config lives in conf.d-https/02-orvexa.conf and is copied into
+# conf.d/ once by init-certs.sh. Without re-syncing here, edits to that file
+# (new hosts, routing changes like www -> landing) never reach the live proxy.
+# Safe to run every deploy: it's the same copy init-certs.sh performs, and the
+# referenced certs already exist on a provisioned VPS.
+if [ -f deploy/nginx/conf.d/02-orvexa.conf ]; then
+  echo "[deploy] Syncing nginx HTTPS config (conf.d-https -> conf.d)..."
+  cp deploy/nginx/conf.d-https/02-orvexa.conf deploy/nginx/conf.d/02-orvexa.conf
+fi
+
 echo "[deploy] Building API..."
 $COMPOSE build api
 
