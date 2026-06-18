@@ -85,7 +85,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:?SMTP_USER must be set}
       SMTP_PASS: ${SMTP_PASS:?SMTP_PASS must be set}
-      SMTP_FROM: ${SMTP_FROM:-Orvexa <noreply@orvexa.tn>}
+      SMTP_FROM: ${SMTP_FROM:-Orvexa <orvexatn@gmail.com>}
       LEAD_NOTIFY_EMAIL: ${LEAD_NOTIFY_EMAIL:-}
     volumes:
       - api-uploads:/var/lib/orvexa/uploads

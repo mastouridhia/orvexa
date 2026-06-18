@@ -220,7 +220,7 @@ function buildLeadHtml(lead: LeadDetails): string {
 
 export async function sendLeadEmail(lead: LeadDetails) {
   const to = process.env.LEAD_NOTIFY_EMAIL ?? process.env.SMTP_USER;
-  const from = process.env.SMTP_FROM ?? 'Orvexa <noreply@orvexa.tn>';
+  const from = process.env.SMTP_FROM ?? 'Orvexa <orvexatn@gmail.com>';
 
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS || !to) {
     console.log('[email] SMTP not configured — new lead received:');
@@ -240,7 +240,7 @@ export async function sendLeadEmail(lead: LeadDetails) {
 export async function sendPasswordResetEmail(to: string, restaurantName: string, token: string) {
   const adminUrl = process.env.ADMIN_APP_URL ?? 'http://localhost:5176';
   const link = `${adminUrl}/reset-password?token=${token}`;
-  const from = process.env.SMTP_FROM ?? 'Orvexa <noreply@orvexa.tn>';
+  const from = process.env.SMTP_FROM ?? 'Orvexa <orvexatn@gmail.com>';
 
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log(`[email] SMTP not configured — password reset link for ${to}:`);
@@ -259,7 +259,7 @@ export async function sendPasswordResetEmail(to: string, restaurantName: string,
 export async function sendInviteEmail(to: string, restaurantName: string, token: string) {
   const adminUrl = process.env.ADMIN_APP_URL ?? 'http://localhost:5176';
   const link = `${adminUrl}/setup?token=${token}`;
-  const from = process.env.SMTP_FROM ?? 'Orvexa <noreply@orvexa.tn>';
+  const from = process.env.SMTP_FROM ?? 'Orvexa <orvexatn@gmail.com>';
 
   if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     console.log(`[email] SMTP not configured — invite link for ${to}:`);

@@ -48,7 +48,7 @@ COPY apps/nginx-spa.conf /etc/nginx/conf.d/default.conf
 
 ## Editorial TODOs
 
-- Replace `hello@tableflow.tn` with your real contact address.
+- Contact address is `orvexatn@gmail.com` (the official Orvexa inbox) across all pages.
 - Set the `<meta name="description">` to something Tunisia-specific that reads well in search snippets.
 - Add an OG/Twitter card image (`<meta property="og:image">`) for social shares.
 - Localize: this version is English-only. The product itself is trilingual; the landing should follow once copy is finalized.
