@@ -458,6 +458,13 @@
     "qrMode": "QR mode",
     "qrModePerTable": "One QR per table",
     "qrModeSingle": "Single menu QR",
+    "dailyReport": {
+      "title": "Daily email report",
+      "sub": "Get yesterday's summary — sales, orders, QR scans and top items — by email every morning.",
+      "enable": "Send me a daily report by email",
+      "recipient": "Recipient email",
+      "hint": "Sent each morning (Tunis time) for the previous day. Leave the toggle off to stop receiving it."
+    },
     "sectionInfo": "Business info",
     "sectionInfoSub": "Hours, address, contact and WiFi shown to customers on your menu. All optional.",
     "info": {

@@ -8,6 +8,7 @@ import { attachRealtime } from './realtime/server.js';
 import { closeDayForRestaurant } from './services/close-day.js';
 import { getBus } from './realtime/bus.js';
 import { connectRedis, redis } from './cache/client.js';
+import { runDailyReports } from './jobs/daily-report.js';
 
 const app = createApp();
 const httpServer = createServer(app);
@@ -18,9 +19,11 @@ void connectRedis();
 httpServer.listen(config.port, () => {
   logger.info({ port: config.port, env: config.env }, 'api listening');
   scheduleMidnightReset();
+  if (config.dailyReport.enabled) scheduleDailyReport();
 });
 
 let midnightTimer: ReturnType<typeof setTimeout> | null = null;
+let reportTimer: ReturnType<typeof setTimeout> | null = null;
 
 function msUntilNextTunisMidnight(): number {
   // Africa/Tunis is UTC+1 (no DST). We compute the next midnight in that tz
@@ -64,6 +67,36 @@ async function runMidnightReset(): Promise<void> {
   }
 }
 
+// ms until the next occurrence of `hour`:00 Africa/Tunis (UTC+1, no DST).
+function msUntilNextTunisHour(hour: number): number {
+  const now = new Date();
+  const [year, month, day] = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Tunis',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(now)
+    .split('-')
+    .map(Number) as [number, number, number];
+  // hour:00:30 Africa/Tunis = same date at (hour-1):00:30 UTC; +30s avoids racing
+  // the 00:00 day-close. If that instant has already passed today, target tomorrow.
+  let target = Date.UTC(year, month - 1, day, hour - 1, 0, 30);
+  if (target <= now.getTime()) target += 24 * 60 * 60 * 1000;
+  return target - now.getTime();
+}
+
+function scheduleDailyReport(): void {
+  const delay = msUntilNextTunisHour(config.dailyReport.hour);
+  reportTimer = setTimeout(() => {
+    void runDailyReports().finally(() => scheduleDailyReport());
+  }, delay);
+  logger.info(
+    { nextRunInSeconds: Math.round(delay / 1000), tunisHour: config.dailyReport.hour },
+    'daily report scheduled',
+  );
+}
+
 let shuttingDown = false;
 
 async function shutdown(signal: NodeJS.Signals): Promise<void> {
@@ -79,6 +112,7 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
 
   try {
     if (midnightTimer !== null) clearTimeout(midnightTimer);
+    if (reportTimer !== null) clearTimeout(reportTimer);
     io.close();
     await new Promise<void>((resolve, reject) => {
       httpServer.close((err) => (err ? reject(err) : resolve()));

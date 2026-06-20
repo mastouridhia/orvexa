@@ -168,6 +168,8 @@ export function Settings() {
           allowedNetworks: restaurant.allowedNetworks,
           orderCeiling: restaurant.orderCeiling,
           perTableQr: restaurant.perTableQr,
+          dailyReportEnabled: restaurant.dailyReportEnabled,
+          reportEmail: restaurant.reportEmail,
           address: restaurant.address,
           mapUrl: restaurant.mapUrl,
           phone: restaurant.phone,
@@ -828,6 +830,58 @@ export function Settings() {
             </label>
           </div>
         </section>
+
+        {/* ── Daily email report (Plus+) ── */}
+        {plan >= 2 && (
+        <section className="tf-a-settings__section">
+          <div className="tf-a-settings__section-head">
+            <span className="tf-a-settings__section-icon">
+              <IconReceipt />
+            </span>
+            <div>
+              <div className="tf-a-settings__section-title">{t('settings.dailyReport.title')}</div>
+              <div className="tf-a-settings__section-sub">{t('settings.dailyReport.sub')}</div>
+            </div>
+          </div>
+          <div className="tf-a-settings__section-body">
+            <label className="tf-a-settings__hours-toggle">
+              <input
+                type="checkbox"
+                checked={restaurant.dailyReportEnabled}
+                onChange={(e) =>
+                  setRestaurant({
+                    ...restaurant,
+                    dailyReportEnabled: e.target.checked,
+                    // Prefill the recipient with the signed-in user's email on first enable.
+                    reportEmail:
+                      e.target.checked && !restaurant.reportEmail
+                        ? (currentUser?.email ?? '')
+                        : restaurant.reportEmail,
+                  })
+                }
+              />
+              <span>{t('settings.dailyReport.enable')}</span>
+            </label>
+            {restaurant.dailyReportEnabled && (
+              <label className="tf-a-settings__field" style={{ marginTop: 12, maxWidth: 360 }}>
+                <span className="tf-a-settings__field-label">
+                  {t('settings.dailyReport.recipient')}
+                </span>
+                <input
+                  type="email"
+                  autoComplete="email"
+                  placeholder={currentUser?.email ?? 'nom@exemple.tn'}
+                  value={restaurant.reportEmail ?? ''}
+                  onChange={(e) => setRestaurant({ ...restaurant, reportEmail: e.target.value })}
+                />
+                <p className="tf-a-settings__note" style={{ marginTop: 4 }}>
+                  {t('settings.dailyReport.hint')}
+                </p>
+              </label>
+            )}
+          </div>
+        </section>
+        )}
         </div>
         )}
 

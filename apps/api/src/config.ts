@@ -96,6 +96,14 @@ export const config = {
   },
 
   demoMode: (process.env.DEMO_MODE ?? '').toLowerCase() === 'true',
+
+  // Scheduled daily email report (35.2). `hour` is the Africa/Tunis wall-clock
+  // hour the digest is sent (default 07:00). Set DAILY_REPORT_ENABLED=false to
+  // disable the scheduler entirely (e.g. on a secondary instance).
+  dailyReport: {
+    enabled: (process.env.DAILY_REPORT_ENABLED ?? 'true').toLowerCase() !== 'false',
+    hour: Math.max(0, Math.min(23, parseInteger(process.env.DAILY_REPORT_HOUR, 7))),
+  },
 } as const;
 
 export type Config = typeof config;

@@ -218,6 +218,102 @@ function buildLeadHtml(lead: LeadDetails): string {
 </html>`;
 }
 
+export interface DailyReportEmailData {
+  restaurantName: string;
+  /** Human date of the reported day, pre-formatted in FR (e.g. "mercredi 18 juin 2026"). */
+  dateLabel: string;
+  salesMillimes: number;
+  ordersCount: number;
+  scans: number;
+  topItems: { name: string; quantity: number }[];
+}
+
+function formatTnd(millimes: number): string {
+  return `${(millimes / 1000).toFixed(3)} TND`;
+}
+
+function buildDailyReportHtml(data: DailyReportEmailData): string {
+  const stat = (label: string, value: string) => `
+    <td style="padding:0 8px;" width="33%" valign="top">
+      <div style="background-color:#fbeed9;border:1px solid rgba(217,122,44,0.28);border-radius:10px;padding:16px 12px;text-align:center;">
+        <div style="font-size:22px;font-weight:700;color:#7c3f12;line-height:1.2;">${value}</div>
+        <div style="font-size:11px;font-weight:600;color:#d97a2c;text-transform:uppercase;letter-spacing:0.6px;margin-top:4px;">${label}</div>
+      </div>
+    </td>`;
+
+  const topItemsRows =
+    data.topItems.length > 0
+      ? data.topItems
+          .map(
+            (it, i) => `
+            <tr>
+              <td style="padding:8px 0;font-size:14px;color:#19140e;border-bottom:1px solid rgba(25,20,14,0.06);">
+                <span style="color:rgba(25,20,14,0.4);font-weight:600;">${i + 1}.</span> ${it.name}
+              </td>
+              <td style="padding:8px 0;font-size:14px;color:#19140e;font-weight:600;text-align:right;border-bottom:1px solid rgba(25,20,14,0.06);">
+                ×${it.quantity}
+              </td>
+            </tr>`,
+          )
+          .join('')
+      : `<tr><td style="padding:8px 0;font-size:14px;color:rgba(25,20,14,0.5);">Aucune vente sur cette journée.</td></tr>`;
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Rapport quotidien Orvexa</title></head>
+<body style="margin:0;padding:0;background-color:#f2efe8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2efe8;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#faf8f4;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(36,28,20,0.06),0 1px 2px rgba(36,28,20,0.04);">
+        <tr><td style="background-color:#d97a2c;padding:32px 40px;">
+          <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">Orvexa</span>
+        </td></tr>
+        <tr><td style="padding:36px 40px 28px;">
+          <h1 style="margin:0 0 4px;font-size:21px;font-weight:700;color:#19140e;line-height:1.3;">Rapport quotidien</h1>
+          <p style="margin:0 0 4px;font-size:15px;color:#19140e;font-weight:600;">${data.restaurantName}</p>
+          <p style="margin:0 0 24px;font-size:14px;color:rgba(25,20,14,0.55);text-transform:capitalize;">${data.dateLabel}</p>
+
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 -8px 28px;"><tr>
+            ${stat('Ventes', formatTnd(data.salesMillimes))}
+            ${stat('Commandes', String(data.ordersCount))}
+            ${stat('Scans QR', String(data.scans))}
+          </tr></table>
+
+          <div style="font-size:12px;font-weight:600;color:#d97a2c;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Top produits</div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            ${topItemsRows}
+          </table>
+        </td></tr>
+        <tr><td style="background-color:#f2efe8;border-top:1px solid rgba(25,20,14,0.08);padding:20px 40px;">
+          <p style="margin:0;font-size:12px;color:rgba(25,20,14,0.42);line-height:1.6;">
+            Vous recevez ce résumé car le rapport quotidien est activé pour votre établissement. Vous pouvez le désactiver dans Réglages → Notifications.
+          </p>
+          <p style="margin:8px 0 0;font-size:12px;color:rgba(25,20,14,0.28);">© ${new Date().getFullYear()} Orvexa — orvexa.tn</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendDailyReportEmail(to: string, data: DailyReportEmailData) {
+  const from = process.env.SMTP_FROM ?? 'Orvexa <orvexatn@gmail.com>';
+
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.log(`[email] SMTP not configured — daily report for ${to} (${data.restaurantName}):`);
+    console.log(`[email] ${JSON.stringify(data)}`);
+    return;
+  }
+
+  await createTransport().sendMail({
+    from,
+    to,
+    subject: `Rapport quotidien Orvexa — ${data.restaurantName} (${data.dateLabel})`,
+    html: buildDailyReportHtml(data),
+  });
+}
+
 export async function sendLeadEmail(lead: LeadDetails) {
   const to = process.env.LEAD_NOTIFY_EMAIL ?? process.env.SMTP_USER;
   const from = process.env.SMTP_FROM ?? 'Orvexa <orvexatn@gmail.com>';

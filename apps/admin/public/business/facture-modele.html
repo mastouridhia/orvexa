@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facture / Devis — Orvexa</title>
+  <style>
+    /* Self-contained: no external CSS/fonts so it works offline and prints identically anywhere. */
+    :root {
+      --ink: #19140E;
+      --saffron: #D97A2C;
+      --cream: #FBEED9;
+      --line: #E4DCCB;
+      --muted: #6B6256;
+      --paper: #ffffff;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: #efe9dc;
+      color: var(--ink);
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* On-screen help bar — hidden on print. */
+    .toolbar {
+      max-width: 820px; margin: 18px auto 0; padding: 12px 16px;
+      background: var(--ink); color: var(--cream); border-radius: 10px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      font-size: 13px;
+    }
+    .toolbar strong { color: #fff; }
+    .toolbar .grow { flex: 1; }
+    .toolbar button {
+      background: var(--saffron); color: #1a120a; border: 0; border-radius: 8px;
+      padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+    .toolbar select {
+      background: #2a2118; color: var(--cream); border: 1px solid #4a3e30;
+      border-radius: 7px; padding: 6px 8px; font-size: 13px;
+    }
+
+    .sheet {
+      max-width: 820px; margin: 18px auto 40px; background: var(--paper);
+      padding: 40px 46px 48px; border-radius: 6px;
+      box-shadow: 0 6px 30px rgba(25,20,14,0.12);
+    }
+
+    /* Brand + document header */
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand svg { width: 30px; height: 30px; }
+    .brand em { font-style: italic; font-weight: 400; color: var(--saffron); }
+    .doc-meta { text-align: right; }
+    .doc-title { font-size: 30px; font-weight: 800; letter-spacing: 2px; color: var(--saffron); margin: 0 0 6px; }
+    .doc-meta .row { display: flex; justify-content: flex-end; gap: 8px; align-items: baseline; }
+    .doc-meta label { color: var(--muted); font-size: 12px; }
+
+    .rule { height: 3px; background: var(--saffron); border-radius: 3px; margin: 18px 0 22px; }
+
+    /* Parties */
+    .parties { display: flex; gap: 28px; }
+    .party { flex: 1; }
+    .party h3 {
+      margin: 0 0 6px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--saffron);
+    }
+    .party .who { font-weight: 700; }
+
+    /* Form fields */
+    input, textarea, .fld {
+      font-family: inherit; font-size: 14px; color: var(--ink);
+      border: 0; border-bottom: 1px dashed var(--line);
+      background: transparent; padding: 2px 2px; width: 100%;
+    }
+    input:focus, textarea:focus { outline: none; border-bottom-color: var(--saffron); background: #fffaf0; }
+    .inline { display: inline-block; width: auto; }
+    textarea { resize: vertical; min-height: 2.4em; line-height: 1.45; }
+    .muted { color: var(--muted); }
+
+    /* Line items */
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    thead th {
+      background: var(--ink); color: var(--cream); font-size: 11px; letter-spacing: 0.6px;
+      text-transform: uppercase; text-align: left; padding: 9px 10px; font-weight: 600;
+    }
+    thead th.num { text-align: right; }
+    tbody td { border-bottom: 1px solid var(--line); padding: 4px 8px; vertical-align: top; }
+    tbody tr:nth-child(even) td { background: #fcf8ef; }
+    td.num input { text-align: right; }
+    .lt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 2px; }
+    .del { color: #b23; cursor: pointer; border: 0; background: none; font-size: 16px; line-height: 1; }
+
+    .below { display: flex; justify-content: space-between; gap: 30px; margin-top: 18px; }
+    .pay { flex: 1.2; font-size: 13px; }
+    .pay h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--saffron); }
+    .totals { flex: 1; max-width: 320px; }
+    .totals .t-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--line); }
+    .totals .t-row.grand {
+      border-bottom: 0; margin-top: 4px; padding: 10px 12px; background: var(--cream);
+      border-radius: 8px; font-size: 17px; font-weight: 800;
+    }
+    .totals .t-row.grand .v { color: var(--saffron); }
+    .totals .v { font-variant-numeric: tabular-nums; }
+
+    .words { margin-top: 14px; font-size: 13px; }
+    .foot { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); text-align: center; }
+    .disclaimer { margin-top: 10px; font-size: 11px; color: var(--muted); font-style: italic; }
+    .addbtn { margin-top: 8px; background: var(--cream); color: #7a4a18; border: 1px dashed var(--saffron); border-radius: 7px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-weight: 600; }
+
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .toolbar, .del, .addbtn { display: none !important; }
+      .sheet { box-shadow: none; margin: 0; max-width: none; padding: 0; border-radius: 0; }
+      input, textarea, .fld { border-bottom-color: #c9c0ad; }
+      @page { size: A4; margin: 14mm; }
+      thead th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      tbody tr:nth-child(even) td, .totals .t-row.grand { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .doc-title, .totals .t-row.grand .v, .party h3, .pay h4 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>Modèle Orvexa</strong>
+    <span>Remplissez les champs, puis&nbsp;:</span>
+    <label class="muted">Type&nbsp;
+      <select id="doctype">
+        <option value="FACTURE">Facture</option>
+        <option value="RE&Ccedil;U">Reçu</option>
+        <option value="DEVIS">Devis</option>
+      </select>
+    </label>
+    <span class="grow"></span>
+    <button onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+  </div>
+
+  <div class="sheet">
+    <div class="head">
+      <div>
+        <div class="brand">
+          <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#19140E"/><circle cx="50" cy="50" r="31" fill="#FBEED9"/><circle cx="50" cy="50" r="19" fill="#D97A2C"/></svg>
+          Orvexa<em>.</em>
+        </div>
+        <div class="muted" style="margin-top:6px; font-size:12px;">Menu digital &amp; commande par QR code</div>
+      </div>
+      <div class="doc-meta">
+        <h1 class="doc-title" id="title">FACTURE</h1>
+        <div class="row"><label id="numlabel">N° facture</label> <input class="inline" style="width:130px" value="2026-001"></div>
+        <div class="row"><label>Date d'émission</label> <input class="inline" type="date" style="width:150px"></div>
+        <div class="row" id="duerow"><label>Échéance</label> <input class="inline" type="date" style="width:150px"></div>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+
+    <div class="parties">
+      <div class="party">
+        <h3>Émetteur</h3>
+        <div class="who">Dhia Eddine Mastouri</div>
+        <div class="muted">Opérateur individuel — Orvexa</div>
+        <div>Sidi Bouzid (Souk Jedid), Tunisie</div>
+        <div>orvexatn@gmail.com · orvexa.tn</div>
+      </div>
+      <div class="party">
+        <h3>Facturé à</h3>
+        <input class="who" placeholder="Nom du restaurant / établissement">
+        <input placeholder="Raison sociale (le cas échéant)">
+        <input placeholder="Adresse">
+        <input placeholder="Ville, code postal">
+        <input placeholder="Contact (nom · téléphone · e-mail)">
+      </div>
+    </div>
+
+    <table id="items">
+      <thead>
+        <tr>
+          <th style="width:42%">Désignation</th>
+          <th style="width:18%">Période</th>
+          <th class="num" style="width:9%">Qté</th>
+          <th class="num" style="width:16%">P.U. (TND)</th>
+          <th class="num" style="width:15%">Total (TND)</th>
+          <th style="width:1%"></th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <!-- rows injected by JS so "add row" stays consistent -->
+      </tbody>
+    </table>
+    <button class="addbtn" onclick="addRow()">+ Ajouter une ligne</button>
+
+    <div class="below">
+      <div class="pay">
+        <h4>Paiement</h4>
+        <div>Devise&nbsp;: <strong>Dinar tunisien (TND)</strong>. Paiement d'avance, à réception.</div>
+        <div style="margin-top:4px">Moyen&nbsp;: <strong>D17</strong> (paiement mobile) ou espèces.</div>
+        <div>N°&nbsp;D17&nbsp;: <input class="inline" style="width:55%" placeholder="votre numéro / compte D17"></div>
+        <div style="margin-top:6px" class="muted">Aucun prélèvement automatique. À défaut de paiement, l'accès au service peut être suspendu (CGU art. 8).</div>
+      </div>
+      <div class="totals">
+        <div class="t-row grand"><span>Total à payer</span><span class="v" id="grand">0,000</span></div>
+      </div>
+    </div>
+
+    <div class="words">
+      Arrêté(e) la présente <span id="wordsdoc">facture</span> à la somme de&nbsp;:
+      <input class="inline" style="width:60%" placeholder="(montant en toutes lettres) dinars">
+    </div>
+
+    <div class="foot">
+      Merci de votre confiance. — Orvexa · orvexatn@gmail.com · orvexa.tn
+    </div>
+    <div class="disclaimer">
+      Document de paiement simplifié émis par un opérateur individuel (sans matricule fiscal ni TVA). Si un client réclame une facture fiscale en bonne et due forme pour sa comptabilité, celle-ci suppose une immatriculation&nbsp;— à traiter au cas par cas.
+    </div>
+  </div>
+
+  <script>
+    // Tunisian dinar = 3 decimals (millimes). Format 149 -> "149,000" (comma as decimal sep, FR style).
+    function fmt(n) {
+      if (!isFinite(n)) n = 0;
+      return n.toLocaleString('fr-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+    }
+    function parseNum(s) {
+      if (typeof s !== 'string') return 0;
+      // Accept both "149,000" and "149.000" / "149.5".
+      const cleaned = s.replace(/\s/g, '').replace(',', '.');
+      const v = parseFloat(cleaned);
+      return isFinite(v) ? v : 0;
+    }
+
+    const PRESETS = [
+      { d: 'Abonnement Orvexa — Formule Pro (mensuel)', per: 'mois en cours', qty: 1, pu: 149 },
+      { d: 'Abonnement Orvexa — Formule Plus (mensuel)', per: 'mois en cours', qty: 1, pu: 79 },
+      { d: 'Abonnement Orvexa — Formule Essentiel (mensuel)', per: 'mois en cours', qty: 1, pu: 19 },
+      { d: 'Frais de mise en service (installation, QR, formation)', per: 'unique', qty: 1, pu: 0 },
+      { d: 'Écran cuisine supplémentaire (Pro)', per: 'mois', qty: 1, pu: 50 },
+    ];
+
+    function rowHtml(d = '', per = '', qty = 1, pu = 0) {
+      return `<tr>
+        <td><input class="desc" value="${d}" placeholder="Désignation"></td>
+        <td><input class="per" value="${per}" placeholder="ex. juin 2026"></td>
+        <td class="num"><input class="qty num" value="${qty}" inputmode="decimal"></td>
+        <td class="num"><input class="pu num" value="${pu ? fmt(pu) : ''}" inputmode="decimal" placeholder="0,000"></td>
+        <td class="lt linetotal">0,000</td>
+        <td><button class="del" title="Supprimer" onclick="this.closest('tr').remove(); recalc();">&times;</button></td>
+      </tr>`;
+    }
+
+    function addRow(d, per, qty, pu) {
+      document.getElementById('rows').insertAdjacentHTML('beforeend', rowHtml(d, per, qty, pu));
+      recalc();
+    }
+
+    function recalc() {
+      let sub = 0;
+      document.querySelectorAll('#rows tr').forEach((tr) => {
+        const qty = parseNum(tr.querySelector('.qty').value);
+        const pu = parseNum(tr.querySelector('.pu').value);
+        const lt = qty * pu;
+        tr.querySelector('.linetotal').textContent = fmt(lt);
+        sub += lt;
+      });
+      document.getElementById('grand').textContent = fmt(sub);
+    }
+
+    // Toggle Facture / Reçu / Devis: [n° label, "arrêté à" wording, show échéance row].
+    const DOC = {
+      'FACTURE': ['N° facture', 'facture', true],
+      'REÇU': ['N° reçu', 'reçu', false],
+      'DEVIS': ['N° devis', 'offre', false],
+    };
+    document.getElementById('doctype').addEventListener('change', (e) => {
+      const v = e.target.value;
+      const [numLabel, word, showDue] = DOC[v] || DOC['FACTURE'];
+      document.getElementById('title').textContent = v;
+      document.getElementById('numlabel').textContent = numLabel;
+      document.getElementById('duerow').style.display = showDue ? '' : 'none';
+      document.getElementById('wordsdoc').textContent = word;
+    });
+
+    document.addEventListener('input', (e) => {
+      if (e.target.closest('#items')) recalc();
+    });
+
+    // Seed with one Pro-subscription line as a starting point.
+    addRow(PRESETS[0].d, '', PRESETS[0].qty, PRESETS[0].pu);
+    recalc();
+  </script>
+</body>
+</html>

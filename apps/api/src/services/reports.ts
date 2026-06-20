@@ -47,6 +47,14 @@ function truncExpr(granularity: ReportGranularity) {
   return sql<string>`date_trunc(${sql.raw(`'${trunc}'`)}, ${sql.raw('"orders"."created_at"')})`;
 }
 
+/** One day's headline numbers for the scheduled daily email report (35.2). */
+export interface DailyReportSummary {
+  ordersCount: number;
+  salesMillimes: number;
+  topItems: TopItemRow[];
+  scans: number;
+}
+
 export class ReportsService {
   async sales(
     restaurantId: string,
@@ -349,6 +357,48 @@ export class ReportsService {
       tablesTotal: tablesRow?.count ?? 0,
       topItemsToday,
       avgDwellMinutesToday,
+    };
+  }
+
+  /**
+   * Headline numbers for one day window `[from, to)` — used by the scheduled
+   * daily email report (35.2). Revenue counts only revenue-terminal orders;
+   * scans = customer sessions opened in the window (one per QR scan).
+   */
+  async dailySummary(restaurantId: string, from: Date, to: Date): Promise<DailyReportSummary> {
+    const [salesRow] = await db
+      .select({
+        count: sql<number>`count(*)::int`,
+        total: sql<number>`coalesce(sum(${orders.totalMillimes}), 0)::int`,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.restaurantId, restaurantId),
+          inArray(orders.status, [...TERMINAL_FOR_REVENUE]),
+          gte(orders.createdAt, from),
+          lt(orders.createdAt, to),
+        ),
+      );
+
+    const [scanRow] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(customerSessions)
+      .where(
+        and(
+          eq(customerSessions.restaurantId, restaurantId),
+          gte(customerSessions.createdAt, from),
+          lt(customerSessions.createdAt, to),
+        ),
+      );
+
+    const topItems = await this.topItems(restaurantId, 5, from, to);
+
+    return {
+      ordersCount: salesRow?.count ?? 0,
+      salesMillimes: salesRow?.total ?? 0,
+      topItems,
+      scans: scanRow?.count ?? 0,
     };
   }
 }

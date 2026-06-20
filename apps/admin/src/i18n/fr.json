@@ -462,6 +462,13 @@
     "qrMode": "Mode QR",
     "qrModePerTable": "Un QR par table",
     "qrModeSingle": "QR menu unique",
+    "dailyReport": {
+      "title": "Rapport quotidien par email",
+      "sub": "Recevez chaque matin le résumé de la veille — ventes, commandes, scans QR et meilleures ventes — par email.",
+      "enable": "M'envoyer un rapport quotidien par email",
+      "recipient": "Email destinataire",
+      "hint": "Envoyé chaque matin (heure de Tunis) pour la journée précédente. Désactivez pour ne plus le recevoir."
+    },
     "sectionInfo": "Infos de l'établissement",
     "sectionInfoSub": "Horaires, adresse, contact et WiFi affichés aux clients sur votre menu. Tout est optionnel.",
     "info": {

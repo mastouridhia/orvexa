@@ -42,6 +42,10 @@ export const restaurants = pgTable('restaurants', {
   wifiSsid: text('wifi_ssid'),
   wifiPassword: text('wifi_password'),
   openingHours: jsonb('opening_hours').$type<OpeningHours>(),
+  // Daily email report (Plus+). When enabled and a recipient is set, a scheduled
+  // job emails yesterday's summary (sales, top items, QR scans) each morning.
+  dailyReportEnabled: boolean('daily_report_enabled').notNull().default(false),
+  reportEmail: text('report_email'),
   isActive: boolean('is_active').notNull().default(true),
   // Legal consent captured at account creation (CGU + Politique de confidentialité).
   // Kept as proof of acceptance; version string identifies which document set was accepted.

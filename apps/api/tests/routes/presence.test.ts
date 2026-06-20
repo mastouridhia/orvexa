@@ -17,10 +17,10 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await resetTransactionalState();
-  // Reset restaurant gate to the default so each test is isolated.
+  // Reset restaurant gate + ceiling to defaults so each test is isolated.
   await db
     .update(restaurants)
-    .set({ orderGateMode: 'off', allowedNetworks: [] })
+    .set({ orderGateMode: 'off', allowedNetworks: [], orderCeiling: 20 })
     .where(eq(restaurants.id, ids.restaurantId));
   // Clean up any ceiling bypass keys from a previous test run.
   try {
@@ -327,6 +327,15 @@ describe('POST /orders idempotency', () => {
 // ─── Per-table order ceiling ──────────────────────────────────────────────────
 
 describe('per-table order ceiling', () => {
+  // These tests exercise the ceiling at 6; the schema default is 20, so set the
+  // precondition explicitly rather than depending on the default (task 25.5).
+  beforeEach(async () => {
+    await db
+      .update(restaurants)
+      .set({ orderCeiling: 6 })
+      .where(eq(restaurants.id, ids.restaurantId));
+  });
+
   it('blocks a 7th order when 6 active orders already exist at the table', async () => {
     const tableId = ids.tableIds[0]!;
     const customer = await openCustomerSession(ids.restaurantId, tableId);

@@ -51,7 +51,7 @@ type InvitationRow = {
   createdAt: string;
 };
 
-type Tab = 'restaurants' | 'invitations' | 'invite';
+type Tab = 'restaurants' | 'invitations' | 'invite' | 'documents';
 
 async function platformFetch<T>(
   path: string,
@@ -502,6 +502,50 @@ function InviteForm({ platformKey }: { platformKey: string }) {
   );
 }
 
+function DocumentsTab() {
+  // Static templates shipped in apps/admin/public/business/ — served at the site
+  // root (BASE_URL = '/') so they're reachable from the deployed admin anywhere,
+  // not just the dev machine. Each opens in a new tab; fill on screen, Ctrl/Cmd+P
+  // → Save as PDF, send to the client. Blank & reusable for every prospect.
+  const base = import.meta.env.BASE_URL;
+  const docs = [
+    {
+      title: 'Facture / Reçu / Devis',
+      desc: 'Document de paiement à remplir (D17, TND). Choisissez « Devis » pour un prospect, « Facture » ou « Reçu » à l’encaissement. Totaux calculés automatiquement.',
+      href: `${base}business/facture-modele.html`,
+    },
+    {
+      title: 'Bon de commande & contrat d’abonnement',
+      desc: 'Le contrat que le client signe : formule, prix convenu, mise en service, signatures. À imprimer en deux exemplaires.',
+      href: `${base}business/contrat-abonnement.html`,
+    },
+  ];
+
+  return (
+    <div className="op-card op-docs">
+      <div className="op-docs__head">
+        <h2>Documents commerciaux</h2>
+        <p>
+          Modèles vierges à remplir puis imprimer / enregistrer en PDF (Ctrl/Cmd+P → « Enregistrer en PDF »).
+          Réutilisables pour chaque client — rien n’est enregistré dans le modèle.
+        </p>
+      </div>
+      <div className="op-doc-list">
+        {docs.map((d) => (
+          <a key={d.href} className="op-doc" href={d.href} target="_blank" rel="noopener noreferrer">
+            <span className="op-doc__icon" aria-hidden="true">📄</span>
+            <span className="op-doc__body">
+              <span className="op-doc__title">{d.title}</span>
+              <span className="op-doc__desc">{d.desc}</span>
+            </span>
+            <span className="op-doc__open">Ouvrir ↗</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function PlatformAdmin() {
   const [platformKey, setPlatformKey] = useState(
     () => sessionStorage.getItem('orvexa.platform.key') ?? '',
@@ -567,6 +611,7 @@ export function PlatformAdmin() {
     { id: 'restaurants', label: 'Clients' },
     { id: 'invitations', label: 'Invitations' },
     { id: 'invite', label: '+ Nouvel invité' },
+    { id: 'documents', label: 'Documents' },
   ];
 
   return (
@@ -603,6 +648,7 @@ export function PlatformAdmin() {
         {tab === 'restaurants' && <RestaurantsTab platformKey={platformKey} />}
         {tab === 'invitations' && <InvitationsTab platformKey={platformKey} />}
         {tab === 'invite' && <InviteForm platformKey={platformKey} />}
+        {tab === 'documents' && <DocumentsTab />}
       </div>
     </div>
   );
@@ -772,6 +818,25 @@ const PLATFORM_CSS = `
 .op-result { padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.88rem; }
 .op-result--ok { background: var(--success-bg); color: var(--success-ink); }
 .op-result--err { background: var(--danger-bg); color: var(--danger-ink); }
+
+/* Documents tab */
+.op-docs { padding: 1.5rem; max-width: 680px; }
+.op-docs__head { margin-bottom: 1.1rem; }
+.op-docs__head h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
+.op-docs__head p { margin: 0.35rem 0 0; color: var(--fg-soft); font-size: 0.85rem; line-height: 1.5; }
+.op-doc-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.op-doc {
+  display: flex; align-items: center; gap: 0.9rem; text-decoration: none;
+  padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--radius-lg);
+  background: var(--bg); color: var(--fg);
+  transition: border-color var(--motion-fast), background var(--motion-fast);
+}
+.op-doc:hover { border-color: var(--accent); background: var(--bg-soft); }
+.op-doc__icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; }
+.op-doc__body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.op-doc__title { font-weight: 600; font-size: 0.95rem; }
+.op-doc__desc { color: var(--fg-soft); font-size: 0.82rem; line-height: 1.45; margin-top: 2px; }
+.op-doc__open { color: var(--accent); font-weight: 600; font-size: 0.85rem; white-space: nowrap; flex-shrink: 0; }
 
 /* Lock screen */
 .op-lock { display: flex; align-items: center; justify-content: center; padding: 1.5rem; }

@@ -13,6 +13,36 @@ Then hand them a phone and say: **"Scan that."**
 
 ---
 
+## The seeded demo tenant (fastest path)
+
+There's a dedicated, self-contained demo restaurant so you never pitch on a real client's live data (Capitol) and never hand-build a menu before a meeting.
+
+**Seed / reset it** (idempotent — safe to re-run before every pitch; it resets the menu and clears any test orders, but keeps the restaurant, admin, and tables):
+
+```bash
+npm run db:seed:demo -w @orvexa/api
+```
+
+What it creates:
+
+- **Restaurant:** `Pizza Corner (Démo)` — a fictional Tunisian pizzeria / fast-food, **Pro plan** (ordering + kitchen + waiter + reports all unlocked)
+- **Menu:** 6 categories / 28 dishes (FR · AR · EN), with real variant pricing — pizza Large/Maxi sizes, multi-select toppings, burger menu formulas, tacos/makloub fillings
+- **8 tables**, each with its own QR slug
+- **Staff logins** — all four roles, **same password** `DemoOrvexa2026!` _(override via `DEMO_ADMIN_PASSWORD`)_, so the full multi-screen demo works with no manual setup:
+  - Admin/owner: `admin@demo.orvexa.tn`
+  - Manager: `manager@demo.orvexa.tn`
+  - Kitchen (KDS): `kitchen@demo.orvexa.tn`
+  - Waiter: `waiter@demo.orvexa.tn`
+
+Links (the seed prints the exact ones for your environment at the end of its run):
+
+- **Customer ordering QR:** `<customer-app>/t/<table-slug>` (printed — use Table 1's)
+- **Shareable view-only menu:** `<customer-app>/m/pizza-corner` (no ordering — what a café posts on Instagram)
+
+Slug is `pizza-corner` (deliberately **not** `demo`, which is the dev/test fixture restaurant "Le Petit Tunis").
+
+---
+
 ## Demo setup — what MUST be working before he walks in
 
 Run this checklist 30 minutes before. If any item fails, fix it or skip that part of the demo — never demo something that might break.

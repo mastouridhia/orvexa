@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bon de commande &amp; Contrat d'abonnement — Orvexa</title>
+  <style>
+    :root {
+      --ink: #19140E;
+      --saffron: #D97A2C;
+      --cream: #FBEED9;
+      --line: #E4DCCB;
+      --muted: #6B6256;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: #efe9dc; color: var(--ink);
+      font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      font-size: 14px; line-height: 1.55;
+    }
+    .toolbar {
+      max-width: 820px; margin: 18px auto 0; padding: 12px 16px;
+      background: var(--ink); color: var(--cream); border-radius: 10px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 13px;
+    }
+    .toolbar strong { color: #fff; }
+    .toolbar .grow { flex: 1; }
+    .toolbar button {
+      background: var(--saffron); color: #1a120a; border: 0; border-radius: 8px;
+      padding: 8px 14px; font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+
+    .sheet {
+      max-width: 820px; margin: 18px auto 40px; background: #fff;
+      padding: 40px 50px 48px; border-radius: 6px; box-shadow: 0 6px 30px rgba(25,20,14,0.12);
+    }
+    .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand svg { width: 30px; height: 30px; }
+    .brand em { font-style: italic; font-weight: 400; color: var(--saffron); }
+    .doc-meta { text-align: right; font-size: 13px; }
+    .doc-meta label { color: var(--muted); }
+    h1.title { font-size: 25px; margin: 16px 0 2px; letter-spacing: -0.4px; }
+    .sub { color: var(--muted); font-size: 13px; margin: 0 0 4px; }
+    .rule { height: 3px; background: var(--saffron); border-radius: 3px; margin: 16px 0 20px; }
+
+    h2 { font-size: 14px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--saffron); margin: 22px 0 8px; }
+    p { margin: 6px 0; }
+    .muted { color: var(--muted); }
+    .small { font-size: 12.5px; }
+
+    input, textarea, .fld {
+      font-family: inherit; font-size: 14px; color: var(--ink);
+      border: 0; border-bottom: 1px dashed var(--line); background: transparent; padding: 2px; width: 100%;
+    }
+    input:focus, textarea:focus { outline: none; border-bottom-color: var(--saffron); background: #fffaf0; }
+    .inline { display: inline-block; width: auto; }
+    textarea { resize: vertical; min-height: 2.6em; line-height: 1.5; }
+
+    .parties { display: flex; gap: 28px; }
+    .party { flex: 1; }
+    .party h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--saffron); }
+    .party .who { font-weight: 700; }
+
+    table.plans { width: 100%; border-collapse: collapse; margin: 6px 0 4px; }
+    table.plans th, table.plans td { border: 1px solid var(--line); padding: 7px 9px; text-align: left; font-size: 13px; vertical-align: top; }
+    table.plans thead th { background: var(--ink); color: var(--cream); font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; }
+    table.plans td.pick { text-align: center; width: 34px; }
+    table.plans .price { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    table.plans tbody tr:nth-child(even) td { background: #fcf8ef; }
+
+    .grid2 { display: flex; gap: 26px; flex-wrap: wrap; }
+    .grid2 > div { flex: 1; min-width: 240px; }
+    .field-label { color: var(--muted); font-size: 12px; display: block; margin-top: 8px; }
+
+    .incl { display: flex; gap: 24px; }
+    .incl ul { margin: 4px 0; padding-left: 18px; }
+    .incl li { margin: 3px 0; font-size: 13px; }
+
+    .ref {
+      background: var(--cream); border-radius: 8px; padding: 12px 16px; font-size: 13px; margin-top: 8px;
+    }
+
+    .sign { display: flex; gap: 40px; margin-top: 30px; }
+    .sign .box { flex: 1; }
+    .sign h4 { margin: 0 0 6px; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--saffron); }
+    .sigline { margin-top: 40px; border-top: 1px solid var(--ink); padding-top: 4px; font-size: 12px; color: var(--muted); }
+    .lu { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+    .foot { margin-top: 26px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); text-align: center; }
+
+    @media print {
+      body { background: #fff; font-size: 12px; }
+      .toolbar { display: none !important; }
+      .sheet { box-shadow: none; margin: 0; max-width: none; padding: 0; border-radius: 0; }
+      input, textarea, .fld { border-bottom-color: #c9c0ad; }
+      h2 { break-after: avoid; }
+      .sign, .ref, table.plans { break-inside: avoid; }
+      @page { size: A4; margin: 14mm; }
+      table.plans thead th, table.plans tbody tr:nth-child(even) td, .ref { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .party h3, h2, .brand em, .doc-meta, h4 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <strong>Modèle Orvexa</strong>
+    <span>Cochez la formule, renseignez le client &amp; le prix, puis imprimez en 2 exemplaires à signer.</span>
+    <span class="grow"></span>
+    <button onclick="window.print()">Imprimer / Enregistrer en PDF</button>
+  </div>
+
+  <div class="sheet">
+    <div class="head">
+      <div class="brand">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" fill="#19140E"/><circle cx="50" cy="50" r="31" fill="#FBEED9"/><circle cx="50" cy="50" r="19" fill="#D97A2C"/></svg>
+        Orvexa<em>.</em>
+      </div>
+      <div class="doc-meta">
+        <div><label>Référence&nbsp;:</label> <input class="inline" style="width:120px" placeholder="BC-2026-001"></div>
+        <div><label>Date&nbsp;:</label> <input class="inline" type="date" style="width:150px"></div>
+      </div>
+    </div>
+
+    <h1 class="title">Bon de commande &amp; contrat d'abonnement</h1>
+    <p class="sub">Souscription au service Orvexa (SaaS — menu digital &amp; commande par QR code). Régi par les CGU d'Orvexa, droit tunisien.</p>
+    <div class="rule"></div>
+
+    <!-- Parties -->
+    <div class="parties">
+      <div class="party">
+        <h3>Éditeur (le Prestataire)</h3>
+        <div class="who">Dhia Eddine Mastouri</div>
+        <div class="muted">Opérateur individuel — Orvexa</div>
+        <div>Sidi Bouzid (Souk Jedid), Tunisie</div>
+        <div>orvexatn@gmail.com · orvexa.tn</div>
+      </div>
+      <div class="party">
+        <h3>Client (l'Établissement)</h3>
+        <input class="who" placeholder="Nom de l'établissement">
+        <input placeholder="Raison sociale (le cas échéant)">
+        <input placeholder="Adresse complète">
+        <input placeholder="Représentant légal (nom &amp; qualité)">
+        <input placeholder="Téléphone · e-mail">
+        <div class="small muted" style="margin-top:4px">Matricule fiscal : <input class="inline" style="width:150px" placeholder="(si l'établissement en a un)"></div>
+      </div>
+    </div>
+
+    <!-- Article 1 -->
+    <h2>1. Objet</h2>
+    <p>Le Client souscrit, pour son établissement, un abonnement au service Orvexa selon la formule cochée
+      ci-dessous. Le présent bon de commande vaut contrat d'abonnement et est régi par les Conditions
+      Générales d'Utilisation et de Service (« CGU ») d'Orvexa visées à l'article 8.</p>
+
+    <!-- Article 2 -->
+    <h2>2. Formule &amp; tarif</h2>
+    <table class="plans">
+      <thead>
+        <tr><th class="pick">✓</th><th>Formule</th><th>Périmètre</th><th class="price">Mensuel</th><th class="price">Annuel</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="pick"><input type="checkbox"></td><td><strong>Essentiel</strong></td><td>Menu digital + fiche établissement (consultation seule)</td><td class="price">19 TND</td><td class="price">190 TND</td></tr>
+        <tr><td class="pick"><input type="checkbox"></td><td><strong>Plus</strong></td><td>+ commande client à table (sans écran cuisine)</td><td class="price">79 TND</td><td class="price">790 TND</td></tr>
+        <tr><td class="pick"><input type="checkbox"></td><td><strong>Pro</strong></td><td>+ écran cuisine + application serveur + rôles complets</td><td class="price">149 TND</td><td class="price">1 490 TND</td></tr>
+        <tr><td class="pick"><input type="checkbox"></td><td><strong>Premium</strong></td><td>+ multi-zones, room service, note sur chambre</td><td class="price">499+ TND</td><td class="price">sur devis</td></tr>
+      </tbody>
+    </table>
+    <div class="grid2">
+      <div>
+        <label class="field-label">Périodicité retenue</label>
+        <input placeholder="mensuelle / annuelle">
+      </div>
+      <div>
+        <label class="field-label">Prix de l'abonnement convenu (TND)</label>
+        <input placeholder="ex. 149,000 TND / mois">
+      </div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label class="field-label">Options (le cas échéant)</label>
+        <input placeholder="ex. écran cuisine suppl. +50 TND/mois · tables suppl.">
+      </div>
+      <div>
+        <label class="field-label">Prix nets en TND, payables d'avance. Voir CGU art. 8.</label>
+        <span class="small muted">Opérateur individuel — pas de TVA appliquée.</span>
+      </div>
+    </div>
+
+    <!-- Article 3 -->
+    <h2>3. Frais de mise en service</h2>
+    <div class="grid2">
+      <div>
+        <label class="field-label">Frais d'installation / onboarding (unique, TND)</label>
+        <input placeholder="0,000 — ou montant convenu">
+      </div>
+      <div>
+        <label class="field-label">Inclus dans la mise en service</label>
+        <input placeholder="ex. saisie menu, impression + pose QR, formation équipe">
+      </div>
+    </div>
+    <p class="small muted">Les QR codes ne font l'objet d'aucune facturation séparée (impression/lamination incluses dans la mise en service).</p>
+
+    <!-- Article 4 -->
+    <h2>4. Durée &amp; démarrage</h2>
+    <div class="grid2">
+      <div>
+        <label class="field-label">Date de démarrage du service</label>
+        <input type="date">
+      </div>
+      <div>
+        <label class="field-label">Reconduction</label>
+        <input value="Sur paiement — aucun prélèvement automatique (CGU art. 8.3)">
+      </div>
+    </div>
+    <p class="small">Le contrat prend effet à la signature / acceptation des CGU et se poursuit par périodes successives.
+      Le Client peut résilier à tout moment&nbsp;; la résiliation prend effet à la fin de la période en cours, sans remboursement (CGU art. 19).</p>
+
+    <!-- Article 5 -->
+    <h2>5. Modalités de paiement</h2>
+    <div class="grid2">
+      <div>
+        <label class="field-label">Moyen de paiement</label>
+        <input value="D17 (paiement mobile) ou espèces">
+      </div>
+      <div>
+        <label class="field-label">Échéance de la 1ʳᵉ facture</label>
+        <input placeholder="ex. avant le go-live">
+      </div>
+    </div>
+    <p class="small">Abonnement payable d'avance. Le service est pleinement accessible après paiement effectif.
+      À défaut de paiement, l'accès peut être suspendu puis résilié (CGU art. 8.5).</p>
+
+    <!-- Article 6 -->
+    <h2>6. Périmètre — inclus / non inclus</h2>
+    <div class="incl">
+      <div style="flex:1">
+        <strong class="small">Inclus</strong>
+        <ul>
+          <li>Accès au service selon la formule cochée, multilingue (ar / fr / en).</li>
+          <li>Hébergement, sauvegardes raisonnables, mises à jour produit.</li>
+          <li>Support par e-mail (orvexatn@gmail.com), délais raisonnables.</li>
+          <li>Mise en service&nbsp;: configuration, QR codes, formation (selon art. 3).</li>
+        </ul>
+      </div>
+      <div style="flex:1">
+        <strong class="small">Non inclus à ce jour</strong>
+        <ul>
+          <li>Passerelle de paiement en ligne (le règlement reste géré par l'établissement).</li>
+          <li>Réservations / réservation de tables.</li>
+          <li>Gestion de stock / inventaire.</li>
+          <li>Garantie de disponibilité (SLA) — voir CGU art. 14.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Article 7 -->
+    <h2>7. Conditions particulières</h2>
+    <textarea placeholder="Engagements spécifiques, planning d'installation, périmètre sur mesure, remises, période d'essai, etc."></textarea>
+
+    <!-- Article 8 -->
+    <h2>8. Conditions générales applicables</h2>
+    <div class="ref">
+      Le présent bon de commande est régi par les <strong>Conditions Générales d'Utilisation et de Service d'Orvexa</strong>
+      (version <input class="inline" style="width:46px" value="1.0">, disponibles sur <strong>orvexa.tn/terms.html</strong>) et la
+      <strong>Politique de confidentialité</strong> (orvexa.tn/privacy.html), que le Client déclare avoir lues et acceptées.
+      Elles régissent notamment&nbsp;: propriété intellectuelle, confidentialité, disponibilité &amp; support,
+      limitation de responsabilité (plafond&nbsp;: 3 mois d'abonnement), résiliation, droit tunisien et tribunaux de Tunis.
+      En cas de divergence, la <strong>version française</strong> des CGU prévaut.
+    </div>
+
+    <!-- Signatures -->
+    <div class="sign">
+      <div class="box">
+        <h4>Pour l'Éditeur</h4>
+        <div class="small">Dhia Eddine Mastouri — Orvexa</div>
+        <div class="sigline">Date, lieu &amp; signature</div>
+      </div>
+      <div class="box">
+        <h4>Pour le Client</h4>
+        <div class="small">Nom &amp; qualité du signataire&nbsp;: <input class="inline" style="width:55%"></div>
+        <div class="sigline">Date, lieu &amp; signature</div>
+        <div class="lu">Mention manuscrite « Lu et approuvé »</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      Bon de commande établi en deux exemplaires originaux. — Orvexa · orvexatn@gmail.com · orvexa.tn
+    </div>
+  </div>
+</body>
+</html>

@@ -4,6 +4,12 @@ import { ApiErrorCode } from '@orvexa/shared';
 import { config } from '../config.js';
 import { errorEnvelope } from '../utils/envelope.js';
 
+// Integration tests drive many orders from one session in tight loops to exercise
+// the per-table ceiling + idempotency code paths; the per-session order limiters
+// (8 s cooldown / 10-per-min) would short-circuit those before the logic under test
+// runs. Skip them under NODE_ENV=test only — never in dev or production.
+const skipInTest = (): boolean => process.env.NODE_ENV === 'test';
+
 const tooManyRequestsHandler = (_req: Request, res: Response): void => {
   res.status(429).json(
     errorEnvelope({
@@ -37,6 +43,7 @@ export const orderRateLimit = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req: Request) => req.customerSession?.id ?? ipKeyGenerator(req.ip ?? ''),
+  skip: skipInTest,
   handler: tooManyRequestsHandler,
 });
 
@@ -52,6 +59,7 @@ export const orderCooldown = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   keyGenerator: (req: Request) => `cooldown:${req.customerSession?.id ?? ipKeyGenerator(req.ip ?? '')}`,
+  skip: skipInTest,
   handler: tooManyRequestsHandler,
 });
 

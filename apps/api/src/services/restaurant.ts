@@ -37,6 +37,8 @@ export function toRestaurant(row: RestaurantRow): Restaurant {
     orderCeiling: row.orderCeiling,
     perTableQr: row.perTableQr,
     extraTables: row.extraTables,
+    dailyReportEnabled: row.dailyReportEnabled,
+    reportEmail: row.reportEmail,
     address: row.address,
     mapUrl: row.mapUrl,
     phone: row.phone,
@@ -96,6 +98,12 @@ export class RestaurantService {
     if (input.orderGateMode !== undefined) patch.orderGateMode = input.orderGateMode;
     if (input.orderCeiling !== undefined) patch.orderCeiling = input.orderCeiling;
     if (input.perTableQr !== undefined) patch.perTableQr = input.perTableQr;
+    if (input.dailyReportEnabled !== undefined) patch.dailyReportEnabled = input.dailyReportEnabled;
+    if (input.reportEmail !== undefined) {
+      // Blank → null so clearing the field removes the recipient (not stored as "").
+      const email = typeof input.reportEmail === 'string' ? input.reportEmail.trim() : input.reportEmail;
+      patch.reportEmail = email === '' ? null : email;
+    }
     if (input.allowedNetworks !== undefined) {
       const cleaned = input.allowedNetworks.map((n) => n.trim()).filter(Boolean);
       const invalid = cleaned.filter((n) => !isValidNetwork(n));

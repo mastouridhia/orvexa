@@ -83,6 +83,9 @@ export const RestaurantSchema = z.object({
   // table limit = TABLE_QUOTA[plan] + extraTables. Capitol is grandfathered via
   // a large value here. Owners cannot self-set this — admin/billing only.
   extraTables: z.number().int().min(0),
+  // Daily email report (Plus+). Opt-in toggle + recipient address (null = unset).
+  dailyReportEnabled: z.boolean(),
+  reportEmail: z.string().email().nullable(),
   createdAt: IsoDateTimeSchema,
   updatedAt: IsoDateTimeSchema,
 }).merge(RestaurantInfoSchema);
@@ -103,6 +106,10 @@ export const PatchRestaurantRequestSchema = z
     allowedNetworks: z.array(z.string().min(1).max(64)).max(20),
     orderCeiling: z.number().int().min(1).max(100),
     perTableQr: z.boolean(),
+    // Daily email report settings. Empty string clears the recipient (normalized
+    // to null server-side); a non-empty value must be a valid email.
+    dailyReportEnabled: z.boolean(),
+    reportEmail: z.string().email().or(z.literal('')).nullable(),
   })
   .merge(RestaurantInfoSchema)
   .partial();
